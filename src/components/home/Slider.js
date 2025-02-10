@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
 // Import your local images here
-import image1 from '../../img/self.png';
-import image2 from '../../img/self2.png';
-import image3 from '../../img/self3.png';
-import image4 from '../../img/self4.png';
+import image1 from '../../img/1.png';
+import image2 from '../../img/2.png';
+import image3 from '../../img/3.png';
+import image4 from '../../img/4.png';
 
 
 const Slider = () => {
@@ -23,9 +23,9 @@ const Slider = () => {
         prevIndex === images.length - 1 ? 0 : prevIndex + 1
       );
     }, 3000);
-
+  
     return () => clearInterval(timer);
-  }, []);
+  }, [images.length]); 
 
   return (
     <div style={{
