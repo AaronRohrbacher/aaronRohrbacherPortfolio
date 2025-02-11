@@ -37,22 +37,20 @@ export default function BaseLayout() {
    }, [])
 
    return (
-      <Box className={darkMode ? Style.dark : Style.light}>
-         <Grid container display={'flex'} flexDirection={'column'} minHeight={'100vh'}
-            justifyContent={'space-between'}>
-            <Grid item>
-               <Navbar darkMode={darkMode} handleClick={handleToggleDarkMode} active={active} setActive={setActive} />
-            </Grid>
-            <Grid item flexGrow={1}>
-               {singlePage ? <SinglePageRoutes refs={{refHome, refAbout, refPortfolio}}/> : <MultiPageRoutes />}
-            </Grid>
-            <Grid item>
-               <Box component={'footer'} display={'flex'} flexDirection={'column'} alignItems={'center'}
-                  py={'1.5rem'} sx={{ opacity: 0.7 }} width={'100%'}>
-                  <p>&copy; 2025 Aaron Rohrbacher</p>
-               </Box>
-            </Grid>
+<Box className={darkMode ? Style.dark : Style.light} sx={{ width: '100%', overflowX: 'hidden', maxWidth: '100vw' }}>
+<Grid container display={'flex'} flexDirection={'column'} minHeight={'100vh'} justifyContent={'space-between'} sx={{ maxWidth: '100%', margin: 0, padding: 0 }}>         <Grid item>
+            <Navbar darkMode={darkMode} handleClick={handleToggleDarkMode} active={active} setActive={setActive} />
          </Grid>
+         <Grid item flexGrow={1}>
+            {singlePage ? <SinglePageRoutes refs={{ refHome, refAbout, refPortfolio }} /> : <MultiPageRoutes />}
+         </Grid>
+         <Grid item>
+            <Box component={'footer'} display={'flex'} flexDirection={'column'} alignItems={'center'}
+               py={'1.5rem'} sx={{ opacity: 0.7 }} width={'100%'}>
+               <p>&copy; 2025 Aaron Rohrbacher</p>
+            </Box>
+         </Grid>
+      </Grid>
       </Box>
    )
 }

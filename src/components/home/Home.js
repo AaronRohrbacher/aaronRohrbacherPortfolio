@@ -15,7 +15,7 @@ export default function Home({ innerRef }) {
 
    return (
       <Box ref={innerRef} component={'main'} display={'flex'} flexDirection={{ xs: 'column', md: 'row' }} alignItems={'center'}
-         justifyContent={'center'} minHeight={'calc(100vh - 175px)'} id={'home'}>
+         justifyContent={'center'} minHeight={'calc(100vh - 175px)'} sx={{ maxWidth: '100%', padding: { xs: '1rem', md: '2rem' } }}>
          <Box className={classNames(Style.avatar, Style.shadowed)} alt={'image of developer'} style={{ background: info.gradient }} width={{ xs: '35vh', md: '40vh' }}
             height={{ xs: '35vh', md: '40vh' }}
             borderRadius={'50%'} mb={{ xs: '1rem', sm: 0 }} mr={{ xs: 0, md: '2rem' }}>
