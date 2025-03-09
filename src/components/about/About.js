@@ -3,6 +3,7 @@ import Style from './About.module.scss';
 import Terminal from "./Terminal";
 import { Box } from "@mui/material";
 import { info } from "../../info/Info";
+import { Helmet } from 'react-helmet';
 
 
 export default function About({ innerRef }) {
@@ -39,9 +40,16 @@ export default function About({ innerRef }) {
     }
 
     return (
-        <Box ref={innerRef} display={'flex'} flexDirection={'column'} alignItems={'center'} mt={'3rem'} id={'about'}>
-            <Terminal text={aboutMeText()} />
-            <Terminal text={skillsText()} />
-        </Box>
+        <>
+            <Helmet>
+                <title>About | Aaron Rohrbacher | Senior Full Stack Software Engineer</title>
+                <meta name="description" content="Portfolio of Aaron Rohrbacher, a fullstack software engineer based in Portland, Oregon." />
+            </Helmet>
+
+            <Box ref={innerRef} display={'flex'} flexDirection={'column'} alignItems={'center'} mt={'3rem'} id={'about'}>
+                <Terminal text={aboutMeText()} />
+                <Terminal text={skillsText()} />
+            </Box>
+        </>
     )
 }
