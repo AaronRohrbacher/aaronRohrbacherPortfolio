@@ -12,7 +12,7 @@ function Resume() {
     return (
         <>
             <Helmet>
-                <title>Resume | Aaron Rohrbacher | Senior Full Stack Software Engineer</title>
+                <title>Aaron Rohrbacher | Resume</title>
                 <meta name="description" content="Resume of Aaron Rohrbacher, a fullstack software engineer based in Portland, Oregon." />
             </Helmet>
             

@@ -42,8 +42,8 @@ export default function About({ innerRef }) {
     return (
         <>
             <Helmet>
-                <title>About | Aaron Rohrbacher | Senior Full Stack Software Engineer</title>
-                <meta name="description" content="Portfolio of Aaron Rohrbacher, a fullstack software engineer based in Portland, Oregon." />
+                <title>Aaron Rohrbacher | About</title>
+                <meta name="description" content="Learn a little more about Aaron Rohrbacher and his endeavours in software." />
             </Helmet>
 
             <Box ref={innerRef} display={'flex'} flexDirection={'column'} alignItems={'center'} mt={'3rem'} id={'about'}>

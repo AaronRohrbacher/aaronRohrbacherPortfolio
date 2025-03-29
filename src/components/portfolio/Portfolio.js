@@ -8,8 +8,8 @@ export default function Portfolio({ innerRef }) {
     return (
         <>
             <Helmet>
-                <title>Portfolio | Aaron Rohrbacher | Senior Full Stack Software Engineer</title>
-                <meta name="description" content="Portfolio of Aaron Rohrbacher, a fullstack software engineer based in Portland, Oregon." />
+                <title>Aaron Rohrbacher | Portfolio</title>
+                <meta name="description" content="Aaron Rohrbacher's portfolio of personal software projects." />
             </Helmet>
             <Box id={'portfolio'}>
                 <Grid container display={'flex'} justifyContent={'center'} sx={{ maxWidth: '100%' }}>
