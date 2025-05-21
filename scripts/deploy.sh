@@ -1,3 +1,4 @@
+#! /usr/bin/bash
 aws s3 rm s3://aaronrohrbacher-com/ --recursive
 cd build
 echo "$(eval pwd)"
