@@ -1,25 +1,29 @@
-@import "../../variables.modules";
+@use "../../variables" as vars;
+
+.shadowed {
+  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, 0.4);
+}
 
 i {
   padding-left: 0.5rem;
 
   &.red {
-    color: $red;
+    color: vars.$red;
   }
 
   &.amber {
-    color: $yellow;
+    color: vars.$yellow;
   }
 
   &.green {
-    color: $green;
+    color: vars.$green;
   }
 }
 
 .terminal {
   p, li {
     margin: 1rem 0;
-    color: $white;
+    color: vars.$white;
   }
 
   a, a:visited {

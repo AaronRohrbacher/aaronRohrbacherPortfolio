@@ -1,5 +1,5 @@
+@use "./variables" as vars;
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;400;700&display=swap');
-@import "./variables.modules";
 
 
 body {
@@ -7,13 +7,13 @@ body {
     font-size: 1.5vh;
     width: 100%;
     height: 100%;
-    color: $dark;
-    background-color: $white;
+    color: vars.$dark;
+    background-color: vars.$white;
     box-sizing: border-box;
 }
 
 li {
-    color: $dark;
+    color: vars.$dark;
 }
 
 * {

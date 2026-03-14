@@ -1,4 +1,8 @@
-@import "../../variables.modules";
+@use "../../variables" as vars;
+
+.shadowed {
+  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, 0.4);
+}
 
 h1 {
   font-size: 2rem;
@@ -28,12 +32,12 @@ h2 {
 }
 
 a {
-  color: $dark;
+  color: vars.$dark;
   transition: color 200ms ease;
 }
 
 a:hover {
-  color: $lightgray;
+  color: vars.$lightgray;
   transition: color 200ms ease;
 }
 

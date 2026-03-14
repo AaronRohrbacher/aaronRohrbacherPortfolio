@@ -8,10 +8,10 @@ import { Route, Routes } from 'react-router-dom';
 export default function MultiPageRoutes() {
     return (
         <Routes>
-            <Route exact path={'/'} element={<Home />} />
-            <Route exact path={'/about'} element={<About />} />
-            <Route exact path={'/portfolio'} element={<Portfolio />} />
-            <Route exact path={'/resume'} element={<Resume />} />
+            <Route path={'/'} element={<Home />} />
+            <Route path={'/about'} element={<About />} />
+            <Route path={'/portfolio'} element={<Portfolio />} />
+            <Route path={'/resume'} element={<Resume />} />
         </Routes>
     )
 }

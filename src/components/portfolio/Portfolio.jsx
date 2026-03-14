@@ -2,7 +2,7 @@ import React from 'react';
 import PortfolioBlock from "./PortfolioBlock";
 import { Box, Grid } from "@mui/material";
 import { info } from "../../info/Info";
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 
 export default function Portfolio({ innerRef }) {
     return (

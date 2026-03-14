@@ -1,4 +1,4 @@
-@import "../variables.modules";
+@use "../variables" as vars;
 
 nav {
   transition: all 400ms;
@@ -6,12 +6,12 @@ nav {
 }
 
 .dark {
-  background-color: $dark;
+  background-color: vars.$dark;
 }
 
 
 .light {
-  background-color: $white;
+  background-color: vars.$white;
 }
 
 .active {
@@ -20,11 +20,11 @@ nav {
 }
 
 li {
-  transition: $transition;
+  transition: vars.$transition;
 
   &:hover {
     transform: translateY(-3px);
-    transition: $transition;
+    transition: vars.$transition;
   }
 }
 

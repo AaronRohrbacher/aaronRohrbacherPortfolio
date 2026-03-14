@@ -1,11 +1,11 @@
-@import "../../variables.modules";
+@use "../../variables" as vars;
 
 .pink {
-  color: $pink;
+  color: vars.$pink;
 }
 
 .green {
-  color: $green;
+  color: vars.$green;
 }
 
 .skills {
