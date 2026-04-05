@@ -16,4 +16,18 @@
         <loc>https://aaronrohrbacher.com/resume</loc>
         <lastmod>2025-05-21</lastmod>
     </url>
+    <url>
+        <loc>https://aaronrohrbacher.com/contact</loc>
+        <lastmod>2025-05-21</lastmod>
+    </url>
+    <url>
+        <loc>https://aaronrohrbacher.com/music</loc>
+        <lastmod>2026-04-04</lastmod>
+        <changefreq>weekly</changefreq>
+    </url>
+    <url>
+        <loc>https://music.aaronrohrbacher.com/</loc>
+        <lastmod>2026-04-04</lastmod>
+        <changefreq>weekly</changefreq>
+    </url>
 </urlset>

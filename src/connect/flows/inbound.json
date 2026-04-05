@@ -1,0 +1,371 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "Find Aaron",
+  "Metadata": {
+    "entryPointPosition": { "x": 64.8, "y": 21.6 },
+    "ActionMetadata": {
+      "9ecd63a0-8b01-4886-81e1-4122abc57704": { "position": { "x": 2400, "y": 75 } },
+      "e8044147-d71a-49be-a074-f1ac0c820a10": {
+        "position": { "x": 2100, "y": 75 },
+        "parameters": { "QueueId": { "displayName": "BasicQueue" } },
+        "queue": { "text": "BasicQueue" }
+      },
+      "fe6810db-1fe8-4b8d-a939-65dadbb61ef7": { "position": { "x": 1400, "y": -80 } },
+      "655eddac-5153-4959-94b6-a21d3adf14ba": { "position": { "x": 2400, "y": 600 } },
+      "Find Aaron": {
+        "position": { "x": 333.6, "y": 40.8 },
+        "isFriendlyName": true,
+        "parameters": { "AgentId": { "displayName": "aaron (Aaron Rohrbacher)" } },
+        "queue": {
+          "text": "aaron (Aaron Rohrbacher)",
+          "id": "arn:aws:connect:us-west-2:{{AWS_ACCOUNT_ID}}:instance/{{CONNECT_INSTANCE_ID}}/agent/{{CONNECT_AGENT_ID}}"
+        }
+      },
+      "aa100001-0000-0000-0000-000000000001": { "position": { "x": 700, "y": -80 } },
+      "aa100001-0000-0000-0000-000000000002": { "position": { "x": 1050, "y": -200 } },
+      "aa100001-0000-0000-0000-000000000003": { "position": { "x": 700, "y": 200 } },
+      "aa100001-0000-0000-0000-000000000004": { "position": { "x": 700, "y": 380 } },
+      "aa100001-0000-0000-0000-000000000005": { "position": { "x": 700, "y": 550 } },
+      "aa100001-0000-0000-0000-000000000006": { "position": { "x": 700, "y": 720 } },
+      "aa100001-0000-0000-0000-000000000007": { "position": { "x": 1050, "y": 120 } },
+      "aa100001-0000-0000-0000-000000000010": { "position": { "x": 1700, "y": 900 } },
+      "aa100001-0000-0000-0000-000000000011": { "position": { "x": 2050, "y": 900 } },
+      "c0a801a1-0001-4001-8001-c0a801a10001": { "position": { "x": 600, "y": 900 } },
+      "c0a801a1-0001-4001-8001-c0a801a10002": { "position": { "x": 600, "y": 1080 } },
+      "c0a801a1-0001-4001-8001-c0a801a10003": { "position": { "x": 600, "y": 1260 } },
+      "c0a801a1-0001-4001-8001-c0a801a10004": { "position": { "x": 600, "y": 1440 } },
+      "c0a801a1-0001-4001-8001-c0a801a10005": { "position": { "x": 600, "y": 1620 } },
+      "c0a801a1-0001-4001-8001-c0a801a10006": { "position": { "x": 600, "y": 1800 } }
+    },
+    "Annotations": [],
+    "name": "Sample inbound flow (first contact experience)",
+    "description": "First contact experience",
+    "type": "contactFlow",
+    "status": "PUBLISHED",
+    "hash": {}
+  },
+  "Actions": [
+
+    {
+      "Parameters": {
+        "MetricType": "NumberOfAgentsOnline",
+        "AgentId": "arn:aws:connect:us-west-2:{{AWS_ACCOUNT_ID}}:instance/{{CONNECT_INSTANCE_ID}}/agent/{{CONNECT_AGENT_ID}}"
+      },
+      "Identifier": "Find Aaron",
+      "Type": "CheckMetricData",
+      "Transitions": {
+        "NextAction": "c0a801a1-0001-4001-8001-c0a801a10001",
+        "Conditions": [
+          {
+            "NextAction": "aa100001-0000-0000-0000-000000000001",
+            "Condition": { "Operator": "NumberGreaterThan", "Operands": ["0"] }
+          }
+        ],
+        "Errors": [
+          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10001", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10001", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Aaron is in! How would you like to connect?\n\n1 — Text chat (right here)\n2 — Voice call (we'll get a number from you)\n3 — Video call\n\nReply 1, 2, or 3.",
+        "ResponseValidation": { "ResponseType": "TEXT" }
+      },
+      "Identifier": "aa100001-0000-0000-0000-000000000001",
+      "Type": "GetParticipantInput",
+      "Transitions": {
+        "NextAction": "aa100001-0000-0000-0000-000000000002",
+        "Conditions": [
+          { "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7", "Condition": { "Operator": "Equals", "Operands": ["1"] } },
+          { "NextAction": "aa100001-0000-0000-0000-000000000003", "Condition": { "Operator": "Equals", "Operands": ["2"] } },
+          { "NextAction": "aa100001-0000-0000-0000-000000000007", "Condition": { "Operator": "Equals", "Operands": ["3"] } }
+        ],
+        "Errors": [
+          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10001", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10001", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "No worries — connecting you via text chat!"
+      },
+      "Identifier": "aa100001-0000-0000-0000-000000000002",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7",
+        "Errors": [
+          { "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Great! What's the best number to call you back on, and your name please? (e.g. John Smith, 503-555-0100)",
+        "ResponseValidation": { "ResponseType": "TEXT" }
+      },
+      "Identifier": "aa100001-0000-0000-0000-000000000003",
+      "Type": "GetParticipantInput",
+      "Transitions": {
+        "NextAction": "aa100001-0000-0000-0000-000000000004",
+        "Conditions": [],
+        "Errors": [
+          { "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Attributes": { "voiceCallbackInfo": "$.StoredCustomerInput" }
+      },
+      "Identifier": "aa100001-0000-0000-0000-000000000004",
+      "Type": "UpdateContactAttributes",
+      "Transitions": {
+        "NextAction": "aa100001-0000-0000-0000-000000000005",
+        "Errors": [
+          { "NextAction": "aa100001-0000-0000-0000-000000000005", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}",
+        "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "notifyType": "voiceCallback",
+          "contactId": "$.ContactId",
+          "channel": "$.Channel",
+          "voiceCallbackInfo": "$.Attributes.voiceCallbackInfo"
+        }
+      },
+      "Identifier": "aa100001-0000-0000-0000-000000000005",
+      "Type": "InvokeLambdaFunction",
+      "Transitions": {
+        "NextAction": "aa100001-0000-0000-0000-000000000006",
+        "Errors": [
+          { "NextAction": "aa100001-0000-0000-0000-000000000006", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Got it! Aaron has been notified and will call you back shortly. Talk soon!"
+      },
+      "Identifier": "aa100001-0000-0000-0000-000000000006",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba",
+        "Errors": [
+          { "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Attributes": { "callType": "video" }
+      },
+      "Identifier": "aa100001-0000-0000-0000-000000000007",
+      "Type": "UpdateContactAttributes",
+      "Transitions": {
+        "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7",
+        "Errors": [
+          { "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}",
+        "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "notifyType": "partial",
+          "contactId": "$.ContactId",
+          "channel": "$.Channel",
+          "endpoint": "$.CustomerEndpoint.Address",
+          "customerName": "$.Attributes.customerName",
+          "contactInfo": "$.Attributes.contactInfo"
+        }
+      },
+      "Identifier": "aa100001-0000-0000-0000-000000000010",
+      "Type": "InvokeLambdaFunction",
+      "Transitions": {
+        "NextAction": "aa100001-0000-0000-0000-000000000011",
+        "Errors": [
+          { "NextAction": "aa100001-0000-0000-0000-000000000011", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Aaron was notified that you stopped by! If you'd like to reach him, visit his AI-powered and interactive resume at https://aaronrohrbacher.com/resume — there's a chat there too. Have a great day!"
+      },
+      "Identifier": "aa100001-0000-0000-0000-000000000011",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba",
+        "Errors": [
+          { "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Hi there! Thanks for being in touch. I'm connecting you directly to Aaron Rohrbacher."
+      },
+      "Identifier": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "e8044147-d71a-49be-a074-f1ac0c820a10",
+        "Errors": [
+          { "NextAction": "e8044147-d71a-49be-a074-f1ac0c820a10", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "QueueId": "arn:aws:connect:us-west-2:{{AWS_ACCOUNT_ID}}:instance/{{CONNECT_INSTANCE_ID}}/queue/{{CONNECT_QUEUE_ID}}"
+      },
+      "Identifier": "e8044147-d71a-49be-a074-f1ac0c820a10",
+      "Type": "UpdateContactTargetQueue",
+      "Transitions": {
+        "NextAction": "9ecd63a0-8b01-4886-81e1-4122abc57704",
+        "Errors": [
+          { "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {},
+      "Identifier": "9ecd63a0-8b01-4886-81e1-4122abc57704",
+      "Type": "TransferContactToQueue",
+      "Transitions": {
+        "NextAction": "e8044147-d71a-49be-a074-f1ac0c820a10",
+        "Errors": [
+          { "NextAction": "e8044147-d71a-49be-a074-f1ac0c820a10", "ErrorType": "QueueAtCapacity" },
+          { "NextAction": "e8044147-d71a-49be-a074-f1ac0c820a10", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {},
+      "Identifier": "655eddac-5153-4959-94b6-a21d3adf14ba",
+      "Type": "DisconnectParticipant",
+      "Transitions": {}
+    },
+
+    {
+      "Parameters": {
+        "Text": "Aaron is not currently in his office. I can take a message if you'd like. May I please take your name?",
+        "ResponseValidation": { "ResponseType": "TEXT" }
+      },
+      "Identifier": "c0a801a1-0001-4001-8001-c0a801a10001",
+      "Type": "GetParticipantInput",
+      "Transitions": {
+        "NextAction": "c0a801a1-0001-4001-8001-c0a801a10002",
+        "Conditions": [],
+        "Errors": [
+          { "NextAction": "aa100001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "aa100001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Attributes": { "customerName": "$.StoredCustomerInput" }
+      },
+      "Identifier": "c0a801a1-0001-4001-8001-c0a801a10002",
+      "Type": "UpdateContactAttributes",
+      "Transitions": {
+        "NextAction": "c0a801a1-0001-4001-8001-c0a801a10003",
+        "Errors": [
+          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10003", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "And either your e-mail address or your phone number, please.",
+        "ResponseValidation": { "ResponseType": "TEXT" }
+      },
+      "Identifier": "c0a801a1-0001-4001-8001-c0a801a10003",
+      "Type": "GetParticipantInput",
+      "Transitions": {
+        "NextAction": "c0a801a1-0001-4001-8001-c0a801a10004",
+        "Conditions": [],
+        "Errors": [
+          { "NextAction": "aa100001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "aa100001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Attributes": { "contactInfo": "$.StoredCustomerInput" }
+      },
+      "Identifier": "c0a801a1-0001-4001-8001-c0a801a10004",
+      "Type": "UpdateContactAttributes",
+      "Transitions": {
+        "NextAction": "c0a801a1-0001-4001-8001-c0a801a10005",
+        "Errors": [
+          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10005", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}",
+        "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "notifyType": "message",
+          "contactId": "$.ContactId",
+          "channel": "$.Channel",
+          "endpoint": "$.CustomerEndpoint.Address",
+          "customerName": "$.Attributes.customerName",
+          "contactInfo": "$.Attributes.contactInfo"
+        }
+      },
+      "Identifier": "c0a801a1-0001-4001-8001-c0a801a10005",
+      "Type": "InvokeLambdaFunction",
+      "Transitions": {
+        "NextAction": "c0a801a1-0001-4001-8001-c0a801a10006",
+        "Errors": [
+          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10006", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Thanks, $.Attributes.customerName! Aaron has been notified, and will be in touch shortly! If you have any questions for me about Aaron, head over to his AI-powered and interactive resume at https://aaronrohrbacher.com/resume — I'll join you there to answer any questions too!"
+      },
+      "Identifier": "c0a801a1-0001-4001-8001-c0a801a10006",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba",
+        "Errors": [
+          { "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    }
+
+  ]
+}

@@ -1,0 +1,25 @@
+@use "@/styles/variables" as vars;
+
+.dark {
+  background-color: var(--dark);
+  color: var(--white);
+  transition: all 400ms;
+
+  :global(a),
+  :global(i),
+  :global(li),
+  :global(footer) {
+    color: var(--white);
+    transition: color 400ms;
+  }
+
+  :global(a:visited) {
+    color: var(--lightgray);
+  }
+}
+
+.light {
+  background-color: var(--white);
+  color: var(--dark);
+  transition: all 400ms;
+}

@@ -1,0 +1,62 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import Style from './MusicLayout.module.scss';
+import MusicNav from './MusicNav';
+import { AuthProvider } from './AuthContext';
+import { MusicPlayerProvider } from './MusicPlayerContext';
+import PlayerBar from './PlayerBar';
+import PageTransition from '@/components/PageTransition';
+import { Box, Grid } from '@mui/material';
+import { setCookie } from 'cookies-next';
+import { usePathname } from 'next/navigation';
+
+export default function MusicLayout({ children, initialDark }) {
+  const [darkMode, setDarkMode] = useState(initialDark === true);
+  const pathname = usePathname();
+
+  function handleToggleDarkMode() {
+    const next = !darkMode;
+    setCookie('darkMode', String(next), { maxAge: 60 * 60 * 24 * 365 });
+    setDarkMode(next);
+  }
+
+  useEffect(() => {
+    if (initialDark === null) {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) setDarkMode(true);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    document.documentElement.style.backgroundColor = darkMode ? '#1f1f1f' : '#f8f8f8';
+  }, [darkMode]);
+
+  const themeClass = darkMode ? Style.dark : Style.light;
+
+  return (
+    <AuthProvider>
+      <MusicPlayerProvider>
+        <Box suppressHydrationWarning className={themeClass} data-theme={darkMode ? 'dark' : 'light'} sx={{ width: '100%', overflowX: 'hidden', maxWidth: '100vw' }}>
+          <Grid container display="flex" flexDirection="column" minHeight="100vh" justifyContent="space-between" sx={{ maxWidth: '100%', margin: 0, padding: 0 }}>
+            <Grid>
+              <MusicNav darkMode={darkMode} handleToggle={handleToggleDarkMode} />
+            </Grid>
+            <Grid flexGrow={1}>
+              <PageTransition key={pathname}>
+                {children}
+              </PageTransition>
+            </Grid>
+            <Grid>
+              <Box component="footer" display="flex" flexDirection="column" alignItems="center"
+                py="1.5rem" sx={{ opacity: 0.7, paddingBottom: '5rem' }} width="100%">
+                <p>&copy; 2025 Aaron Rohrbacher</p>
+              </Box>
+            </Grid>
+          </Grid>
+          <PlayerBar />
+        </Box>
+      </MusicPlayerProvider>
+    </AuthProvider>
+  );
+}

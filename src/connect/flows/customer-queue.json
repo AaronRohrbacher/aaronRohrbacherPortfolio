@@ -1,0 +1,216 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "bb200001-0000-0000-0000-000000000001",
+  "Metadata": {
+    "entryPointPosition": { "x": 64, "y": 21 },
+    "ActionMetadata": {
+      "bb200001-0000-0000-0000-000000000001": { "position": { "x": 300, "y": 100 } },
+      "bb200001-0000-0000-0000-000000000002": { "position": { "x": 600, "y": 100 } },
+      "bb200001-0000-0000-0000-000000000003": { "position": { "x": 900, "y": 100 } },
+      "bb200001-0000-0000-0000-000000000004": { "position": { "x": 900, "y": 300 } },
+      "bb200001-0000-0000-0000-000000000005": { "position": { "x": 900, "y": 480 } },
+      "bb200001-0000-0000-0000-000000000006": { "position": { "x": 900, "y": 660 } },
+      "bb200001-0000-0000-0000-000000000007": { "position": { "x": 900, "y": 840 } },
+      "bb200001-0000-0000-0000-000000000008": { "position": { "x": 900, "y": 1020 } },
+      "bb200001-0000-0000-0000-000000000009": { "position": { "x": 900, "y": 1200 } },
+      "bb200001-0000-0000-0000-000000000010": { "position": { "x": 600, "y": 300 } },
+      "bb200001-0000-0000-0000-000000000011": { "position": { "x": 600, "y": 480 } },
+      "bb200001-0000-0000-0000-000000000012": { "position": { "x": 1200, "y": 1200 } }
+    },
+    "Annotations": [],
+    "name": "Aaron portfolio — customer queue flow",
+    "description": "Waits 60s then offers message option; notifies Aaron on all exits.",
+    "type": "customerQueue",
+    "status": "PUBLISHED",
+    "hash": {}
+  },
+  "Actions": [
+
+    {
+      "Parameters": { "WaitTimeSeconds": "60" },
+      "Identifier": "bb200001-0000-0000-0000-000000000001",
+      "Type": "Wait",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000002",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000002", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Thanks for your patience! Aaron is taking a bit longer than expected — he may have stepped away. Reply **1** to leave him a message, or just hang tight if you'd like to keep waiting."
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000002",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000003",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Reply 1 to leave a message, or keep waiting.",
+        "ResponseValidation": { "ResponseType": "TEXT" }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000003",
+      "Type": "GetParticipantInput",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000004",
+        "Conditions": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000004", "Condition": { "Operator": "Equals", "Operands": ["1"] } }
+        ],
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "bb200001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Sure! May I please take your name?",
+        "ResponseValidation": { "ResponseType": "TEXT" }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000004",
+      "Type": "GetParticipantInput",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000005",
+        "Conditions": [],
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "bb200001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Attributes": { "customerName": "$.StoredCustomerInput" }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000005",
+      "Type": "UpdateContactAttributes",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000006",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000006", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "And either your e-mail address or your phone number, please.",
+        "ResponseValidation": { "ResponseType": "TEXT" }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000006",
+      "Type": "GetParticipantInput",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000007",
+        "Conditions": [],
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000008", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "bb200001-0000-0000-0000-000000000008", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Attributes": { "contactInfo": "$.StoredCustomerInput" }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000007",
+      "Type": "UpdateContactAttributes",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000008",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000008", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}",
+        "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "notifyType": "message_from_queue",
+          "contactId": "$.ContactId",
+          "channel": "$.Channel",
+          "endpoint": "$.CustomerEndpoint.Address",
+          "customerName": "$.Attributes.customerName",
+          "contactInfo": "$.Attributes.contactInfo"
+        }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000008",
+      "Type": "InvokeLambdaFunction",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000009",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000009", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Thanks, $.Attributes.customerName! Aaron has been notified and will be in touch shortly. If you have questions about his work in the meantime, check out his AI-powered resume at https://aaronrohrbacher.com/resume — there's a chat there too!"
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000009",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000012",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000012", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}",
+        "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "notifyType": "missed",
+          "contactId": "$.ContactId",
+          "channel": "$.Channel",
+          "endpoint": "$.CustomerEndpoint.Address"
+        }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000010",
+      "Type": "InvokeLambdaFunction",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000011",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000011", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Aaron was notified that you stopped by! You're welcome to try again later, or visit his resume at https://aaronrohrbacher.com/resume anytime. Have a great day!"
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000011",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000012",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000012", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {},
+      "Identifier": "bb200001-0000-0000-0000-000000000012",
+      "Type": "DisconnectParticipant",
+      "Transitions": {}
+    }
+
+  ]
+}

@@ -11,9 +11,28 @@
 
 # production
 /build
+/out
+.next/
+.vercel
+
+# testing artifacts
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
 
 # secrets
 .env
+
+# music track metadata store
+.data/
+
+# fine-tuned ONNX model (too large for git)
+public/models/
 
 # misc
 .DS_Store

@@ -1,57 +1,73 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
-import Style from './BaseLayout.module.scss'
-import Navbar from "./Navbar";
-import { useLocation } from "react-router-dom";
-import { Box, Grid } from "@mui/material";
-import MultiPageRoutes from './MultiPageRoutes';
-import { singlePage } from '../info/Info';
-import SinglePageRoutes from './SinglePageRoutes';
-import useScrollObserver from '../hooks/useScrollObserver';
+import Style from './BaseLayout.module.scss';
+import Navbar from './Navbar';
+import PageTransition from './PageTransition';
+import { Box, Grid } from '@mui/material';
+import { singlePage } from '@/info/Info';
+import useScrollObserver from '@/hooks/useScrollObserver';
+import { setCookie } from 'cookies-next';
 
-export default function BaseLayout() {
-   const location = useLocation()
+export default function BaseLayout({ children, activePage, initialDark }) {
+  const [active, setActive] = useState(activePage || 'home');
+  const refHome = useScrollObserver(setActive);
+  const refAbout = useScrollObserver(setActive);
+  const refPortfolio = useScrollObserver(setActive);
+  const [darkMode, setDarkMode] = useState(initialDark === true);
 
-   const [active, setActive] = useState(location.pathname === '/' ? 'home' : location.pathname.slice(1, location.pathname.length));
-   const refHome = useScrollObserver(setActive);
-   const refAbout = useScrollObserver(setActive);
-   const refPortfolio = useScrollObserver(setActive);
-   let [darkMode, setDarkMode] = useState(false);
+  function handleToggleDarkMode() {
+    const next = !darkMode;
+    setCookie('darkMode', String(next), { maxAge: 60 * 60 * 24 * 365 });
+    setDarkMode(next);
+  }
 
+  useEffect(() => {
+    // On first visit with no saved preference, respect system preference
+    if (initialDark === null) {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) setDarkMode(true);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    // Keep html background in sync so no white flash behind the layout
+    document.documentElement.style.backgroundColor = darkMode ? '#1f1f1f' : '#f8f8f8';
+  }, [darkMode]);
 
-   function handleToggleDarkMode() {
-      let oppositeOfCurrentDarkMode = !darkMode
-      console.log(oppositeOfCurrentDarkMode)
-      localStorage.setItem('darkMode', `${oppositeOfCurrentDarkMode}`)
-      setDarkMode(oppositeOfCurrentDarkMode)
-   }
+  const themeClass = darkMode ? Style.dark : Style.light;
 
-   useEffect(() => {
-      let detectedDarkMode = JSON.parse(localStorage.getItem('darkMode'));
-
-      if (detectedDarkMode) {
-         setDarkMode(detectedDarkMode)
-      } else {
-         localStorage.setItem('darkMode', 'false')
-      }
-   }, [])
-
-   return (
-<Box className={darkMode ? Style.dark : Style.light} sx={{ width: '100%', overflowX: 'hidden', maxWidth: '100vw' }}>
-<Grid container display={'flex'} flexDirection={'column'} minHeight={'100vh'} justifyContent={'space-between'} sx={{ maxWidth: '100%', margin: 0, padding: 0 }}>         <Grid item>
-            <Navbar darkMode={darkMode} handleClick={handleToggleDarkMode} active={active} setActive={setActive} />
-         </Grid>
-         <Grid item flexGrow={1}>
-            {singlePage ? <SinglePageRoutes refs={{ refHome, refAbout, refPortfolio }} /> : <MultiPageRoutes />}
-         </Grid>
-         <Grid item>
-            <Box component={'footer'} display={'flex'} flexDirection={'column'} alignItems={'center'}
-               py={'1.5rem'} sx={{ opacity: 0.7 }} width={'100%'}>
-               <p>&copy; 2025 Aaron Rohrbacher</p>
-            </Box>
-         </Grid>
+  return (
+    <Box suppressHydrationWarning className={themeClass} sx={{ width: '100%', overflowX: 'hidden', maxWidth: '100vw' }}>
+      <Grid container display={'flex'} flexDirection={'column'} minHeight={'100vh'} justifyContent={'space-between'} sx={{ maxWidth: '100%', margin: 0, padding: 0 }}>
+        <Grid>
+          <Navbar darkMode={darkMode} handleClick={handleToggleDarkMode} active={active} setActive={setActive} />
+        </Grid>
+        <Grid flexGrow={1}>
+          <PageTransition>
+            {singlePage ? (
+              <Box mt={'3rem'}>
+                {React.Children.map(children, (child) =>
+                  React.cloneElement(child, {
+                    innerRef: child.type.displayName === 'Home' ? refHome
+                      : child.type.displayName === 'About' ? refAbout
+                      : child.type.displayName === 'Portfolio' ? refPortfolio
+                      : undefined,
+                  })
+                )}
+              </Box>
+            ) : (
+              children
+            )}
+          </PageTransition>
+        </Grid>
+        <Grid>
+          <Box component={'footer'} display={'flex'} flexDirection={'column'} alignItems={'center'}
+            py={'1.5rem'} sx={{ opacity: 0.7 }} width={'100%'}>
+            <p>&copy; 2025 Aaron Rohrbacher</p>
+          </Box>
+        </Grid>
       </Grid>
-      </Box>
-   )
+    </Box>
+  );
 }
-

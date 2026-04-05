@@ -1,0 +1,54 @@
+@use "@/styles/variables" as vars;
+
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.current {
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+
+.switchLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 14px;
+  border: 1.5px solid rgba(128, 128, 128, 0.2);
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  color: inherit;
+  opacity: 0.4;
+  transition: opacity 250ms, border-color 250ms, background 250ms;
+  white-space: nowrap;
+
+  i {
+    font-size: 0.6rem;
+    color: inherit;
+  }
+
+  &:hover {
+    opacity: 0.85;
+    border-color: var(--accent-1);
+    background: rgba(128, 128, 128, 0.06);
+  }
+
+  @media (max-width: 480px) {
+    span { display: none; }
+    i { font-size: 0.75rem; }
+    padding: 0.25rem 0.45rem;
+  }
+}

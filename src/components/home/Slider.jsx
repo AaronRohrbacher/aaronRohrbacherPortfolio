@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 
 // Import your local images here
@@ -11,10 +13,10 @@ const Slider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const images = [
-    image1,
-    image2,
-    image3,
-    image4
+    image1.src,
+    image2.src,
+    image3.src,
+    image4.src,
   ];
 
   useEffect(() => {

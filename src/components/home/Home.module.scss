@@ -1,27 +1,91 @@
-@use "../../variables" as vars;
+@use "@/styles/variables" as vars;
+
+// ─── Hero layout ─────────────────────────────────────────────────────────────
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 175px);
+  padding: 2rem 1.5rem;
+  gap: 3.5rem;
+
+  // Stack on mobile
+  flex-direction: column;
+  text-align: center;
+
+  @media (min-width: 900px) {
+    flex-direction: row;
+    text-align: left;
+    padding: 3rem 4rem;
+  }
+}
+
+// ─── Avatar ──────────────────────────────────────────────────────────────────
+
+.avatar {
+  flex-shrink: 0;
+  border-radius: 50%;
+  width: clamp(200px, 34vh, 320px);
+  height: clamp(200px, 34vh, 320px);
+  overflow: hidden;
+  position: relative;
+}
 
 .shadowed {
-  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
 }
 
-h1 {
-  font-size: 2rem;
-  text-align: center;
-  @media only screen and (min-width: 940px) {
-    font-size: 3rem;
-    text-align: left;
+// ─── Text content ────────────────────────────────────────────────────────────
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 520px;
+}
+
+.position {
+  opacity: 0.75;
+  font-weight: 500;
+}
+
+.bio {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+// ─── Actions (button + socials) ───────────────────────────────────────────────
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+
+  // Center on mobile, left on desktop
+  justify-content: center;
+  @media (min-width: 900px) {
+    justify-content: flex-start;
   }
 }
 
-h2 {
-  font-size: 1.25rem;
-  text-align: center;
-  @media only screen and (min-width: 940px) {
+.socials {
+  display: flex;
+  gap: 1.25rem;
+  font-size: 1.75rem;
+
+  @media (min-width: 900px) {
     font-size: 2rem;
-    text-align: left;
   }
 }
 
+// ─── Waving hand ─────────────────────────────────────────────────────────────
 
 .hand {
   animation-name: wave;
@@ -29,25 +93,16 @@ h2 {
   animation-iteration-count: infinite;
   transform-origin: 70% 70%;
   display: inline-block;
-}
-
-a {
-  color: vars.$dark;
-  transition: color 200ms ease;
-}
-
-a:hover {
-  color: vars.$lightgray;
-  transition: color 200ms ease;
+  margin-left: 0.25rem;
 }
 
 @keyframes wave {
-  0% { transform: rotate( 0.0deg) }
-  10% { transform: rotate(14.0deg) }
-  20% { transform: rotate(-8.0deg) }
-  30% { transform: rotate(14.0deg) }
-  40% { transform: rotate(-4.0deg) }
-  50% { transform: rotate(10.0deg) }
-  60% { transform: rotate( 0.0deg) }
-  100% { transform: rotate( 0.0deg) }
+  0%   { transform: rotate(  0.0deg) }
+  10%  { transform: rotate( 14.0deg) }
+  20%  { transform: rotate( -8.0deg) }
+  30%  { transform: rotate( 14.0deg) }
+  40%  { transform: rotate( -4.0deg) }
+  50%  { transform: rotate( 10.0deg) }
+  60%  { transform: rotate(  0.0deg) }
+  100% { transform: rotate(  0.0deg) }
 }

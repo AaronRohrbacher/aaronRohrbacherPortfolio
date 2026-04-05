@@ -1,48 +1,41 @@
-@use "../../variables" as vars;
+@use "@/styles/variables" as vars;
 
 .shadowed {
   box-shadow: 0 .5rem 1rem rgba(0, 0, 0, 0.4);
 }
 
-i {
-  padding-left: 0.5rem;
+.red {
+  color: var(--red);
+}
 
-  &.red {
-    color: vars.$red;
-  }
+.amber {
+  color: var(--yellow);
+}
 
-  &.amber {
-    color: vars.$yellow;
-  }
-
-  &.green {
-    color: vars.$green;
-  }
+.green {
+  color: var(--green);
 }
 
 .terminal {
-  p, li {
+  :global(p),
+  :global(li) {
     margin: 1rem 0;
-    color: vars.$white;
+    color: var(--white);
   }
 
-  a, a:visited {
-    animation: changeColors 3s infinite;
+  :global(a),
+  :global(a:visited) {
+    color: var(--accent-1);
     font-weight: bold;
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation: changeColors 3s infinite;
+    }
   }
 }
 
 @keyframes changeColors {
-  0% {
-    color: #00a47f;
-  }
-  33.3% {
-    color: #1d91e3;
-  }
-  66.6% {
-    color: #d419fe;
-  }
-  100% {
-    color: #00a47f;
-  }
+  0%    { color: var(--accent-1); }
+  50%   { color: var(--accent-2); }
+  100%  { color: var(--accent-1); }
 }

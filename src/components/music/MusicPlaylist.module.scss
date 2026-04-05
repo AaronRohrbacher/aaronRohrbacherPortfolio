@@ -1,0 +1,365 @@
+@use "@/styles/variables" as vars;
+
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 4rem;
+
+  @media (max-width: 640px) {
+    padding: 0.75rem 1rem 3rem;
+  }
+}
+
+// ─── Hero (compact) ──────────────────────────────────────────────────────────
+.hero {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-top: 0.5rem;
+}
+
+.title {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 800;
+  margin: 0;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  opacity: 0.5;
+  margin: 0.25rem 0 0;
+}
+
+// ─── Search ─────────────────────────────────────────────────────────────────
+.searchInput {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  border: 1.5px solid rgba(128, 128, 128, 0.2);
+  font-size: 0.9rem;
+  background: rgba(128, 128, 128, 0.04);
+  color: inherit;
+  box-sizing: border-box;
+  font-family: inherit;
+  margin-bottom: 1.25rem;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent-2);
+    background: rgba(128, 128, 128, 0.06);
+  }
+
+  &::placeholder {
+    opacity: 0.35;
+  }
+}
+
+// ─── Loading / Error / Empty ─────────────────────────────────────────────────
+.loading, .error, .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem 0;
+  opacity: 0.5;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(128, 128, 128, 0.2);
+  border-top-color: var(--accent-1);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.retryBtn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  border: 1.5px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+// ─── Now Playing ─────────────────────────────────────────────────────────────
+.nowPlaying {
+  background: rgba(128, 128, 128, 0.05);
+  border: 1px solid rgba(128, 128, 128, 0.12);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.nowPlayingInfo {
+  margin-bottom: 0.75rem;
+}
+
+.nowPlayingLabel {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.4;
+}
+
+.nowPlayingTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0.25rem 0 0;
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+}
+
+.nowPlayingArtists {
+  font-size: 0.85rem;
+  opacity: 0.6;
+  margin: 0.15rem 0 0;
+}
+
+// ─── Track List ──────────────────────────────────────────────────────────────
+.trackList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.trackCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(128, 128, 128, 0.1);
+  background: rgba(128, 128, 128, 0.03);
+  transition: background 200ms, border-color 200ms;
+
+  &:hover {
+    background: rgba(128, 128, 128, 0.08);
+    border-color: rgba(128, 128, 128, 0.2);
+  }
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+  }
+}
+
+.trackCard.active {
+  border-color: var(--accent-1);
+  background: rgba(0, 168, 120, 0.06);
+}
+
+// ─── Play Button ─────────────────────────────────────────────────────────────
+.playBtn {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  background: var(--gradient);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: transform 150ms, opacity 200ms;
+  padding: 0;
+  margin-top: 0.15rem;
+
+  &:hover {
+    transform: scale(1.08);
+    opacity: 0.9;
+  }
+
+  i {
+    color: white;
+    margin-left: 2px;
+  }
+}
+
+// ─── Track Info ──────────────────────────────────────────────────────────────
+.trackInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.trackName {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+}
+
+.trackArtists {
+  font-size: 0.82rem;
+  opacity: 0.55;
+  margin: 0.2rem 0 0;
+}
+
+.trackDate {
+  font-size: 0.72rem;
+  opacity: 0.4;
+  margin: 0.15rem 0 0;
+}
+
+.trackDesc {
+  font-size: 0.82rem;
+  opacity: 0.45;
+  margin: 0.35rem 0 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// ─── Actions Row ─────────────────────────────────────────────────────────────
+.trackActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.playInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--gradient);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: opacity 200ms;
+
+  &:hover { opacity: 0.85; }
+
+  i { color: white; font-size: 0.65rem; }
+}
+
+.downloadGroup {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.downloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1.5px solid rgba(128, 128, 128, 0.3);
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.6;
+  transition: opacity 200ms, border-color 200ms;
+
+  &:hover {
+    opacity: 1;
+    border-color: currentColor;
+  }
+
+  i {
+    font-size: 0.6rem;
+  }
+}
+
+// ─── Pagination ──────────────────────────────────────────────────────────────
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(128, 128, 128, 0.12);
+}
+
+.pageBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1.5px solid rgba(128, 128, 128, 0.25);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: opacity 200ms, border-color 200ms;
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent-1);
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+  }
+}
+
+.pageInfo {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.5;
+}
+
+// ─── Dump / Release Sections ─────────────────────────────────────────────────
+.dumpSection {
+  margin-bottom: 2rem;
+}
+
+.dumpHeader {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+}
+
+.dumpTitleLink {
+  text-decoration: none;
+
+  &:hover .dumpTitle {
+    opacity: 0.8;
+  }
+}
+
+.dumpTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: opacity 0.15s;
+}
+
+.dumpArtists {
+  font-size: 0.82rem;
+  opacity: 0.6;
+  margin: 0.2rem 0 0;
+}
+
+.dumpDesc {
+  font-size: 0.8rem;
+  opacity: 0.5;
+  margin: 0.2rem 0 0;
+  line-height: 1.4;
+}

@@ -1,0 +1,59 @@
+.page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  text-align: center;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.title {
+  font-size: clamp(2.5rem, 6vw, 3.5rem);
+  font-weight: 800;
+  margin: 0;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sub {
+  font-size: 1rem;
+  opacity: 0.65;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 450px;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 2rem;
+  border-radius: 30px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border: none;
+  background: var(--gradient);
+  color: white;
+  cursor: pointer;
+  transition: opacity 200ms, transform 150ms;
+
+  &:hover { opacity: 0.85; transform: translateY(-2px); }
+}
+
+.hint {
+  font-size: 0.82rem;
+  opacity: 0.4;
+  margin: 0;
+
+  i { margin: 0 0.2rem; font-size: 0.75rem; }
+}

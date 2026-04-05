@@ -1,30 +1,33 @@
-@use "../variables" as vars;
-
-footer {
-  color: vars.$dark;
-}
+@use "@/styles/variables" as vars;
 
 .dark {
-  background-color: vars.$dark;
-  color: vars.$white;
+  background-color: var(--dark);
+  color: var(--white);
   transition: all 400ms;
 
-  a, i, li {
-    color: vars.$white;
+  // Device mockup frames go dark with the page
+  --device-body:   #2c2c2e;
+  --device-body-2: #1e1e20;
+  --device-chrome: #3a3a3c;
+  --device-key:    #3e3e42;
+  --device-hinge:  #2a2a2c;
+  --device-shadow: rgba(0, 0, 0, 0.5);
+
+  :global(a),
+  :global(i),
+  :global(li),
+  :global(footer) {
+    color: var(--white);
     transition: color 400ms;
   }
 
-  a:visited {
-    color: vars.$white;
-  }
-
-  footer {
-    color: vars.$white;
+  :global(a:visited) {
+    color: var(--lightgray);
   }
 }
 
 .light {
-  background-color: vars.$white;
-  color: vars.$dark;
+  background-color: var(--white);
+  color: var(--dark);
   transition: all 400ms;
 }

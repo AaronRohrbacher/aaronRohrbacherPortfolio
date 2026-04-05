@@ -1,0 +1,15 @@
+{
+  "CORSRules": [
+    {
+      "AllowedHeaders": ["*"],
+      "AllowedMethods": ["PUT"],
+      "AllowedOrigins": [
+        "http://localhost:3000",
+        "http://10.1.1.143:3000",
+        "https://music.aaronrohrbacher.com",
+        "https://aaronrohrbacher.com"
+      ],
+      "ExposeHeaders": ["ETag"]
+    }
+  ]
+}

@@ -1,25 +1,43 @@
-import React from 'react';
-import PortfolioBlock from "./PortfolioBlock";
-import { Box, Grid } from "@mui/material";
-import { info } from "../../info/Info";
-import { Helmet } from 'react-helmet-async';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import PortfolioBlock from './PortfolioBlock';
+import { Box, Grid } from '@mui/material';
+import { motion, MotionConfig } from 'framer-motion';
+import { info } from '@/info/Info';
+
+const STORAGE_KEY = 'portfolio_items';
 
 export default function Portfolio({ innerRef }) {
-    return (
-        <>
-            <Helmet>
-                <title>Aaron Rohrbacher | Portfolio</title>
-                <meta name="description" content="Aaron Rohrbacher's portfolio of personal software projects." />
-            </Helmet>
-            <Box id={'portfolio'}>
-                <Grid container display={'flex'} justifyContent={'center'} sx={{ maxWidth: '100%' }}>
-                    {info.portfolio.map((project, index) => (
-                        <Grid item xs={12} md={6} key={index}>
-                            <PortfolioBlock image={project.image} desc={project.desc} source={project.source} title={project.title} />
-                        </Grid>
-                    ))}
-                </Grid>
-            </Box>
-        </>
-    );
-};
+  const [projects, setProjects] = useState(info.portfolio);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try { setProjects(JSON.parse(stored)); } catch {}
+    }
+  }, []);
+
+  return (
+    <MotionConfig reducedMotion="user">
+      <Box ref={innerRef} id={'portfolio'} py={'2rem'}>
+        <Grid container justifyContent={'center'} sx={{ maxWidth: '100%' }}>
+          {projects.map((project, index) => (
+            <Grid size={{ xs: 12, md: 6 }} key={project.id ?? index}>
+              <motion.div
+                initial={{ opacity: 0, y: 32 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.5, delay: (index % 2) * 0.12, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <PortfolioBlock project={project} />
+              </motion.div>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    </MotionConfig>
+  );
+}
+
+Portfolio.displayName = 'Portfolio';

@@ -1,21 +1,280 @@
-@use "../../variables" as vars;
+@use "@/styles/variables" as vars;
 
-.pink {
-  color: vars.$pink;
+// ─── Page ────────────────────────────────────────────────────────────────────
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
 }
 
-.green {
-  color: vars.$green;
+// ─── Main grid ───────────────────────────────────────────────────────────────
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+
+  @media (min-width: 900px) {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 4rem;
+    align-items: start;
+  }
 }
 
-.skills {
-  columns: 1;
-  @media only screen and (min-width: 940px) {
-    columns: 2;
+// ─── Left column ─────────────────────────────────────────────────────────────
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.eyebrow {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.heading {
+  font-family: 'Gucina', 'Inter', sans-serif;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+  text-align: left;
+}
+
+.role {
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.6;
+  margin: 0;
+}
+
+.bioParagraph {
+  font-size: 0.95rem;
+  line-height: 1.8;
+  opacity: 0.82;
+  margin: 0;
+}
+
+// ─── Philosophy ──────────────────────────────────────────────────────────────
+
+.philosophy {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.philosophyLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  margin-bottom: 0.25rem;
+}
+
+.philosophyItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  opacity: 0.8;
+}
+
+.philosophyMark {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+}
+
+// ─── Bento grid ──────────────────────────────────────────────────────────────
+
+.bento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.card {
+  background: rgba(128, 128, 128, 0.08);
+  border: 1px solid rgba(128, 128, 128, 0.15);
+  border-radius: 1rem;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: border-color 250ms ease;
+
+  &:hover {
+    border-color: rgba(128, 128, 128, 0.3);
+  }
+}
+
+.cardWide {
+  grid-column: span 2;
+}
+
+.cardLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  margin: 0;
+}
+
+.cardValue {
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 0;
+
+  a {
+    color: var(--accent-1);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+// ─── Certifications ──────────────────────────────────────────────────────────
+
+.certList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.cert {
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+// ─── Terminal card ───────────────────────────────────────────────────────────
+
+.terminalCard {
+  background: #1a1724;
+  border-color: rgba(255, 255, 255, 0.08);
+  gap: 0;
+}
+
+.terminalDots {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+
+  span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: block;
+  }
+}
+
+.terminalBody {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  color: #e0e0e0;
+
+  p { margin: 0; }
+}
+
+.terminalPrompt {
+  color: var(--accent-1);
+  margin-right: 0.5rem;
+}
+
+.terminalOut {
+  color: var(--accent-2);
+  padding-left: 1rem;
+  margin-bottom: 0.3rem !important;
+}
+
+.terminalCursor {
+  animation: blink 1s step-end infinite;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: blink 1s step-end infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+// ─── Skills section ──────────────────────────────────────────────────────────
+
+.skillsSection {
+  margin-top: 4rem;
+  border-top: 1px solid rgba(128, 128, 128, 0.15);
+  padding-top: 3rem;
+}
+
+.skillsHeading {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  margin: 0 0 1.75rem;
+}
+
+.skillGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+
+  @media (min-width: 640px) {
+    grid-template-columns: 1fr 1fr;
   }
 
-  li {
-    margin: 0;
-    line-height: 1.75;
+  @media (min-width: 1000px) {
+    grid-template-columns: 1fr 1fr 1fr;
   }
+}
+
+.skillGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.skillGroupLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.skillTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.skillTag {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(128, 128, 128, 0.1);
+  border: 1px solid rgba(128, 128, 128, 0.18);
+  white-space: nowrap;
 }

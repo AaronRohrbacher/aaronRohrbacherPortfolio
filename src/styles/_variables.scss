@@ -1,0 +1,46 @@
+// ─── Brand / Accent ──────────────────────────────────────────────────────────
+// These are the two colors that control the gradient, name highlight,
+// nav underline, avatar ring, and chat button. Change here to retheme the site.
+$accent-1: #00a878;
+$accent-2: #7c3aed;
+
+// ─── UI Palette ──────────────────────────────────────────────────────────────
+$purple:    #8D53FF;
+$pink:      #CA6BE6;
+$white:     #f8f8f8;
+$dark:      #1f1f1f;
+$red:       #FF6057;
+$yellow:    #FFBD2E;
+$green:     #27C93F;
+$lightgray: #c9c9c9;
+
+// ─── Misc ─────────────────────────────────────────────────────────────────────
+$transition: all 250ms ease;
+
+// ─── CSS Custom Properties ───────────────────────────────────────────────────
+// Exposes every value above as a var(--xxx) so JS and inline styles can consume
+// them without importing Sass, and so they're all in one place to change.
+:root {
+  --accent-1:   #{$accent-1};
+  --accent-2:   #{$accent-2};
+  --gradient:   linear-gradient(135deg, #{$accent-1}, #{$accent-2});
+
+  --purple:     #{$purple};
+  --pink:       #{$pink};
+  --white:      #{$white};
+  --dark:       #{$dark};
+  --red:        #{$red};
+  --yellow:     #{$yellow};
+  --green:      #{$green};
+  --lightgray:  #{$lightgray};
+
+  --transition: #{$transition};
+
+  // Device mockup frame — light mode defaults
+  --device-body:   #d1d1d6;
+  --device-body-2: #b8b8be;
+  --device-chrome: #e8e8ea;
+  --device-key:    #c0c0c6;
+  --device-hinge:  #a0a0a5;
+  --device-shadow: rgba(0, 0, 0, 0.14);
+}
