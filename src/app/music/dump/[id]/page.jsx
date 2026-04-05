@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Style from '@/components/music/MusicPlaylist.module.scss';
 import { useAuth } from '@/components/music/AuthContext';
 import { useMusicPlayer } from '@/components/music/MusicPlayerContext';
@@ -9,6 +9,8 @@ import Link from 'next/link';
 
 export default function DumpPage() {
   const { id } = useParams();
+  const searchParams = useSearchParams();
+  const shareToken = searchParams.get('share');
   const { getAuthHeaders } = useAuth();
   const { currentTrack, isPlaying, playTrack, setQueue: setPlayerQueue } = useMusicPlayer();
 
@@ -26,7 +28,8 @@ export default function DumpPage() {
     setError(null);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`/api/music/dump?id=${encodeURIComponent(id)}`, { headers });
+      const url = `/api/music/dump?id=${encodeURIComponent(id)}${shareToken ? `&share=${encodeURIComponent(shareToken)}` : ''}`;
+      const res = await fetch(url, { headers });
       if (res.status === 401) {
         setError('sign-in');
         return;
@@ -55,7 +58,8 @@ export default function DumpPage() {
   }
 
   function getDownloadUrl(track, format) {
-    return `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${format}&download=1`;
+    const share = shareToken ? `&share=${encodeURIComponent(shareToken)}` : '';
+    return `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${format}&download=1${share}`;
   }
 
   if (loading) {

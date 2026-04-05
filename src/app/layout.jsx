@@ -2,7 +2,9 @@ import '@/styles/globals.scss';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import AmazonConnectLoader from '@/components/AmazonConnectLoader';
-import ChatAgentLoader from '@/components/ChatAgentLoader';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
+// AI agent disabled — see AI_COMMENTED_OUT.md at repo root.
+// import ChatAgentLoader from '@/components/ChatAgentLoader';
 
 export const metadata = {
   title: {
@@ -23,6 +25,12 @@ export const metadata = {
   manifest: '/icons/site.webmanifest',
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
@@ -30,9 +38,11 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#000000" />
       </head>
       <body>
+        <GoogleAnalytics />
         <AppRouterCacheProvider>
           <AmazonConnectLoader />
-          <ChatAgentLoader />
+          {/* AI agent disabled — see AI_COMMENTED_OUT.md at repo root. */}
+          {/* <ChatAgentLoader /> */}
           {children}
         </AppRouterCacheProvider>
       </body>

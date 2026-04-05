@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getDump, getDumpTracks, getTrackPermissions } from '@/lib/trackStore';
+import { getDump, getDumpTracks, getTrackPermissions, redeemDumpShareLink } from '@/lib/trackStore';
 import { authenticateRequest } from '@/lib/verifyToken';
+import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
 
 /**
- * GET /api/music/dump?id=xxx
+ * GET /api/music/dump?id=xxx[&share=<token>]
  * Public endpoint for viewing a single dump + its tracks (with permission checks).
+ * A valid `share` token bound to this dump bypasses visibility checks.
  */
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
+  const shareToken = searchParams.get('share');
   if (!id) {
     return NextResponse.json({ error: 'Missing dump id' }, { status: 400 });
   }
@@ -21,8 +24,26 @@ export async function GET(request) {
 
     const user = await authenticateRequest(request);
 
-    // Admins can view any dump regardless of published/visibility state
-    if (!user?.isAdmin) {
+    // A valid share link scoped to this dump grants access regardless of
+    // published state, visibility, or sign-in status.
+    let shareGrant = false;
+    if (shareToken) {
+      const redeemed = await redeemDumpShareLink(shareToken);
+      if (redeemed && redeemed.dumpId === id) {
+        shareGrant = true;
+        logEvent({
+          type: EVENT_TYPES.SHARE_REDEEM,
+          targetType: 'dump',
+          targetId: id,
+          detail: `token:${shareToken.slice(0, 8)}`,
+          ...requestMeta(request),
+        });
+      }
+    }
+
+    // Admins (or share-link holders) can view any dump regardless of
+    // published/visibility state.
+    if (!user?.isAdmin && !shareGrant) {
       if (!dump.published) {
         return NextResponse.json({ error: 'Not found' }, { status: 404 });
       }
@@ -51,6 +72,9 @@ export async function GET(request) {
     }
 
     const tracks = await getDumpTracks(id);
+    // Propagate the share token to stream URLs so audio playback + downloads
+    // work for link-only visitors.
+    const shareQs = shareGrant ? `&share=${encodeURIComponent(shareToken)}` : '';
     const withUrls = tracks.map((track) => ({
       id: track.id,
       name: track.name,
@@ -62,7 +86,7 @@ export async function GET(request) {
       streamUrls: Object.fromEntries(
         Object.keys(track.formats).map((f) => [
           f,
-          `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${f}`,
+          `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${f}${shareQs}`,
         ])
       ),
     }));

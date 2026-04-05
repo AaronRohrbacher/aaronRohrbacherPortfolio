@@ -307,3 +307,40 @@ export async function getMagicLinksForUser(email) {
 export async function deleteMagicLink(token) {
   await deleteItem(`MAGIC#${token}`, `MAGIC#${token}`);
 }
+
+// --- Dump Share Links (direct-to-dump, no account) ---
+
+export async function createDumpShareLink(dumpId, createdBy, expiresInDays = 30) {
+  const token = randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + expiresInDays * 86400000).toISOString();
+  await putItem({
+    PK: `DUMP_SHARE#${token}`,
+    SK: `DUMP_SHARE#${token}`,
+    GSI1PK: `DUMP_SHARE_FOR#${dumpId}`,
+    GSI1SK: `DUMP_SHARE#${token}`,
+    token,
+    dumpId,
+    createdBy,
+    createdAt: new Date().toISOString(),
+    expiresAt,
+  });
+  return { token, dumpId, expiresAt };
+}
+
+export async function redeemDumpShareLink(token) {
+  const item = await getItem(`DUMP_SHARE#${token}`, `DUMP_SHARE#${token}`);
+  if (!item) return null;
+  if (item.expiresAt && new Date(item.expiresAt) < new Date()) return null;
+  return { dumpId: item.dumpId, token: item.token };
+}
+
+export async function getDumpShareLinks(dumpId) {
+  const items = await query({ indexName: 'GSI1', gsi1pk: `DUMP_SHARE_FOR#${dumpId}` });
+  return items
+    .filter((i) => !i.expiresAt || new Date(i.expiresAt) >= new Date())
+    .map((i) => ({ token: i.token, dumpId: i.dumpId, createdAt: i.createdAt, expiresAt: i.expiresAt, createdBy: i.createdBy }));
+}
+
+export async function deleteDumpShareLink(token) {
+  await deleteItem(`DUMP_SHARE#${token}`, `DUMP_SHARE#${token}`);
+}

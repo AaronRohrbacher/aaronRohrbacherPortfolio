@@ -33,6 +33,10 @@ export default function BaseLayout({ children, activePage, initialDark }) {
   useEffect(() => {
     // Keep html background in sync so no white flash behind the layout
     document.documentElement.style.backgroundColor = darkMode ? '#1f1f1f' : '#f8f8f8';
+    // Expose theme so global styles (e.g. native <select> options) can
+    // adapt — CSS-module classes like .dark are hashed and can't be
+    // targeted from globals.scss.
+    document.documentElement.dataset.theme = darkMode ? 'dark' : 'light';
   }, [darkMode]);
 
   const themeClass = darkMode ? Style.dark : Style.light;

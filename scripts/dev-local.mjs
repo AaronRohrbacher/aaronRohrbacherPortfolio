@@ -18,6 +18,18 @@ import { join } from 'path';
 import { DynamoDBClient, CreateTableCommand, DescribeTableCommand } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import net from 'net';
+import zlib from 'zlib';
+
+// Silence Node's DEP0184 warning: dynamodb-local's index.js calls
+// `zlib.Unzip()` without `new` during extraction. Wrap the constructor so
+// callers get a properly-constructed instance either way. Must run BEFORE
+// requiring dynamodb-local.
+const OriginalUnzip = zlib.Unzip;
+function UnzipShim(...args) {
+    return new.target ? Reflect.construct(OriginalUnzip, args, new.target) : new OriginalUnzip(...args);
+}
+UnzipShim.prototype = OriginalUnzip.prototype;
+zlib.Unzip = UnzipShim;
 
 const require = createRequire(import.meta.url);
 const dynamoLocal = require('dynamodb-local');

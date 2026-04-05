@@ -8,9 +8,10 @@ import { useRouter } from 'next/navigation';
 import UserManager from './UserManager';
 import GroupManager from './GroupManager';
 import DumpManager from './DumpManager';
+import EventsPanel from './EventsPanel';
 
 
-const TABS = ['tracks', 'dumps', 'users', 'groups', 'settings'];
+const TABS = ['tracks', 'dumps', 'users', 'groups', 'events', 'settings'];
 
 export default function MusicAdmin() {
   const { user, loading: authLoading, getAuthHeaders } = useAuth();
@@ -312,6 +313,11 @@ export default function MusicAdmin() {
       {/* Groups Tab */}
       {tab === 'groups' && (
         <GroupManager getAuthHeaders={getAuthHeaders} />
+      )}
+
+      {/* Events Tab */}
+      {tab === 'events' && (
+        <EventsPanel getAuthHeaders={getAuthHeaders} />
       )}
 
       {/* Settings Tab */}

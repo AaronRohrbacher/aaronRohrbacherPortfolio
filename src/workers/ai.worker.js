@@ -1,3 +1,7 @@
+// AI agent disabled — see AI_COMMENTED_OUT.md at repo root.
+// This worker is only loaded by src/components/ChatAgent.jsx, which is no
+// longer mounted. Code preserved intact below.
+
 import { pipeline, TextStreamer, env } from '@huggingface/transformers';
 import { FACT_CHUNKS, AARON_CHAT_SYSTEM_PROMPT } from '../constants/aaronChatFacts.js';
 

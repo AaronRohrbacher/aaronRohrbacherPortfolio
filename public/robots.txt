@@ -1,3 +1,11 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /music/admin
+Disallow: /music/login
+Disallow: /music/signup
+Disallow: /music/forgot-password
+Disallow: /api/
+
+Sitemap: https://aaronrohrbacher.com/sitemap.xml
+Sitemap: https://music.aaronrohrbacher.com/music-sitemap.xml

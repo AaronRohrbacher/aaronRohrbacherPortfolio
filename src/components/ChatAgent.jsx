@@ -1,5 +1,9 @@
 'use client';
 
+// AI agent disabled — see AI_COMMENTED_OUT.md at repo root.
+// This file is no longer imported (ChatAgentLoader returns null and the loader
+// is unmounted from src/app/layout.jsx). Code preserved intact below.
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Style from './ChatAgent.module.scss';
 import { findRelevantFacts, DOMAIN_RE } from '../constants/aaronChatFacts';

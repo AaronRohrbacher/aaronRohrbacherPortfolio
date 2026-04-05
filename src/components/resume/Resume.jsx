@@ -269,9 +269,15 @@ function SkillGroups() {
 // ─── AI Chat panel — opens the site-wide AI agent ─────────────────────────────
 
 function AskAI() {
+  // AI agent disabled — see AI_COMMENTED_OUT.md at repo root.
+  // Opens the Amazon Connect chat via the programmaticLaunch callback
+  // registered in AmazonConnect.jsx (window.__connectLaunch).
   const openChat = () => {
-    window.dispatchEvent(new CustomEvent('open-chat-agent'));
+    if (typeof window.__connectLaunch === 'function') window.__connectLaunch();
   };
+  // const openChat = () => {
+  //   window.dispatchEvent(new CustomEvent('open-chat-agent'));
+  // };
 
   return (
     <motion.div className={Style.aiPanel} variants={fadeUp} custom={0} initial="hidden" animate="visible">

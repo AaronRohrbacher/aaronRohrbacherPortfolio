@@ -47,6 +47,27 @@
   text-align: left;
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.aiBadge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  background: var(--gradient);
+  color: white;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .desc {
   font-size: 0.82rem;
   line-height: 1.6;

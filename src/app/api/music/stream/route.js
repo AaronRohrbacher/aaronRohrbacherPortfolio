@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getObject } from '@/lib/s3';
-import { getTrack, getTrackPermissions, getDump } from '@/lib/trackStore';
+import { getTrack, getTrackPermissions, getDump, redeemDumpShareLink } from '@/lib/trackStore';
 import { authenticateRequest } from '@/lib/verifyToken';
+import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
 
 const CONTENT_TYPES = {
   mp3: 'audio/mpeg',
@@ -19,6 +20,7 @@ export async function GET(request) {
   const id = searchParams.get('id');
   const format = searchParams.get('format') || 'mp3';
   const download = searchParams.get('download') === '1';
+  const shareToken = searchParams.get('share');
 
   if (!id) {
     return NextResponse.json({ error: 'Missing track id' }, { status: 400 });
@@ -33,6 +35,14 @@ export async function GET(request) {
     // Permission check
     const user = await authenticateRequest(request);
 
+    // A valid share link bound to this track's parent dump grants access
+    // regardless of publish state / visibility / sign-in.
+    let shareGrant = false;
+    if (shareToken && track.dumpId) {
+      const redeemed = await redeemDumpShareLink(shareToken);
+      if (redeemed && redeemed.dumpId === track.dumpId) shareGrant = true;
+    }
+
     // Check if track is effectively published (directly or via published dump)
     let effectivelyPublished = track.published;
     if (!effectivelyPublished && track.dumpId) {
@@ -40,16 +50,16 @@ export async function GET(request) {
       if (dump?.published) effectivelyPublished = true;
     }
 
-    // Admins can stream/download any track regardless of publish state
-    if (!effectivelyPublished && !user?.isAdmin) {
+    // Admins / share-link holders can stream any track regardless of state
+    if (!effectivelyPublished && !user?.isAdmin && !shareGrant) {
       return NextResponse.json({ error: 'Track not available' }, { status: 403 });
     }
 
-    if (track.visibility === 'authenticated' && !user) {
+    if (track.visibility === 'authenticated' && !user && !shareGrant) {
       return NextResponse.json({ error: 'Sign in required' }, { status: 401 });
     }
 
-    if (track.visibility === 'restricted') {
+    if (track.visibility === 'restricted' && !shareGrant) {
       if (!user) {
         return NextResponse.json({ error: 'Sign in required' }, { status: 401 });
       }
@@ -78,6 +88,15 @@ export async function GET(request) {
     const disposition = download
       ? `attachment; filename="${filename}"`
       : `inline; filename="${filename}"`;
+
+    logEvent({
+      type: download ? EVENT_TYPES.DOWNLOAD : EVENT_TYPES.STREAM,
+      actor: user?.email || (shareGrant ? `share:${shareToken.slice(0, 8)}` : null),
+      targetType: 'track',
+      targetId: id,
+      detail: format,
+      ...requestMeta(request),
+    });
 
     return new Response(s3Response.Body, {
       headers: {

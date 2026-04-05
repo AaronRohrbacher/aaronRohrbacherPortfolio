@@ -202,6 +202,7 @@
   font-size: 0.82rem;
   opacity: 0.55;
   margin: 0.2rem 0 0;
+  white-space: pre-line;
 }
 
 .trackDate {
@@ -215,10 +216,7 @@
   opacity: 0.45;
   margin: 0.35rem 0 0;
   line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  white-space: pre-line;
 }
 
 // ─── Actions Row ─────────────────────────────────────────────────────────────
@@ -355,6 +353,7 @@
   font-size: 0.82rem;
   opacity: 0.6;
   margin: 0.2rem 0 0;
+  white-space: pre-line;
 }
 
 .dumpDesc {
@@ -362,4 +361,5 @@
   opacity: 0.5;
   margin: 0.2rem 0 0;
   line-height: 1.4;
+  white-space: pre-line;
 }

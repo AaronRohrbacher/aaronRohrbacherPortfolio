@@ -7,6 +7,7 @@ export default function UserManager({ getAuthHeaders }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
+  const [autoConfirm, setAutoConfirm] = useState(false);
   const [error, setError] = useState('');
   const [linkCopied, setLinkCopied] = useState(null); // email of user whose link was just copied
 
@@ -34,7 +35,7 @@ export default function UserManager({ getAuthHeaders }) {
       const res = await fetch('/api/music/admin/users', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ email: email.trim(), autoConfirm }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -106,6 +107,14 @@ export default function UserManager({ getAuthHeaders }) {
           onChange={(e) => setEmail(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && inviteUser()}
         />
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+          <input
+            type="checkbox"
+            checked={autoConfirm}
+            onChange={(e) => setAutoConfirm(e.target.checked)}
+          />
+          Auto-confirm (no email)
+        </label>
         <button className={Style.btn} onClick={inviteUser}>Invite</button>
       </div>
 

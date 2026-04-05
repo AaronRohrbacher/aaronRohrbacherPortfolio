@@ -19,7 +19,9 @@ const localImpl = {
     return u ? normalizeLocalUser(u) : null;
   },
 
-  async createUser(email) {
+  async createUser(email, { suppressEmail = false } = {}) {
+    // Local dev never sends email — suppressEmail is a no-op here.
+    void suppressEmail;
     const user = await local.createUser(email, 'testapp123');
     return normalizeLocalUser(user);
   },
@@ -104,18 +106,25 @@ const cognitoImpl = {
     return formatUser(result);
   },
 
-  async createUser(email) {
+  async createUser(email, { suppressEmail = false } = {}) {
     const { AdminCreateUserCommand } = await import('@aws-sdk/client-cognito-identity-provider');
     const client = await getClient();
-    const result = await client.send(new AdminCreateUserCommand({
+    const params = {
       UserPoolId: USER_POOL_ID,
       Username: email,
       UserAttributes: [
         { Name: 'email', Value: email },
         { Name: 'email_verified', Value: 'true' },
       ],
-      DesiredDeliveryMediums: ['EMAIL'],
-    }));
+    };
+    if (suppressEmail) {
+      // Skip Cognito's default invite email — admin will share access
+      // out-of-band (magic link, password reset, etc.).
+      params.MessageAction = 'SUPPRESS';
+    } else {
+      params.DesiredDeliveryMediums = ['EMAIL'];
+    }
+    const result = await client.send(new AdminCreateUserCommand(params));
     return formatUser(result.User);
   },
 

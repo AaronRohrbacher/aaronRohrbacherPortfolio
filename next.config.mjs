@@ -6,21 +6,24 @@ const nextConfig = {
   // Allow LAN-IP access to the dev server (phones, other devices on the network).
   // Without this, Next 16 blocks cross-origin requests for _next/* chunks,
   // which breaks client hydration (PageTransition stays at opacity:0).
-  allowedDevOrigins: ['10.1.1.143', '10.1.1.0/24', '192.168.0.0/16'],
+  allowedDevOrigins: ['10.1.1.142', '10.1.1.143', '10.1.1.0/24', '192.168.0.0/16'],
 
 
-  // Required for SharedArrayBuffer — needed by ONNX Runtime WASM (Transformers.js)
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-          { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
-        ],
-      },
-    ];
-  },
+  // AI agent disabled — see AI_COMMENTED_OUT.md at repo root.
+  // COOP/COEP headers below were required for SharedArrayBuffer (ONNX/Transformers.js).
+  // They block Amazon Connect's cross-origin subresources from loading, so they're
+  // commented out while AI is disabled. Restore if re-enabling Transformers.js.
+  // async headers() {
+  //   return [
+  //     {
+  //       source: '/(.*)',
+  //       headers: [
+  //         { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+  //         { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
+  //       ],
+  //     },
+  //   ];
+  // },
 };
 
 export default nextConfig;

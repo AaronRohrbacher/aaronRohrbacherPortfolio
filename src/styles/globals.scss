@@ -91,6 +91,41 @@ button:hover {
     cursor: pointer;
 }
 
+// Amazon Connect renders its chat widget directly in the DOM (not an iframe),
+// so our global `button` styles leak in. AC sets background/border via its
+// own class-scoped rules but relies on UA defaults for color/padding/font on
+// some buttons (e.g. the error-state Close button: white bg + our white text
+// = invisible). :where() keeps this override at specificity 0,0,1, so it
+// beats the plain `button` selector above yet still loses to AC's own
+// class-scoped rules (0,1,0).
+// Native <select> dropdown options render in a user-agent-styled popup.
+// In dark mode our selects have transparent-ish backgrounds + light text,
+// which carries into the popup and makes items invisible. Force opaque
+// theme-aware colors on <option> elements.
+select option {
+    background-color: #f8f8f8;
+    color: #1f1f1f;
+}
+html[data-theme="dark"] select option {
+    background-color: #1f1f1f;
+    color: #f8f8f8;
+}
+
+:where(#amazon-connect-chat-widget) button {
+    color: initial;
+    padding: revert;
+    font-family: revert;
+    margin-bottom: 0;
+}
+
+// Paint the AC launcher bubble with the site gradient so it matches every
+// other primary button. AC's inline style sets a solid purple via
+// `background-color`, so we also clear that. The SVG icon stays white.
+#amazon-connect-chat-widget #amazon-connect-open-widget-button {
+    background: var(--gradient) !important;
+    background-color: transparent !important;
+}
+
 footer {
     color: var(--dark);
 }
@@ -143,22 +178,23 @@ h2 {
     }
 }
 
-// Hide the default Amazon Connect floating button — our AI agent FAB replaces it.
-// The Connect chat/voice/video panel still opens when triggered programmatically.
-#amazon-connect-chat-widget {
-  pointer-events: none !important;
-  opacity: 0 !important;
-  position: fixed !important;
-  bottom: -200px !important;
-  right: -200px !important;
-  width: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
-}
-
-// When the Connect chat panel is actively open, make it visible again
-#amazon-connect-chat-widget iframe,
-#amazon-connect-chat-widget [class*="ChatWidget"] {
-  pointer-events: auto !important;
-  opacity: 1 !important;
-}
+// AI agent disabled — see AI_COMMENTED_OUT.md at repo root.
+// These rules hid AC's default floating button because the AI FAB replaced it.
+// With AI commented out, hiding AC's button leaves no visible chat entry point,
+// so these rules are commented out to restore AC's default widget visibility.
+// Restore if re-enabling the AI FAB.
+// #amazon-connect-chat-widget {
+//   pointer-events: none !important;
+//   opacity: 0 !important;
+//   position: fixed !important;
+//   bottom: -200px !important;
+//   right: -200px !important;
+//   width: 0 !important;
+//   height: 0 !important;
+//   overflow: hidden !important;
+// }
+// #amazon-connect-chat-widget iframe,
+// #amazon-connect-chat-widget [class*="ChatWidget"] {
+//   pointer-events: auto !important;
+//   opacity: 1 !important;
+// }

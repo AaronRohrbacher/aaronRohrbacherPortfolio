@@ -14,7 +14,27 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
   const [uploadProgress, setUploadProgress] = useState('');
   const [form, setForm] = useState({ name: '', description: '', artists: '', visibility: 'public' });
   const [editing, setEditing] = useState(null);
+  const [shareCopied, setShareCopied] = useState(null);
   const fileRef = useRef(null);
+
+  async function createShareLink(dumpId) {
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/music/admin/dump-share-links', {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dumpId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create link');
+      const url = `${window.location.origin}/music/dump/${encodeURIComponent(dumpId)}?share=${data.link.token}`;
+      await navigator.clipboard.writeText(url);
+      setShareCopied(dumpId);
+      setTimeout(() => setShareCopied(null), 3000);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
 
   const fetchDumps = useCallback(async () => {
     setLoading(true);
@@ -40,6 +60,11 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
     const audioFiles = files ? [...files].filter((f) =>
       AUDIO_EXTS.some((ext) => f.name.toLowerCase().endsWith(ext))
     ) : [];
+
+    if (audioFiles.length === 0) {
+      setError('Add at least one audio file (MP3, WAV, or AIFF) before creating the dump.');
+      return;
+    }
 
     try {
       const headers = await getAuthHeaders();
@@ -243,6 +268,9 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
                 >
                   {dump.published ? 'Unpublish' : 'Publish'}
                 </button>
+                <button className={Style.iconBtn} onClick={() => createShareLink(dump.id)}>
+                  {shareCopied === dump.id ? 'Copied!' : 'Share Link'}
+                </button>
                 <button className={Style.iconBtn + ' ' + Style.unpublishBtn} onClick={() => deleteDump(dump.id)}>
                   Delete
                 </button>
@@ -271,6 +299,10 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
         <DumpEditor
           dump={editing}
           getAuthHeaders={getAuthHeaders}
+          onRefresh={async () => {
+            await fetchDumps();
+            if (onRefresh) onRefresh();
+          }}
           onSave={async (updated) => {
             try {
               const headers = await getAuthHeaders();
@@ -293,7 +325,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
   );
 }
 
-function DumpEditor({ dump, getAuthHeaders, onSave, onCancel }) {
+function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
   const [form, setForm] = useState({ ...dump });
   const [perms, setPerms] = useState({ users: [], groups: [] });
   const [allUsers, setAllUsers] = useState([]);
@@ -302,7 +334,76 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel }) {
   const [pending, setPending] = useState({});
   const [userSearch, setUserSearch] = useState('');
   const [groupSearch, setGroupSearch] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
+  const [uploadError, setUploadError] = useState('');
+  const editFileRef = useRef(null);
   const trackIds = (dump.tracks || []).map((t) => t.id);
+
+  async function uploadMore() {
+    const files = editFileRef.current?.files;
+    const audioFiles = files ? [...files].filter((f) =>
+      AUDIO_EXTS.some((ext) => f.name.toLowerCase().endsWith(ext))
+    ) : [];
+    if (audioFiles.length === 0) {
+      setUploadError('Pick at least one audio file (MP3, WAV, or AIFF).');
+      return;
+    }
+    setUploadError('');
+    setUploading(true);
+    try {
+      const headers = await getAuthHeaders();
+      setUploadProgress(`Uploading 0/${audioFiles.length}...`);
+      const urlRes = await fetch('/api/music/admin/upload', {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: audioFiles.map((f) => ({ filename: f.name })) }),
+      });
+      const urlData = await urlRes.json();
+      if (!urlRes.ok) throw new Error(urlData.error);
+
+      for (let i = 0; i < audioFiles.length; i++) {
+        const file = audioFiles[i];
+        const urlInfo = urlData.urls.find((u) => u.filename === file.name);
+        if (!urlInfo || urlInfo.error) continue;
+        setUploadProgress(`Uploading ${i + 1}/${audioFiles.length}: ${file.name}`);
+        const uploadRes = await fetch(urlInfo.uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        });
+        if (!uploadRes.ok) {
+          throw new Error(`Upload failed for ${file.name} (${uploadRes.status}). Check S3 bucket CORS settings.`);
+        }
+      }
+
+      setUploadProgress('Syncing with S3...');
+      const tracksRes = await fetch('/api/music/tracks?raw=1', { headers });
+      const tracksData = await tracksRes.json();
+      const allTracks = tracksData.tracks || [];
+      const uploadedNames = audioFiles.map((f) => f.name.replace(/\.(mp3|wav|aiff|aif)$/i, ''));
+      const toAssign = allTracks.filter((t) => uploadedNames.includes(t.id) && !t.dumpId);
+      if (toAssign.length > 0) {
+        const updated = allTracks.map((t) =>
+          toAssign.find((a) => a.id === t.id)
+            ? { ...t, dumpId: form.id, visibility: form.visibility }
+            : t
+        );
+        await fetch('/api/music/tracks', {
+          method: 'PUT',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tracks: updated }),
+        });
+      }
+      if (editFileRef.current) editFileRef.current.value = '';
+      setUploadProgress('');
+      if (onRefresh) await onRefresh();
+    } catch (err) {
+      setUploadError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  }
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -550,6 +651,32 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel }) {
               )}
             </div>
           )}
+
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Add tracks to this dump</label>
+            <input
+              type="file"
+              ref={editFileRef}
+              multiple
+              accept=".mp3,.wav,.aiff,.aif"
+              disabled={uploading}
+              style={{ display: 'block', marginTop: '0.35rem' }}
+            />
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                className={Style.btn}
+                onClick={uploadMore}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading...' : 'Upload & Add'}
+              </button>
+              {uploadProgress && <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{uploadProgress}</span>}
+            </div>
+            {uploadError && (
+              <p style={{ color: '#d14', fontSize: '0.8rem', margin: '0.4rem 0 0' }}>{uploadError}</p>
+            )}
+          </div>
 
           <div className={Style.metaInfo}>
             <span>ID: <code>{form.id}</code></span>

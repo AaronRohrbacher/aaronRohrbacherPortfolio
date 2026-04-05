@@ -80,6 +80,7 @@ export const info = {
             image: session.src,
             mockupType: 'laptop',
             url: 'session — coming soon',
+            aiPowered: true,
         },
         {
             title: "Heard",
@@ -87,6 +88,7 @@ export const info = {
             image: heard.src,
             mockupType: 'laptop',
             url: 'heard — coming soon',
+            aiPowered: true,
         },
         {
             title: "Fanboy",
@@ -94,6 +96,7 @@ export const info = {
             image: fanboy.src,
             mockupType: 'laptop',
             url: 'fanboy — coming soon',
+            aiPowered: true,
         },
         {
             title: "AppNow",

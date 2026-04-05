@@ -17,6 +17,7 @@ import Style from './PortfolioBlock.module.scss';
  *   live        {string?}          – live demo link
  *   website     {string?}          – marketing/product site link
  *   source      {string?}          – github/source link
+ *   aiPowered   {boolean?}         – renders an "AI-Powered" badge next to the title
  */
 export default function PortfolioBlock({ project }) {
   const {
@@ -25,6 +26,7 @@ export default function PortfolioBlock({ project }) {
     mockupType = 'laptop',
     url,
     live, website, source,
+    aiPowered,
   } = project;
 
   return (
@@ -45,7 +47,10 @@ export default function PortfolioBlock({ project }) {
 
       {/* Info */}
       <div className={Style.info}>
-        <h2 className={Style.title}>{title}</h2>
+        <div className={Style.titleRow}>
+          <h2 className={Style.title}>{title}</h2>
+          {aiPowered ? <span className={Style.aiBadge}>AI-Powered</span> : null}
+        </div>
         <p className={Style.desc}>{desc}</p>
 
         {/* Links */}

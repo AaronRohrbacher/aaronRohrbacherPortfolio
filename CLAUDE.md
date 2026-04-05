@@ -49,7 +49,7 @@ Components use **SCSS Modules** (`.module.scss`) for scoped styles. Global style
 ### Music Section
 The `/music` route (also accessible via `music.aaronrohrbacher.com` subdomain) is a music streaming/download section:
 - **Subdomain routing**: `middleware.js` rewrites `music.*` requests to `/music/*` routes
-- **S3 integration**: `src/lib/s3.js` connects to the `musicsforyou` bucket (us-east-2) to list and stream audio files (WAV, AIFF, MP3)
+- **S3 integration**: `src/lib/s3.js` connects to the `musicsforu` bucket (us-east-2) to list and stream audio files (WAV, AIFF, MP3)
 - **Track metadata**: `src/lib/trackStore.js` persists track metadata (name, description, artists, published status) to `.data/tracks.json`
 - **API routes**: `/api/music/tracks` (GET/PUT), `/api/music/stream` (presigned URL redirect), `/api/music/contact` (Resend email)
 - **Admin**: `/music/admin` — password-protected panel to publish/unpublish tracks, edit titles/descriptions/artists, reorder tracks

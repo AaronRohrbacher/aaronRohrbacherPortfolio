@@ -4,9 +4,15 @@ import React from 'react';
 import Style from './ContactPage.module.scss';
 
 export default function ContactPage() {
+  // AI agent disabled — see AI_COMMENTED_OUT.md at repo root.
+  // Opens the Amazon Connect chat via the programmaticLaunch callback
+  // registered in AmazonConnect.jsx (window.__connectLaunch).
   const openChat = () => {
-    window.dispatchEvent(new CustomEvent('open-chat-agent'));
+    if (typeof window.__connectLaunch === 'function') window.__connectLaunch();
   };
+  // const openChat = () => {
+  //   window.dispatchEvent(new CustomEvent('open-chat-agent'));
+  // };
 
   return (
     <div className={Style.page}>
