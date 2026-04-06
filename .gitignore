@@ -15,6 +15,9 @@
 .next/
 .vercel
 
+# SST
+.sst/
+
 # testing artifacts
 /test-results/
 /playwright-report/

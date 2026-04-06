@@ -1,77 +1,144 @@
 @use "@/styles/variables" as vars;
 
+// ─── Animated gradient background (used by hero + accents) ─────────────────
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 168, 120, 0.4); }
+  50%      { box-shadow: 0 0 16px 4px rgba(0, 168, 120, 0.15); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+// ─── Page Container ───��─────────────────────────────────────────────────────
 .page {
-  max-width: 860px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 1rem 1.5rem 4rem;
+  padding: 0 1.5rem 5rem;
 
   @media (max-width: 640px) {
-    padding: 0.75rem 1rem 3rem;
+    padding: 0 1rem 4rem;
   }
 }
 
-// ─── Hero (compact) ──────────────────────────────────────────────────────────
+// ─── Hero ──────────���─────────────────────────────��──────────────────────────
 .hero {
+  position: relative;
   text-align: center;
-  margin-bottom: 1.5rem;
-  padding-top: 0.5rem;
+  padding: 3.5rem 1.5rem 2.5rem;
+  margin: -1rem -1.5rem 2rem;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(0, 168, 120, 0.06),
+      rgba(124, 58, 237, 0.06),
+      rgba(0, 168, 120, 0.03)
+    );
+    background-size: 300% 300%;
+    animation: gradientShift 12s ease infinite;
+    z-index: 0;
+  }
+
+  // Subtle noise texture overlay
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    z-index: 0;
+  }
+
+  > * { position: relative; z-index: 1; }
+
+  @media (max-width: 640px) {
+    padding: 2.5rem 1rem 2rem;
+    margin: -0.5rem -1rem 1.5rem;
+  }
 }
 
 .title {
-  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
   font-weight: 800;
   margin: 0;
-  background: var(--gradient);
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-1));
+  background-size: 200% auto;
+  animation: gradientShift 6s ease infinite;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .subtitle {
-  font-size: 0.85rem;
-  opacity: 0.5;
-  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  opacity: 0.45;
+  margin: 0.5rem 0 0;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
-// ─── Search ─────────────────────────────────────────────────────────────────
+// ─── Search ��─────────────────────────────────────���──────────────────────────
 .searchInput {
   display: block;
   width: 100%;
-  padding: 0.6rem 1rem;
-  border-radius: 10px;
-  border: 1.5px solid rgba(128, 128, 128, 0.2);
+  padding: 0.75rem 1.25rem;
+  border-radius: 14px;
+  border: 1px solid rgba(128, 128, 128, 0.12);
   font-size: 0.9rem;
   background: rgba(128, 128, 128, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: inherit;
   box-sizing: border-box;
   font-family: inherit;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.75rem;
+  transition: border-color 300ms, background 300ms, box-shadow 300ms;
 
   &:focus {
     outline: none;
-    border-color: var(--accent-2);
+    border-color: var(--accent-1);
     background: rgba(128, 128, 128, 0.06);
+    box-shadow: 0 0 0 3px rgba(0, 168, 120, 0.08);
   }
 
   &::placeholder {
-    opacity: 0.35;
+    opacity: 0.3;
+    font-weight: 400;
   }
 }
 
-// ─── Loading / Error / Empty ─────────────────────────────────────────────────
+// ─── Loading / Error / Empty ────────────────���───────────────────────────────
 .loading, .error, .empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  padding: 4rem 0;
+  padding: 5rem 0;
   opacity: 0.5;
 }
 
 .spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid rgba(128, 128, 128, 0.2);
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid rgba(128, 128, 128, 0.15);
   border-top-color: var(--accent-1);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -80,33 +147,367 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .retryBtn {
-  padding: 0.5rem 1.25rem;
-  border-radius: 8px;
-  border: 1.5px solid currentColor;
+  padding: 0.55rem 1.5rem;
+  border-radius: 10px;
+  border: 1.5px solid rgba(128, 128, 128, 0.2);
   background: transparent;
   color: inherit;
   cursor: pointer;
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: border-color 200ms, background 200ms;
+
+  &:hover {
+    border-color: var(--accent-1);
+    background: rgba(0, 168, 120, 0.05);
+  }
 }
 
-// ─── Now Playing ─────────────────────────────────────────────────────────────
-.nowPlaying {
-  background: rgba(128, 128, 128, 0.05);
-  border: 1px solid rgba(128, 128, 128, 0.12);
+// ─── Track List ───────────────────────────────��─────────────────────────────
+.trackList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+// ─── Track Card — glassmorphism ───���─────────��───────────────────────────────
+.trackCard {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.15rem 1.3rem;
+  border-radius: 16px;
+  border: 1px solid rgba(128, 128, 128, 0.08);
+  background: rgba(128, 128, 128, 0.025);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Entrance animation
+  animation: fadeSlideUp 0.5s ease both;
+
+  // Stagger delay via nth-child
+  @for $i from 1 through 20 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.04}s;
+    }
+  }
+
+  &:hover {
+    background: rgba(128, 128, 128, 0.06);
+    border-color: rgba(128, 128, 128, 0.15);
+    transform: translateY(-1px);
+    box-shadow:
+      0 4px 24px -4px rgba(0, 0, 0, 0.06),
+      0 0 0 1px rgba(128, 128, 128, 0.05);
+  }
+
+  &.active {
+    border-color: rgba(0, 168, 120, 0.3);
+    background: rgba(0, 168, 120, 0.04);
+    box-shadow:
+      0 0 24px -8px rgba(0, 168, 120, 0.15),
+      inset 0 0 0 1px rgba(0, 168, 120, 0.06);
+
+    // Gradient accent line on left
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 3px;
+      border-radius: 3px;
+      background: var(--gradient);
+    }
+  }
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border-radius: 14px;
+  }
+}
+
+// ─── Play Button ───────���────────────────────────────────────────────────────
+.playBtn {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  background: var(--gradient);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms;
+  padding: 0;
+  margin-top: 0.1rem;
+  box-shadow: 0 2px 12px -2px rgba(0, 168, 120, 0.3);
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 20px -2px rgba(0, 168, 120, 0.4);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  .active & {
+    animation: pulseGlow 2.5s ease-in-out infinite;
+  }
+
+  i {
+    color: white;
+    margin-left: 2px;
+  }
+}
+
+// ─── Track Info ────────────────────────────────���────────────────────────────
+.trackInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.trackName {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.trackArtists {
+  font-size: 0.8rem;
+  opacity: 0.5;
+  margin: 0.2rem 0 0;
+  white-space: pre-line;
+  font-weight: 500;
+}
+
+.trackDate {
+  font-size: 0.7rem;
+  opacity: 0.3;
+  margin: 0.15rem 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.trackDesc {
+  font-size: 0.8rem;
+  opacity: 0.4;
+  margin: 0.35rem 0 0;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+// ─── Actions Row ───────────��─────────────────────────��──────────────────────
+.trackActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.65rem;
+  flex-wrap: wrap;
+  opacity: 0.7;
+  transition: opacity 200ms;
+
+  .trackCard:hover & {
+    opacity: 1;
+  }
+}
+
+.playInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--gradient);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: opacity 200ms, transform 150ms;
+  letter-spacing: 0.01em;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  &:active { transform: translateY(0); }
+
+  i { color: white; font-size: 0.6rem; }
+}
+
+.downloadGroup {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.downloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid rgba(128, 128, 128, 0.15);
+  background: rgba(128, 128, 128, 0.03);
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.55;
+  transition: all 200ms;
+  letter-spacing: 0.01em;
+
+  &:hover {
+    opacity: 1;
+    border-color: var(--accent-2);
+    background: rgba(124, 58, 237, 0.05);
+    transform: translateY(-1px);
+  }
+
+  i { font-size: 0.55rem; }
+}
+
+// ─── Pagination ─────────���──────────────────────────────��────────────────────
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(128, 128, 128, 0.08);
+}
+
+.pageBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgba(128, 128, 128, 0.15);
+  background: rgba(128, 128, 128, 0.03);
+  backdrop-filter: blur(4px);
+  color: inherit;
+  cursor: pointer;
+  transition: all 200ms;
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent-1);
+    background: rgba(0, 168, 120, 0.05);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+  }
+}
+
+.pageInfo {
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0.4;
+  font-variant-numeric: tabular-nums;
+}
+
+// ─── Dump / Release Sections ────────���───────────────────────────────────────
+.dumpSection {
+  margin-bottom: 2.25rem;
+  animation: fadeSlideUp 0.5s ease both;
+}
+
+.dumpHeader {
+  margin-bottom: 0.85rem;
+  padding: 1rem 1.25rem;
   border-radius: 14px;
+  background: rgba(128, 128, 128, 0.03);
+  border: 1px solid rgba(128, 128, 128, 0.06);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  position: relative;
+  overflow: hidden;
+
+  // Subtle gradient accent on top edge
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 1rem;
+    right: 1rem;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--gradient);
+    opacity: 0.5;
+  }
+}
+
+.dumpTitleLink {
+  text-decoration: none;
+
+  &:hover .dumpTitle {
+    opacity: 0.85;
+  }
+}
+
+.dumpTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: opacity 0.2s;
+}
+
+.dumpArtists {
+  font-size: 0.8rem;
+  opacity: 0.55;
+  margin: 0.25rem 0 0;
+  white-space: pre-line;
+  font-weight: 500;
+}
+
+.dumpDesc {
+  font-size: 0.78rem;
+  opacity: 0.4;
+  margin: 0.25rem 0 0;
+  line-height: 1.45;
+  white-space: pre-line;
+}
+
+// ─── Now Playing (unused but kept for compat) ───────────────────────────────
+.nowPlaying {
+  background: rgba(128, 128, 128, 0.04);
+  border: 1px solid rgba(128, 128, 128, 0.1);
+  border-radius: 16px;
   padding: 1.25rem;
   margin-bottom: 1.5rem;
+  backdrop-filter: blur(8px);
 }
 
-.nowPlayingInfo {
-  margin-bottom: 0.75rem;
-}
+.nowPlayingInfo { margin-bottom: 0.75rem; }
 
 .nowPlayingLabel {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.4;
+  letter-spacing: 0.1em;
+  opacity: 0.35;
 }
 
 .nowPlayingTitle {
@@ -120,246 +521,4 @@
   font-size: 0.85rem;
   opacity: 0.6;
   margin: 0.15rem 0 0;
-}
-
-// ─── Track List ──────────────────────────────────────────────────────────────
-.trackList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.trackCard {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.1rem 1.25rem;
-  border-radius: 12px;
-  border: 1px solid rgba(128, 128, 128, 0.1);
-  background: rgba(128, 128, 128, 0.03);
-  transition: background 200ms, border-color 200ms;
-
-  &:hover {
-    background: rgba(128, 128, 128, 0.08);
-    border-color: rgba(128, 128, 128, 0.2);
-  }
-
-  @media (max-width: 640px) {
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    padding: 0.85rem 1rem;
-  }
-}
-
-.trackCard.active {
-  border-color: var(--accent-1);
-  background: rgba(0, 168, 120, 0.06);
-}
-
-// ─── Play Button ─────────────────────────────────────────────────────────────
-.playBtn {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  background: var(--gradient);
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: transform 150ms, opacity 200ms;
-  padding: 0;
-  margin-top: 0.15rem;
-
-  &:hover {
-    transform: scale(1.08);
-    opacity: 0.9;
-  }
-
-  i {
-    color: white;
-    margin-left: 2px;
-  }
-}
-
-// ─── Track Info ──────────────────────────────────────────────────────────────
-.trackInfo {
-  flex: 1;
-  min-width: 0;
-}
-
-.trackName {
-  font-size: 1.05rem;
-  font-weight: 700;
-  margin: 0;
-  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
-}
-
-.trackArtists {
-  font-size: 0.82rem;
-  opacity: 0.55;
-  margin: 0.2rem 0 0;
-  white-space: pre-line;
-}
-
-.trackDate {
-  font-size: 0.72rem;
-  opacity: 0.4;
-  margin: 0.15rem 0 0;
-}
-
-.trackDesc {
-  font-size: 0.82rem;
-  opacity: 0.45;
-  margin: 0.35rem 0 0;
-  line-height: 1.5;
-  white-space: pre-line;
-}
-
-// ─── Actions Row ─────────────────────────────────────────────────────────────
-.trackActionsRow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.6rem;
-  flex-wrap: wrap;
-}
-
-.playInline {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: var(--gradient);
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: opacity 200ms;
-
-  &:hover { opacity: 0.85; }
-
-  i { color: white; font-size: 0.65rem; }
-}
-
-.downloadGroup {
-  display: flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
-
-.downloadBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.35rem 0.65rem;
-  border-radius: 6px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  border: 1.5px solid rgba(128, 128, 128, 0.3);
-  background: transparent;
-  color: inherit;
-  text-decoration: none;
-  opacity: 0.6;
-  transition: opacity 200ms, border-color 200ms;
-
-  &:hover {
-    opacity: 1;
-    border-color: currentColor;
-  }
-
-  i {
-    font-size: 0.6rem;
-  }
-}
-
-// ─── Pagination ──────────────────────────────────────────────────────────────
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(128, 128, 128, 0.12);
-}
-
-.pageBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.9rem;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  border: 1.5px solid rgba(128, 128, 128, 0.25);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  transition: opacity 200ms, border-color 200ms;
-
-  &:hover:not(:disabled) {
-    border-color: var(--accent-1);
-  }
-
-  &:disabled {
-    opacity: 0.25;
-    cursor: not-allowed;
-  }
-}
-
-.pageInfo {
-  font-size: 0.8rem;
-  font-weight: 600;
-  opacity: 0.5;
-}
-
-// ─── Dump / Release Sections ─────────────────────────────────────────────────
-.dumpSection {
-  margin-bottom: 2rem;
-}
-
-.dumpHeader {
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
-}
-
-.dumpTitleLink {
-  text-decoration: none;
-
-  &:hover .dumpTitle {
-    opacity: 0.8;
-  }
-}
-
-.dumpTitle {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin: 0;
-  background: var(--gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  transition: opacity 0.15s;
-}
-
-.dumpArtists {
-  font-size: 0.82rem;
-  opacity: 0.6;
-  margin: 0.2rem 0 0;
-  white-space: pre-line;
-}
-
-.dumpDesc {
-  font-size: 0.8rem;
-  opacity: 0.5;
-  margin: 0.2rem 0 0;
-  line-height: 1.4;
-  white-space: pre-line;
 }

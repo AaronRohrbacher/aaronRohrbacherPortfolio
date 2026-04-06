@@ -27,7 +27,7 @@
   "Actions": [
 
     {
-      "Parameters": { "WaitTimeSeconds": "60" },
+      "Parameters": { "WaitTimeSeconds": "30" },
       "Identifier": "bb200001-0000-0000-0000-000000000001",
       "Type": "Wait",
       "Transitions": {
@@ -40,7 +40,7 @@
 
     {
       "Parameters": {
-        "Text": "Thanks for your patience! Aaron is taking a bit longer than expected — he may have stepped away. Reply **1** to leave him a message, or just hang tight if you'd like to keep waiting."
+        "Text": "Thanks for hanging in there! Aaron might've stepped away for a sec. Reply **1** to leave a message, or stay put to keep waiting."
       },
       "Identifier": "bb200001-0000-0000-0000-000000000002",
       "Type": "MessageParticipant",
@@ -73,7 +73,7 @@
 
     {
       "Parameters": {
-        "Text": "Sure! May I please take your name?",
+        "Text": "Sure thing — what's your name?",
         "ResponseValidation": { "ResponseType": "TEXT" }
       },
       "Identifier": "bb200001-0000-0000-0000-000000000004",
@@ -104,7 +104,7 @@
 
     {
       "Parameters": {
-        "Text": "And either your e-mail address or your phone number, please.",
+        "Text": "And a way to reach you — email or phone?",
         "ResponseValidation": { "ResponseType": "TEXT" }
       },
       "Identifier": "bb200001-0000-0000-0000-000000000006",
@@ -158,7 +158,7 @@
 
     {
       "Parameters": {
-        "Text": "Thanks, $.Attributes.customerName! Aaron has been notified and will be in touch shortly. If you have questions about his work in the meantime, check out his AI-powered resume at https://aaronrohrbacher.com/resume — there's a chat there too!"
+        "Text": "Thanks, $.Attributes.customerName — Aaron's got your message and will be in touch shortly. Appreciate the patience!"
       },
       "Identifier": "bb200001-0000-0000-0000-000000000009",
       "Type": "MessageParticipant",
@@ -193,7 +193,7 @@
 
     {
       "Parameters": {
-        "Text": "Aaron was notified that you stopped by! You're welcome to try again later, or visit his resume at https://aaronrohrbacher.com/resume anytime. Have a great day!"
+        "Text": "Aaron was pinged you stopped by. Feel free to try again later. Take care!"
       },
       "Identifier": "bb200001-0000-0000-0000-000000000011",
       "Type": "MessageParticipant",
