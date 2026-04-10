@@ -6,6 +6,7 @@ import Style from '@/components/music/MusicPlaylist.module.scss';
 import { useAuth } from '@/components/music/AuthContext';
 import { useMusicPlayer } from '@/components/music/MusicPlayerContext';
 import Link from 'next/link';
+import { useMusicHref } from '@/lib/musicLinks';
 
 export default function DumpPage() {
   const { id } = useParams();
@@ -13,6 +14,7 @@ export default function DumpPage() {
   const shareToken = searchParams.get('share');
   const { getAuthHeaders } = useAuth();
   const { currentTrack, isPlaying, playTrack, setQueue: setPlayerQueue } = useMusicPlayer();
+  const musicHref = useMusicHref();
 
   const [dump, setDump] = useState(null);
   const [tracks, setTracks] = useState([]);
@@ -78,7 +80,7 @@ export default function DumpPage() {
       <div className={Style.page}>
         <div className={Style.error}>
           <p>You need to sign in to view this content.</p>
-          <Link href="/music/login" className={Style.retryBtn}>Sign In</Link>
+          <Link href={musicHref('/login')} className={Style.retryBtn}>Sign In</Link>
         </div>
       </div>
     );
@@ -89,7 +91,7 @@ export default function DumpPage() {
       <div className={Style.page}>
         <div className={Style.error}>
           <p>You don&apos;t have access to this content.</p>
-          <Link href="/music" className={Style.retryBtn}>Back to Music</Link>
+          <Link href={musicHref('/')} className={Style.retryBtn}>Back to Music</Link>
         </div>
       </div>
     );
@@ -100,7 +102,7 @@ export default function DumpPage() {
       <div className={Style.page}>
         <div className={Style.error}>
           <p>Could not find this release.</p>
-          <Link href="/music" className={Style.retryBtn}>Back to Music</Link>
+          <Link href={musicHref('/')} className={Style.retryBtn}>Back to Music</Link>
         </div>
       </div>
     );
@@ -134,7 +136,7 @@ export default function DumpPage() {
         )}
       </div>
       <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-        <Link href="/music" className={Style.retryBtn}>
+        <Link href={musicHref('/')} className={Style.retryBtn}>
           <i className="fa-solid fa-arrow-left" /> All Music
         </Link>
       </div>

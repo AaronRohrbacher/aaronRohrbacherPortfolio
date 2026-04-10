@@ -66,6 +66,10 @@ function PhoneFrame({ image, alt }) {
 export default function DeviceMockup({ image, alt = 'screenshot', type = 'laptop', url = '' }) {
   const imgStyle = { width: '100%', height: '100%', objectFit: 'cover', display: 'block' };
 
+  if (type === 'none') {
+    return <img src={image} alt={alt} style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '8px' }} />;
+  }
+
   if (type === 'laptop') {
     return (
       <ScaledFrame nativeWidth={870} nativeHeight={520}>

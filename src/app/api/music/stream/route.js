@@ -82,13 +82,6 @@ export async function GET(request) {
       );
     }
 
-    // Proxy through server — works with both public and private buckets
-    const s3Response = await getObject(key);
-    const filename = `${track.name}.${format}`;
-    const disposition = download
-      ? `attachment; filename="${filename}"`
-      : `inline; filename="${filename}"`;
-
     logEvent({
       type: download ? EVENT_TYPES.DOWNLOAD : EVENT_TYPES.STREAM,
       actor: user?.email || (shareGrant ? `share:${shareToken.slice(0, 8)}` : null),
@@ -97,6 +90,22 @@ export async function GET(request) {
       detail: format,
       ...requestMeta(request),
     });
+
+    // Streaming: redirect to CloudFront CDN (edge-cached, much faster than
+    // proxying through Lambda). Downloads still proxy so we can set
+    // Content-Disposition: attachment.
+    const cdnDomain = process.env.MUSIC_CDN_DOMAIN;
+    if (!download && cdnDomain) {
+      const cdnUrl = `https://${cdnDomain}/${encodeURI(key)}`;
+      return NextResponse.redirect(cdnUrl, 302);
+    }
+
+    // Fallback: proxy through server (downloads, or CDN not configured)
+    const s3Response = await getObject(key);
+    const filename = `${track.name}.${format}`;
+    const disposition = download
+      ? `attachment; filename="${filename}"`
+      : `inline; filename="${filename}"`;
 
     return new Response(s3Response.Body, {
       headers: {

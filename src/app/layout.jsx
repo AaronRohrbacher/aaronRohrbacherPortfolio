@@ -1,18 +1,18 @@
 import '@/styles/globals.scss';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
-import AmazonConnectLoader from '@/components/AmazonConnectLoader';
+import Script from 'next/script';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 // AI agent disabled — see AI_COMMENTED_OUT.md at repo root.
 // import ChatAgentLoader from '@/components/ChatAgentLoader';
 
 export const metadata = {
   title: {
-    default: 'Aaron Rohrbacher | Lead AI Engineer & DevOps Architect',
+    default: 'Aaron Rohrbacher | Lead Cross-Platform Software and DevOps Engineer',
     template: '%s | Aaron Rohrbacher',
   },
-  description: 'Portfolio of Aaron Rohrbacher — lead AI engineer and developer specializing in AI/ML, full-stack software engineering, and DevOps architecture. Based in Portland, Oregon.',
-  keywords: ['AI engineer', 'AI developer', 'machine learning', 'DevOps', 'software architect', 'AWS', 'full stack', 'Portland'],
+  description: 'Portfolio of Aaron Rohrbacher — lead cross-platform software and DevOps engineer specializing in AI/ML, full-stack development, and cloud architecture. Based in Portland, Oregon.',
+  keywords: ['software engineer', 'cross-platform', 'DevOps', 'AI engineer', 'machine learning', 'AWS', 'full stack', 'Portland'],
   authors: [{ name: 'Aaron Rohrbacher' }],
   icons: {
     icon: [
@@ -40,7 +40,7 @@ export default function RootLayout({ children }) {
       <body>
         <GoogleAnalytics />
         <AppRouterCacheProvider>
-          <AmazonConnectLoader />
+          <Script src="/amazonConnect.js" strategy="lazyOnload" />
           {/* AI agent disabled — see AI_COMMENTED_OUT.md at repo root. */}
           {/* <ChatAgentLoader /> */}
           {children}

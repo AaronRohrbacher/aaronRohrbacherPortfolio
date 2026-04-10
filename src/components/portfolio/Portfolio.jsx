@@ -21,6 +21,7 @@ export default function Portfolio({ innerRef }) {
   return (
     <MotionConfig reducedMotion="user">
       <Box ref={innerRef} id={'portfolio'} py={'2rem'}>
+        <h1 className="sr-only">Portfolio</h1>
         <Grid container justifyContent={'center'} sx={{ maxWidth: '100%' }}>
           {projects.map((project, index) => (
             <Grid size={{ xs: 12, md: 6 }} key={project.id ?? index}>

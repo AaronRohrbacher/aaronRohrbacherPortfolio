@@ -68,7 +68,7 @@ export default function BaseLayout({ children, activePage, initialDark }) {
         <Grid>
           <Box component={'footer'} display={'flex'} flexDirection={'column'} alignItems={'center'}
             py={'1.5rem'} sx={{ opacity: 0.7 }} width={'100%'}>
-            <p>&copy; 2025 Aaron Rohrbacher</p>
+            <p>&copy; {new Date().getFullYear()} Aaron Rohrbacher</p>
           </Box>
         </Grid>
       </Grid>

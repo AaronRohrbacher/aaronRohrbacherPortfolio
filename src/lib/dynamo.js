@@ -13,7 +13,7 @@ const TABLE_NAME = process.env.MUSIC_TABLE_NAME || 'MusicData';
 let _client;
 function getDocClient() {
   if (!_client) {
-    const config = { region: process.env.NEXT_PUBLIC_AWS_REGION || 'us-east-2' };
+    const config = { region: process.env.DYNAMO_REGION || process.env.AWS_REGION || 'us-west-2' };
     // Connect to DynamoDB Local when running locally
     if (process.env.DYNAMO_ENDPOINT) {
       config.endpoint = process.env.DYNAMO_ENDPOINT;

@@ -9,7 +9,7 @@
  */
 
 export const FACT_CHUNKS = [
-  'Aaron Rohrbacher is a Lead AI/ML Software Engineer and DevOps Architect based in Portland, Oregon. He wrapped up his role as Lead Software Development Engineer at Forbes AAC in March 2026 and is actively seeking his next role, available to start immediately.',
+  'Aaron Rohrbacher is a senior DevOps engineer and AI platform builder based in Portland, Oregon. He wrapped up his role as Lead Software Development Engineer at Forbes AAC (Dec 2024 – Mar 2026) and is actively seeking his next role, available to start immediately.',
   'At Forbes AAC, Aaron led stabilization of a legacy Ruby and Ember stack and an enterprise rebuild using Next.js. He rebuilt native apps: iOS in Swift, Android in Java and Kotlin, macOS in Swift, Windows and Linux in Qt and Rust.',
   'At SPARQ, Aaron was technical lead on enterprise AI projects, AWS cloud migrations, and conversational AI. He worked on payroll and logistics systems at scale serving over 500,000 employees.',
   'Aaron\'s earlier employers include Nuel Cloud (AWS LAMP provisioning), Nordic, Fiduciary Benchmarks, and Planet Argon.',

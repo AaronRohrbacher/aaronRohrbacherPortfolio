@@ -15,7 +15,7 @@ Language-agnostic proficiency in programming and DevOps, with expertise in fiduc
 
 EXPERIENCE:
 
-Forbes AAC — Lead Software Development Engineer (Aug 2025 – Mar 2026)
+Forbes AAC — Lead Software Development Engineer (Dec 2024 – Mar 2026)
 - Stabilized emergency-ridden deprecations, mitigating imminent risk of platform and data loss.
 - Stabilized a Ruby 2.6 and Ember 3.0 application (both past EOL), creating tools to convert deprecated Ember code into editable JavaScript, preserving years of Speech Language Pathologist refinements.
 - Negotiated with Heroku and upgraded infrastructure to prevent complete loss of the application.

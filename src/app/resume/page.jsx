@@ -1,6 +1,11 @@
 export const metadata = {
   title: 'Resume',
-  description: 'Resume of Aaron Rohrbacher, a Lead AI/ML Software Engineer and DevOps Architect based in Portland, Oregon.',
+  description: 'Resume of Aaron Rohrbacher — lead cross-platform software and DevOps engineer based in Portland, Oregon.',
+  openGraph: {
+    title: 'Resume | Aaron Rohrbacher',
+    description: 'Resume of Aaron Rohrbacher — lead cross-platform software and DevOps engineer based in Portland, Oregon.',
+    url: 'https://aaronrohrbacher.com/resume',
+  },
 };
 
 import { cookies } from 'next/headers';

@@ -1,6 +1,11 @@
 export const metadata = {
   title: 'Portfolio',
   description: "Aaron Rohrbacher's portfolio of personal software projects.",
+  openGraph: {
+    title: 'Portfolio | Aaron Rohrbacher',
+    description: "Aaron Rohrbacher's portfolio of personal software projects.",
+    url: 'https://aaronrohrbacher.com/portfolio',
+  },
 };
 
 import { cookies } from 'next/headers';

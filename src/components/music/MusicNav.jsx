@@ -6,14 +6,16 @@ import Toggler from '../home/Toggler';
 import SectionToggle from '../SectionToggle';
 import Link from 'next/link';
 import { useAuth } from './AuthContext';
+import { useMusicHref } from '@/lib/musicLinks';
 
 const navLinks = [
-  { name: 'Music',   href: '/music',       key: 'music' },
+  { name: 'Music',   href: '/',       key: 'music' },
 ];
 
 export default function MusicNav({ darkMode, handleToggle }) {
   const { user, loading, signOut } = useAuth();
   const [scrolled, setScrolled] = useState(false);
+  const musicHref = useMusicHref();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -29,7 +31,7 @@ export default function MusicNav({ darkMode, handleToggle }) {
     ].join(' ')}>
       {/* Logo + Section Toggle */}
       <div className={Style.logoGroup}>
-        <Link href="/music" className={Style.logo}>
+        <Link href={musicHref('/')} className={Style.logo}>
           <span className={Style.logoText}>ar</span>
           <span className={Style.logoDot} />
         </Link>
@@ -40,7 +42,7 @@ export default function MusicNav({ darkMode, handleToggle }) {
       <ul className={Style.links}>
         {navLinks.map((link) => (
           <li key={link.key}>
-            <Link href={link.href} className={Style.link}>
+            <Link href={musicHref(link.href)} className={Style.link}>
               {link.name}
               <span className={Style.underline} />
             </Link>
@@ -48,7 +50,7 @@ export default function MusicNav({ darkMode, handleToggle }) {
         ))}
         {!loading && user?.isAdmin && (
           <li>
-            <Link href="/music/admin" className={Style.link}>
+            <Link href={musicHref('/admin')} className={Style.link}>
               Admin
               <span className={Style.underline} />
             </Link>
@@ -61,7 +63,7 @@ export default function MusicNav({ darkMode, handleToggle }) {
                 Sign Out
               </button>
             ) : (
-              <Link href="/music/login" className={Style.link}>
+              <Link href={musicHref('/login')} className={Style.link}>
                 Sign In
                 <span className={Style.underline} />
               </Link>

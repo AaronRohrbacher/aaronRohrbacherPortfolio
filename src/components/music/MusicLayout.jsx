@@ -5,13 +5,14 @@ import Style from './MusicLayout.module.scss';
 import MusicNav from './MusicNav';
 import { AuthProvider } from './AuthContext';
 import { MusicPlayerProvider } from './MusicPlayerContext';
+import { MusicHrefProvider } from '@/lib/musicLinks';
 import PlayerBar from './PlayerBar';
 import PageTransition from '@/components/PageTransition';
 import { Box, Grid } from '@mui/material';
 import { setCookie } from 'cookies-next';
 import { usePathname } from 'next/navigation';
 
-export default function MusicLayout({ children, initialDark }) {
+export default function MusicLayout({ children, initialDark, isMusicSubdomain = false }) {
   const [darkMode, setDarkMode] = useState(initialDark === true);
   const pathname = usePathname();
 
@@ -35,6 +36,7 @@ export default function MusicLayout({ children, initialDark }) {
   const themeClass = darkMode ? Style.dark : Style.light;
 
   return (
+    <MusicHrefProvider isMusicSubdomain={isMusicSubdomain}>
     <AuthProvider>
       <MusicPlayerProvider>
         <Box suppressHydrationWarning className={themeClass} data-theme={darkMode ? 'dark' : 'light'} sx={{ width: '100%', overflowX: 'hidden', maxWidth: '100vw' }}>
@@ -58,5 +60,6 @@ export default function MusicLayout({ children, initialDark }) {
         </Box>
       </MusicPlayerProvider>
     </AuthProvider>
+    </MusicHrefProvider>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, useInView, AnimatePresence, MotionConfig } from 'framer-motion';
 import Style from './Resume.module.scss';
 
@@ -10,15 +10,13 @@ const EXPERIENCE = [
   {
     company: 'Forbes AAC',
     title: 'Lead Software Development Engineer',
-    period: 'Aug 2025',
+    period: 'Dec 2024 – Mar 2026',
     location: 'Mansfield, OH (Remote)',
     color: 'var(--accent-2)',
     bullets: [
-      'Stabilized emergency-ridden deprecations, mitigating imminent risk of platform and data loss through programming and soft skills.',
-      'Stabilized a Ruby 2.6 and Ember 3.0 application (both past EOL), creating tools to convert deprecated Ember code into editable JavaScript — preserving years of Speech Language Pathologist refinements.',
-      'Negotiated with Heroku and upgraded infrastructure to prevent complete loss of the application, providing a timely outcome that left everything operational with satisfied stakeholders.',
-      'Prevented loss of the Android application by bringing it to current standards and ensuring continued functionality for critical communication needs.',
-      'Upgraded iOS app to prevent crashing and added compatibility with latest iOS versions, ensuring uninterrupted service for users who depend on it for daily communication.',
+      'Stabilized a critically failing Ruby 2.6 / Ember 3.0 platform (both past EOL), mitigating imminent data and platform loss. Built tooling to convert deprecated Ember code into editable JavaScript — preserving years of Speech Language Pathologist refinements.',
+      'Negotiated with Heroku and upgraded infrastructure to prevent complete loss of the application, leaving everything operational with satisfied stakeholders.',
+      'Rescued Android and iOS apps from deprecation-driven crashes, bringing both to current standards and ensuring uninterrupted service for users who depend on them for daily communication.',
       'Architected a complete infrastructure rebuild on Next.js — injecting compiled legacy Ember JS for continuity — while medical professionals continued refining decade-old features without interruption.',
       'Fully rebuilt cross-platform apps in native code: iOS (Swift), Android (Java/Kotlin), macOS (Swift with native navigation), Windows & Linux (Qt on Rust), replacing deprecated Cordova.',
       'Redesigned content sync from one-asset-at-a-time to compressed, licensed package delivery — saving thousands monthly in data transfer costs and enabling better offline use for AAC users.',
@@ -30,10 +28,8 @@ const EXPERIENCE = [
     period: 'Aug 2022 – Feb 2025',
     location: 'Atlanta, GA (Remote)',
     color: 'var(--purple)',
+    recruitedTo: 'Forbes AAC',
     bullets: [
-      'Consulted for enterprise clients across AAC, logistics, and payroll — delivering technical leadership, architecture, and implementation expertise.',
-      'Inherited a codebase whose sole developer went AWOL; documented existing API and developed a comprehensive infrastructure migration plan.',
-      'Migrated application from Heroku to AWS with zero downtime, upgraded severely deprecated dependencies, and relaunched with improved security.',
       'Served as lead system architect building microservices and APIs on AWS Lambda + Node.js with third-party services — achieving significant cloud infrastructure cost savings.',
       'Completed phase-one production deployment of a payroll system overhaul serving 500k+ employees for a global logistics leader.',
       'Modernized internal API processes for a new payroll vendor using GCP Cloud Run functions (Python, Java, Node.js), resulting in substantial cost savings.',
@@ -45,7 +41,7 @@ const EXPERIENCE = [
   },
   {
     company: 'Nuel Cloud Computing LLC',
-    title: 'Proprietor, System Architect & Engineer',
+    title: 'Proprietor, Systems Architect & Engineering Director',
     period: 'Aug 2020 – Feb 2024',
     location: 'Portland, OR',
     color: 'var(--accent-1)',
@@ -156,7 +152,7 @@ const SKILL_GROUPS = [
   },
 ];
 
-const TABS = ['Timeline', 'Skills', 'About', 'Ask AI'];
+const TABS = ['Timeline', 'Skills', 'About' /*, 'Ask AI' */];
 
 // ─── Shared animation variants ────────────────────────────────────────────────
 
@@ -175,10 +171,52 @@ const fadeIn = {
 
 // ─── Timeline entry ───────────────────────────────────────────────────────────
 
-function TimelineEntry({ job, index, isLast }) {
-  const [open, setOpen] = useState(index === 0);
+function Timeline() {
+  const [openStates, setOpenStates] = useState(() => EXPERIENCE.map((_, i) => i === 0));
+  const toggle = (i) => setOpenStates((prev) => prev.map((v, j) => (j === i ? !v : v)));
+
+  return (
+    <div className={Style.timeline}>
+      {EXPERIENCE.map((job, i) => (
+        <TimelineEntry
+          key={job.company}
+          job={job}
+          index={i}
+          isLast={i === EXPERIENCE.length - 1}
+          open={openStates[i]}
+          onToggle={() => toggle(i)}
+          prevOpen={i > 0 ? openStates[i - 1] : false}
+        />
+      ))}
+    </div>
+  );
+}
+
+function TimelineEntry({ job, index, isLast, open, onToggle, prevOpen }) {
   const ref = useRef(null);
+  const recruitedRef = useRef(null);
+  const recruitedLabelRef = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-60px' });
+
+  // Measure distance between dots. Bar always shows; text+arrow fade with prevOpen.
+  useEffect(() => {
+    if (!job.recruitedTo || !recruitedRef.current || !ref.current) return;
+    const measure = () => {
+      const myDot = ref.current.querySelector(`.${Style.dot}`);
+      const prevEntry = ref.current.previousElementSibling;
+      const prevDot = prevEntry?.querySelector(`.${Style.dot}`);
+      if (!myDot || !prevDot) return;
+      const dist = Math.abs(myDot.getBoundingClientRect().top - prevDot.getBoundingClientRect().top);
+      recruitedRef.current.style.height = `${dist}px`;
+      if (recruitedLabelRef.current) {
+        recruitedLabelRef.current.style.height = `${dist}px`;
+      }
+    };
+    // Re-measure after framer-motion finishes animating (~350ms)
+    measure();
+    const t = setTimeout(measure, 400);
+    return () => clearTimeout(t);
+  }, [prevOpen, open, job.recruitedTo]);
 
   return (
     <motion.div
@@ -189,6 +227,18 @@ function TimelineEntry({ job, index, isLast }) {
       initial="hidden"
       animate={inView ? 'visible' : 'hidden'}
     >
+      {job.recruitedTo && (
+        <div className={Style.recruitedGutter}>
+          <div className={Style.recruitedBar} ref={recruitedRef} />
+          <div
+            className={[Style.recruitedLabelWrap, prevOpen ? Style.recruitedVisible : Style.recruitedHidden].join(' ')}
+            ref={recruitedLabelRef}
+          >
+            <span className={Style.recruitedArrow}>→</span>
+            <span className={Style.recruitedText}>Consulted for {job.recruitedTo} via {job.company}, then hired directly</span>
+          </div>
+        </div>
+      )}
       <div className={Style.spine}>
         <motion.div
           className={Style.dot}
@@ -201,7 +251,7 @@ function TimelineEntry({ job, index, isLast }) {
       </div>
 
       <div className={Style.entryContent}>
-        <button className={Style.entryHeader} onClick={() => setOpen(o => !o)}>
+        <button className={Style.entryHeader} onClick={onToggle}>
           <div>
             <p className={Style.entryCompany} style={{ color: job.color }}>{job.company}</p>
             <h3 className={Style.entryTitle}>{job.title}</h3>
@@ -269,15 +319,9 @@ function SkillGroups() {
 // ─── AI Chat panel — opens the site-wide AI agent ─────────────────────────────
 
 function AskAI() {
-  // AI agent disabled — see AI_COMMENTED_OUT.md at repo root.
-  // Opens the Amazon Connect chat via the programmaticLaunch callback
-  // registered in AmazonConnect.jsx (window.__connectLaunch).
   const openChat = () => {
-    if (typeof window.__connectLaunch === 'function') window.__connectLaunch();
+    document.getElementById('amazon-connect-open-widget-button')?.click();
   };
-  // const openChat = () => {
-  //   window.dispatchEvent(new CustomEvent('open-chat-agent'));
-  // };
 
   return (
     <motion.div className={Style.aiPanel} variants={fadeUp} custom={0} initial="hidden" animate="visible">
@@ -308,12 +352,13 @@ export default function Resume({ innerRef }) {
       <motion.header
         className={Style.header}
         initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       >
         <p className={Style.eyebrow}>Resume</p>
         <h1 className={Style.name}>Aaron Rohrbacher</h1>
-        <p className={Style.role}>Lead AI/ML Software Engineer &amp; DevOps Architect</p>
+        <p className={Style.role}>Senior Software &amp; DevOps Engineer</p>
         <p className={Style.location}>
           <i className="fa-solid fa-location-dot" /> Portland, Oregon &nbsp;·&nbsp; Open to senior / lead roles
         </p>
@@ -323,9 +368,6 @@ export default function Resume({ innerRef }) {
           </a>
           <a href="https://linkedin.com/in/aaronrohrbacher" target="_blank" rel="noopener noreferrer" className={Style.contactLink}>
             <i className="fa-brands fa-linkedin" /> LinkedIn
-          </a>
-          <a href="/Aaron_Rohrbacher_Resume.pdf" download className={Style.downloadBtn}>
-            <i className="fa-solid fa-download" /> Download PDF
           </a>
         </div>
       </motion.header>
@@ -354,19 +396,13 @@ export default function Resume({ innerRef }) {
           exit="hidden"
           className={Style.panel}
         >
-          {tab === 'Timeline' && (
-            <div className={Style.timeline}>
-              {EXPERIENCE.map((job, i) => (
-                <TimelineEntry key={job.company} job={job} index={i} isLast={i === EXPERIENCE.length - 1} />
-              ))}
-            </div>
-          )}
+          {tab === 'Timeline' && <Timeline />}
 
           {tab === 'Skills' && <SkillGroups />}
 
           {tab === 'About' && (
             <motion.div className={Style.about} variants={fadeUp} custom={0} initial="hidden" animate="visible">
-              <p>I&apos;m a Lead AI/ML Software Engineer &amp; DevOps Architect with language-agnostic proficiency in programming and DevOps, and deep expertise in fiduciary finance, HR, payroll, and logistics. I deliver creative, effective, and timely solutions across AWS, GCP, and Azure.</p>
+              <p>I&apos;m a senior software &amp; DevOps engineer with language-agnostic proficiency in programming and DevOps, and deep expertise in fiduciary finance, HR, payroll, and logistics. I deliver creative, effective, and timely solutions across AWS, GCP, and Azure.</p>
               <p>Most recently at Forbes AAC, I led emergency stabilization and a ground-up enterprise rebuild of an assistive technology platform, including full rewrites of all native apps (iOS, Android, macOS, Windows, Linux). At SPARQ, I drove AI-powered conversational experiences and infrastructure for enterprise clients including a payroll overhaul serving 500k+ employees.</p>
               <p>AWS Certified Cloud Practitioner and Certified Developer – Associate. AWS DevOps Engineer – Professional in progress. Outside of engineering, I play saxophone and am learning instrument repair.</p>
               <motion.div className={Style.cta} variants={fadeUp} custom={3} initial="hidden" animate="visible">
@@ -377,7 +413,7 @@ export default function Resume({ innerRef }) {
             </motion.div>
           )}
 
-          {tab === 'Ask AI' && <AskAI />}
+          {/* {tab === 'Ask AI' && <AskAI />} */}
 
         </motion.div>
       </AnimatePresence>

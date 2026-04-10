@@ -14,10 +14,10 @@ const fadeUp = {
 };
 
 const PHILOSOPHY = [
-  'Production-readiness is a design constraint from day one — not a phase.',
-  'Security and compliance are first-class requirements, not afterthoughts.',
-  'The best AI feature degrades gracefully when the model is wrong.',
-  'Infrastructure is code. Everything must be reproducible.',
+  'Language and framework agnosticism. Tools get picked for the problem, not the other way around — and that goes for AI too.',
+  'The Open-Closed Principle is at the heart of most everything I build. Extend, don\'t gut.',
+  'Self-documenting code and the Principle of Least Astonishment. Magic isn\'t always magic for the next folks.',
+  'RFC-based decision-making. I\'ve laid down the law on architecture and tooling, but I\'ve learned more from my colleagues than from any course or book. Encourage discussion — even disagreement. That\'s how we grow as technologists.',
 ];
 
 const SKILL_GROUPS = [
@@ -39,21 +39,21 @@ export default function About({ innerRef }) {
 
           {/* Left: bio + philosophy */}
           <div className={Style.left}>
-            <motion.p className={Style.eyebrow} variants={fadeUp} custom={0} initial="hidden" animate="visible">
+            <motion.p className={Style.eyebrow} variants={fadeUp} custom={0} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               About
             </motion.p>
-            <motion.h1 className={Style.heading} variants={fadeUp} custom={1} initial="hidden" animate="visible">
+            <motion.h1 className={Style.heading} variants={fadeUp} custom={1} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               {info.firstName} {info.lastName}
             </motion.h1>
-            <motion.p className={Style.role} variants={fadeUp} custom={2} initial="hidden" animate="visible">
+            <motion.p className={Style.role} variants={fadeUp} custom={2} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               {info.position}
             </motion.p>
 
-            <motion.p className={Style.bioParagraph} variants={fadeUp} custom={3} initial="hidden" animate="visible">
+            <motion.p className={Style.bioParagraph} variants={fadeUp} custom={3} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               {info.bio}
             </motion.p>
 
-            <motion.div className={Style.philosophy} variants={fadeUp} custom={4} initial="hidden" animate="visible">
+            <motion.div className={Style.philosophy} variants={fadeUp} custom={4} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               <p className={Style.philosophyLabel}>Engineering philosophy</p>
               {PHILOSOPHY.map((item, i) => (
                 <div key={i} className={Style.philosophyItem}>
@@ -65,7 +65,7 @@ export default function About({ innerRef }) {
           </div>
 
           {/* Right: bento cards */}
-          <motion.div className={Style.bento} variants={fadeUp} custom={2} initial="hidden" animate="visible">
+          <motion.div className={Style.bento} variants={fadeUp} custom={2} initial="hidden" whileInView="visible" viewport={{ once: true }}>
 
             {/* Currently */}
             <div className={`${Style.card} ${Style.cardWide}`}>

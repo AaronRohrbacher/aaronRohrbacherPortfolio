@@ -1,6 +1,5 @@
 @use "@/styles/variables" as vars;
 
-// ─── Animated gradient background (used by hero + accents) ─────────────────
 @keyframes gradientShift {
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }
@@ -8,21 +7,16 @@
 }
 
 @keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(24px); }
+  from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 168, 120, 0.4); }
-  50%      { box-shadow: 0 0 16px 4px rgba(0, 168, 120, 0.15); }
+@keyframes eqBar {
+  0%, 100% { height: 30%; }
+  50%      { height: 100%; }
 }
 
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-// ─── Page Container ───��─────────────────────────────────────────────────────
+// ─── Page ───────────────────────────────────────────────────────────────────
 .page {
   max-width: 900px;
   margin: 0 auto;
@@ -33,99 +27,133 @@
   }
 }
 
-// ─── Hero ──────────���─────────────────────────────��──────────────────────────
+// ─── Hero ───────────────────────────────────────────────────────────────────
 .hero {
   position: relative;
-  text-align: center;
-  padding: 3.5rem 1.5rem 2.5rem;
-  margin: -1rem -1.5rem 2rem;
+  margin: 0 -1.5rem;
+  padding: 3rem 2rem 2.5rem;
   overflow: hidden;
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      135deg,
-      rgba(0, 168, 120, 0.06),
-      rgba(124, 58, 237, 0.06),
-      rgba(0, 168, 120, 0.03)
-    );
+    background: linear-gradient(135deg, rgba(0,168,120,0.08), rgba(124,58,237,0.06), transparent);
     background-size: 300% 300%;
-    animation: gradientShift 12s ease infinite;
-    z-index: 0;
+    animation: gradientShift 14s ease infinite;
   }
 
-  // Subtle noise texture overlay
   &::after {
     content: '';
     position: absolute;
-    inset: 0;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    z-index: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--gradient);
+    opacity: 0.15;
   }
 
-  > * { position: relative; z-index: 1; }
-
   @media (max-width: 640px) {
-    padding: 2.5rem 1rem 2rem;
-    margin: -0.5rem -1rem 1.5rem;
+    margin: 0 -1rem;
+    padding: 2rem 1.25rem 2rem;
   }
 }
 
+.heroInner {
+  position: relative;
+  z-index: 1;
+  max-width: 660px;
+}
+
 .title {
-  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
   font-weight: 800;
   margin: 0;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   background: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-1));
   background-size: 200% auto;
   animation: gradientShift 6s ease infinite;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  line-height: 1.05;
 }
 
 .subtitle {
-  font-size: 0.9rem;
-  opacity: 0.45;
-  margin: 0.5rem 0 0;
+  font-size: 0.92rem;
+  opacity: 0.55;
+  margin: 1rem 0 0;
   font-weight: 400;
-  letter-spacing: 0.01em;
+  line-height: 1.7;
+  max-width: 600px;
 }
 
-// ─── Search ��─────────────────────────────────────���──────────────────────────
+.statsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.stat {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.35;
+}
+
+.statDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.3;
+}
+
+// ─── Search ─────────────────────────────────────────────────────────────────
+.searchWrap {
+  position: relative;
+  margin: 1.5rem 0 1.75rem;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  opacity: 0.25;
+  pointer-events: none;
+}
+
 .searchInput {
   display: block;
   width: 100%;
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
   border-radius: 14px;
-  border: 1px solid rgba(128, 128, 128, 0.12);
-  font-size: 0.9rem;
-  background: rgba(128, 128, 128, 0.04);
+  border: 1px solid rgba(128, 128, 128, 0.1);
+  font-size: 0.88rem;
+  background: rgba(128, 128, 128, 0.035);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: inherit;
   box-sizing: border-box;
   font-family: inherit;
-  margin-bottom: 1.75rem;
   transition: border-color 300ms, background 300ms, box-shadow 300ms;
 
   &:focus {
     outline: none;
     border-color: var(--accent-1);
-    background: rgba(128, 128, 128, 0.06);
-    box-shadow: 0 0 0 3px rgba(0, 168, 120, 0.08);
+    background: rgba(128, 128, 128, 0.05);
+    box-shadow: 0 0 0 3px rgba(0, 168, 120, 0.06);
   }
 
-  &::placeholder {
-    opacity: 0.3;
-    font-weight: 400;
-  }
+  &::placeholder { opacity: 0.25; }
 }
 
-// ─── Loading / Error / Empty ────────────────���───────────────────────────────
+// ─── Loading / Error / Empty ────────────────────────────────────────────────
 .loading, .error, .empty {
   display: flex;
   flex-direction: column;
@@ -138,7 +166,7 @@
 .spinner {
   width: 32px;
   height: 32px;
-  border: 2.5px solid rgba(128, 128, 128, 0.15);
+  border: 2.5px solid rgba(128, 128, 128, 0.12);
   border-top-color: var(--accent-1);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -149,236 +177,247 @@
 .retryBtn {
   padding: 0.55rem 1.5rem;
   border-radius: 10px;
-  border: 1.5px solid rgba(128, 128, 128, 0.2);
+  border: 1px solid rgba(128, 128, 128, 0.2);
   background: transparent;
   color: inherit;
   cursor: pointer;
   font-weight: 500;
-  font-size: 0.85rem;
-  transition: border-color 200ms, background 200ms;
+  transition: border-color 200ms;
 
-  &:hover {
-    border-color: var(--accent-1);
-    background: rgba(0, 168, 120, 0.05);
-  }
+  &:hover { border-color: var(--accent-1); }
 }
 
-// ─── Track List ───────────────────────────────��─────────────────────────────
+// ─── Track List ─────────────────────────────────────────────────────────────
 .trackList {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 2px;
 }
 
-// ─── Track Card — glassmorphism ───���─────────��───────────────────────────────
+// ─── Track Card ─────────────────────────────────────────────────────────────
 .trackCard {
-  position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.15rem 1.3rem;
-  border-radius: 16px;
-  border: 1px solid rgba(128, 128, 128, 0.08);
-  background: rgba(128, 128, 128, 0.025);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 180ms ease;
+  position: relative;
 
-  // Entrance animation
-  animation: fadeSlideUp 0.5s ease both;
-
-  // Stagger delay via nth-child
+  animation: fadeSlideUp 0.4s ease both;
   @for $i from 1 through 20 {
-    &:nth-child(#{$i}) {
-      animation-delay: #{$i * 0.04}s;
-    }
+    &:nth-child(#{$i}) { animation-delay: #{$i * 0.03}s; }
   }
 
   &:hover {
     background: rgba(128, 128, 128, 0.06);
-    border-color: rgba(128, 128, 128, 0.15);
-    transform: translateY(-1px);
-    box-shadow:
-      0 4px 24px -4px rgba(0, 0, 0, 0.06),
-      0 0 0 1px rgba(128, 128, 128, 0.05);
+
+    .trackArtHover { opacity: 1; }
+    .trackArtInner { opacity: 0.3; }
   }
 
   &.active {
-    border-color: rgba(0, 168, 120, 0.3);
-    background: rgba(0, 168, 120, 0.04);
-    box-shadow:
-      0 0 24px -8px rgba(0, 168, 120, 0.15),
-      inset 0 0 0 1px rgba(0, 168, 120, 0.06);
+    background: rgba(0, 168, 120, 0.06);
 
-    // Gradient accent line on left
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 12px;
-      bottom: 12px;
-      width: 3px;
-      border-radius: 3px;
-      background: var(--gradient);
+    .trackName {
+      color: var(--accent-1);
     }
-  }
-
-  @media (max-width: 640px) {
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    padding: 0.9rem 1rem;
-    border-radius: 14px;
   }
 }
 
-// ─── Play Button ───────���────────────────────────────────────────────────────
-.playBtn {
+// ─── Track Art Swatch ───────────────────────────────────────────────────────
+.trackArt {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
   flex-shrink: 0;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
-  background: var(--gradient);
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms;
-  padding: 0;
-  margin-top: 0.1rem;
-  box-shadow: 0 2px 12px -2px rgba(0, 168, 120, 0.3);
+  overflow: hidden;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.2);
 
-  &:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 20px -2px rgba(0, 168, 120, 0.4);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-
-  .active & {
-    animation: pulseGlow 2.5s ease-in-out infinite;
-  }
-
-  i {
-    color: white;
-    margin-left: 2px;
+  @media (max-width: 640px) {
+    width: 42px;
+    height: 42px;
+    border-radius: 6px;
   }
 }
 
-// ─── Track Info ────────────────────────────────���────────────────────────────
+.trackArtInner {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  z-index: 1;
+  transition: opacity 150ms;
+}
+
+.trackNum {
+  font-weight: 700;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.trackArtHover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  color: white;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: opacity 150ms;
+  z-index: 2;
+}
+
+// ─── EQ Bars (playing indicator) ────────────────────────────────────────────
+.eqBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+
+  span {
+    display: block;
+    width: 3px;
+    border-radius: 2px;
+    background: white;
+    animation: eqBar 0.8s ease-in-out infinite;
+
+    &:nth-child(1) { animation-delay: 0s; height: 60%; }
+    &:nth-child(2) { animation-delay: 0.2s; height: 100%; }
+    &:nth-child(3) { animation-delay: 0.4s; height: 40%; }
+  }
+}
+
+// ─── Track Info ─────────────────────────────────────────────────────────────
 .trackInfo {
   flex: 1;
   min-width: 0;
 }
 
 .trackName {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 0.92rem;
+  font-weight: 600;
   margin: 0;
   font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
   letter-spacing: -0.01em;
+  transition: color 200ms;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .trackArtists {
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   opacity: 0.5;
-  margin: 0.2rem 0 0;
-  white-space: pre-line;
-  font-weight: 500;
+  margin: 0.1rem 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trackDesc {
+  font-size: 0.74rem;
+  opacity: 0.35;
+  margin: 0.15rem 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ─── Track Right ────────────────────────────────────────────────────────────
+.trackRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  position: relative;
 }
 
 .trackDate {
   font-size: 0.7rem;
   opacity: 0.3;
-  margin: 0.15rem 0 0;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  @media (max-width: 640px) { display: none; }
 }
 
-.trackDesc {
-  font-size: 0.8rem;
-  opacity: 0.4;
-  margin: 0.35rem 0 0;
-  line-height: 1.5;
-  white-space: pre-line;
+.trackActions {
+  display: flex;
+  gap: 0.25rem;
 }
 
-// ─── Actions Row ───────────��─────────────────────────��──────────────────────
-.trackActionsRow {
+.actionBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  margin-top: 0.65rem;
-  flex-wrap: wrap;
-  opacity: 0.7;
-  transition: opacity 200ms;
-
-  .trackCard:hover & {
-    opacity: 1;
-  }
-}
-
-.playInline {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.35rem 0.8rem;
-  border-radius: 8px;
+  justify-content: center;
   font-size: 0.72rem;
-  font-weight: 600;
-  background: var(--gradient);
-  color: white;
-  border: none;
+  background: transparent;
+  border: 1px solid rgba(128, 128, 128, 0.1);
+  color: inherit;
   cursor: pointer;
-  transition: opacity 200ms, transform 150ms;
-  letter-spacing: 0.01em;
+  opacity: 0.35;
+  transition: all 200ms;
+  padding: 0;
 
   &:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+    opacity: 1;
+    background: rgba(128, 128, 128, 0.08);
+    border-color: rgba(128, 128, 128, 0.2);
   }
-
-  &:active { transform: translateY(0); }
-
-  i { color: white; font-size: 0.6rem; }
 }
 
-.downloadGroup {
+// ─── Download Dropdown ──────────────────────────────────────────────────────
+.downloadDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.35rem;
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.35rem;
   display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 1px;
+  z-index: 20;
+  min-width: 100px;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.3);
+  animation: fadeSlideUp 0.15s ease;
 }
 
-.downloadBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.35rem 0.6rem;
-  border-radius: 8px;
-  font-size: 0.7rem;
+:global([data-theme="light"]) .downloadDropdown {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.1);
+}
+
+.downloadLink {
+  display: block;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  border: 1px solid rgba(128, 128, 128, 0.15);
-  background: rgba(128, 128, 128, 0.03);
   color: inherit;
   text-decoration: none;
-  opacity: 0.55;
-  transition: all 200ms;
-  letter-spacing: 0.01em;
+  border-radius: 7px;
+  transition: background 150ms;
+  letter-spacing: 0.02em;
 
   &:hover {
-    opacity: 1;
-    border-color: var(--accent-2);
-    background: rgba(124, 58, 237, 0.05);
-    transform: translateY(-1px);
+    background: rgba(128, 128, 128, 0.1);
   }
-
-  i { font-size: 0.55rem; }
 }
 
-// ─── Pagination ─────────���──────────────────────────────��────────────────────
+// ─── Pagination ─────────────────────────────────────────────────────────────
 .pagination {
   display: flex;
   align-items: center;
@@ -386,7 +425,7 @@
   gap: 1rem;
   margin-top: 2.5rem;
   padding-top: 1.25rem;
-  border-top: 1px solid rgba(128, 128, 128, 0.08);
+  border-top: 1px solid rgba(128, 128, 128, 0.06);
 }
 
 .pageBtn {
@@ -395,77 +434,88 @@
   gap: 0.35rem;
   padding: 0.5rem 1rem;
   border-radius: 10px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  border: 1px solid rgba(128, 128, 128, 0.15);
-  background: rgba(128, 128, 128, 0.03);
-  backdrop-filter: blur(4px);
+  border: 1px solid rgba(128, 128, 128, 0.12);
+  background: transparent;
   color: inherit;
   cursor: pointer;
   transition: all 200ms;
 
   &:hover:not(:disabled) {
     border-color: var(--accent-1);
-    background: rgba(0, 168, 120, 0.05);
-    transform: translateY(-1px);
+    background: rgba(0, 168, 120, 0.04);
   }
 
-  &:disabled {
-    opacity: 0.2;
-    cursor: not-allowed;
-  }
+  &:disabled { opacity: 0.2; cursor: not-allowed; }
 }
 
 .pageInfo {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  opacity: 0.4;
+  opacity: 0.35;
   font-variant-numeric: tabular-nums;
 }
 
-// ─── Dump / Release Sections ────────���───────────────────────────────────────
+// ─── Dump / Release Sections ────────────────────────────────────────────────
 .dumpSection {
-  margin-bottom: 2.25rem;
+  margin-bottom: 2.5rem;
   animation: fadeSlideUp 0.5s ease both;
 }
 
 .dumpHeader {
-  margin-bottom: 0.85rem;
-  padding: 1rem 1.25rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding: 1.25rem;
   border-radius: 14px;
   background: rgba(128, 128, 128, 0.03);
   border: 1px solid rgba(128, 128, 128, 0.06);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  position: relative;
-  overflow: hidden;
+}
 
-  // Subtle gradient accent on top edge
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 1rem;
-    right: 1rem;
-    height: 2px;
-    border-radius: 2px;
-    background: var(--gradient);
-    opacity: 0.5;
+.dumpArt {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.2rem;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2);
+
+  @media (max-width: 640px) {
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    font-size: 1rem;
   }
+}
+
+.dumpMeta {
+  flex: 1;
+  min-width: 0;
+}
+
+.dumpLabel {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.3;
 }
 
 .dumpTitleLink {
   text-decoration: none;
-
-  &:hover .dumpTitle {
-    opacity: 0.85;
-  }
+  &:hover .dumpTitle { opacity: 0.8; }
 }
 
 .dumpTitle {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  margin: 0;
+  margin: 0.15rem 0 0;
   letter-spacing: -0.02em;
   background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   -webkit-background-clip: text;
@@ -475,50 +525,24 @@
 }
 
 .dumpArtists {
-  font-size: 0.8rem;
-  opacity: 0.55;
-  margin: 0.25rem 0 0;
-  white-space: pre-line;
-  font-weight: 500;
+  font-size: 0.78rem;
+  opacity: 0.5;
+  margin: 0.15rem 0 0;
 }
 
 .dumpDesc {
-  font-size: 0.78rem;
-  opacity: 0.4;
-  margin: 0.25rem 0 0;
-  line-height: 1.45;
-  white-space: pre-line;
+  font-size: 0.74rem;
+  opacity: 0.35;
+  margin: 0.15rem 0 0;
+  line-height: 1.4;
 }
 
-// ─── Now Playing (unused but kept for compat) ───────────────────────────────
-.nowPlaying {
-  background: rgba(128, 128, 128, 0.04);
-  border: 1px solid rgba(128, 128, 128, 0.1);
-  border-radius: 16px;
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
-  backdrop-filter: blur(8px);
-}
-
-.nowPlayingInfo { margin-bottom: 0.75rem; }
-
-.nowPlayingLabel {
+.dumpCount {
   font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  opacity: 0.35;
-}
-
-.nowPlayingTitle {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin: 0.25rem 0 0;
-  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
-}
-
-.nowPlayingArtists {
-  font-size: 0.85rem;
-  opacity: 0.6;
-  margin: 0.15rem 0 0;
+  letter-spacing: 0.06em;
+  opacity: 0.3;
+  margin-top: 0.35rem;
+  display: inline-block;
 }

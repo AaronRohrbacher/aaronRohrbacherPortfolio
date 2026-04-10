@@ -9,6 +9,7 @@ import UserManager from './UserManager';
 import GroupManager from './GroupManager';
 import DumpManager from './DumpManager';
 import EventsPanel from './EventsPanel';
+import { useMusicHref } from '@/lib/musicLinks';
 
 
 const TABS = ['tracks', 'dumps', 'users', 'groups', 'events', 'settings'];
@@ -16,6 +17,7 @@ const TABS = ['tracks', 'dumps', 'users', 'groups', 'events', 'settings'];
 export default function MusicAdmin() {
   const { user, loading: authLoading, getAuthHeaders } = useAuth();
   const router = useRouter();
+  const musicHref = useMusicHref();
   const [tab, setTab] = useState('tracks');
   const [tracks, setTracks] = useState([]);
   const [dumps, setDumps] = useState([]);
@@ -136,7 +138,7 @@ export default function MusicAdmin() {
   }
 
   if (!user) {
-    router.push('/music/login');
+    router.push(musicHref('/login'));
     return null;
   }
 

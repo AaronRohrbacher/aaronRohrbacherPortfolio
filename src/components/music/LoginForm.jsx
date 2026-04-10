@@ -5,10 +5,12 @@ import { useAuth } from './AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Style from './AuthForm.module.scss';
+import { useMusicHref } from '@/lib/musicLinks';
 
 export default function LoginForm() {
   const { signIn, completeNewPassword } = useAuth();
   const router = useRouter();
+  const musicHref = useMusicHref();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -23,7 +25,7 @@ export default function LoginForm() {
     try {
       if (needsNewPassword) {
         await completeNewPassword(needsNewPassword, newPassword);
-        router.push('/music');
+        router.push(musicHref('/'));
         return;
       }
       const result = await signIn(email, password);
@@ -32,7 +34,7 @@ export default function LoginForm() {
         setLoading(false);
         return;
       }
-      router.push('/music');
+      router.push(musicHref('/'));
     } catch (err) {
       setError(err.message || 'Sign in failed');
       setLoading(false);
@@ -91,10 +93,10 @@ export default function LoginForm() {
         {!needsNewPassword && (
           <>
             <div className={Style.link}>
-              <Link href="/music/forgot-password">Forgot password?</Link>
+              <Link href={musicHref('/forgot-password')}>Forgot password?</Link>
             </div>
             <div className={Style.link}>
-              Don&apos;t have an account? <Link href="/music/signup">Sign up</Link>
+              Don&apos;t have an account? <Link href={musicHref('/signup')}>Sign up</Link>
             </div>
           </>
         )}

@@ -5,33 +5,40 @@ import Link from 'next/link';
 import Style from './MusicPlaylist.module.scss';
 import { useAuth } from './AuthContext';
 import { useMusicPlayer } from './MusicPlayerContext';
+import { useMusicHref } from '@/lib/musicLinks';
 
 const DEFAULT_PER_PAGE = 10;
+
+// Deterministic gradient from track name — gives each track a unique color swatch
+function trackGradient(name) {
+  let h = 0;
+  for (let i = 0; i < (name || '').length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  const hue1 = ((h % 360) + 360) % 360;
+  const hue2 = (hue1 + 40) % 360;
+  return `linear-gradient(135deg, hsl(${hue1}, 55%, 45%), hsl(${hue2}, 60%, 35%))`;
+}
 
 export default function MusicPlaylist({ initialTracks = [], initialDumps = [] }) {
   const { getAuthHeaders } = useAuth();
   const { currentTrack, isPlaying, playTrack, setQueue: setPlayerQueue } = useMusicPlayer();
+  const musicHref = useMusicHref();
 
-  // Use SSR data immediately, then refresh client-side (picks up auth'd content)
   const hasInitial = initialTracks.length > 0 || initialDumps.length > 0;
   const [tracks, setTracks] = useState(initialTracks);
   const [dumps, setDumps] = useState(initialDumps);
   const [loading, setLoading] = useState(!hasInitial);
   const [error, setError] = useState(null);
   const [queue, setQueue] = useState(() => {
-    const q = [...initialDumps.flatMap((d) => d.tracks || []), ...initialTracks];
-    return q;
+    return [...initialDumps.flatMap((d) => d.tracks || []), ...initialTracks];
   });
   const [page, setPage] = useState(0);
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
   const [search, setSearch] = useState('');
 
-  // Set initial queue in player context
   useEffect(() => {
     if (queue.length > 0) setPlayerQueue(queue);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Client-side refresh to pick up auth-gated tracks
   useEffect(() => {
     fetchTracks();
     fetchSettings();
@@ -102,7 +109,6 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
 
   const noContent = tracks.length === 0 && dumps.length === 0;
 
-  // Filter by search
   const filtered = search.trim()
     ? queue.filter((t) => {
         const q = search.toLowerCase();
@@ -115,13 +121,11 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
       })
     : queue;
 
-  // Pagination over filtered results
   const totalPages = Math.ceil(filtered.length / perPage);
   const pageStart = page * perPage;
   const pageEnd = pageStart + perPage;
   const visibleQueue = filtered.slice(pageStart, pageEnd);
 
-  // Map visible items back to dump/loose grouping
   const visibleDumpMap = {};
   const visibleLoose = [];
   for (const t of visibleQueue) {
@@ -134,52 +138,65 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
   }
   const visibleDumps = dumps.filter((d) => visibleDumpMap[d.id]);
 
-  // Global index uses original queue position for correct playback
   const filteredIndexMap = new Map(filtered.map((t) => [t.id, queue.indexOf(t)]));
 
   return (
     <div className={Style.page}>
       {/* Hero */}
       <div className={Style.hero}>
-        <h1 className={Style.title}>Music</h1>
-        <p className={Style.subtitle}>
-          Listen, enjoy, and download. All tracks available for streaming right here.
-        </p>
+        <div className={Style.heroInner}>
+          <h1 className={Style.title}>Music</h1>
+          <p className={Style.subtitle}>
+            Oh hey. My name is Aaron Rohrbacher. I live in Portland, Oregon, and am the outright owner of a tenor saxophone and clarinet. You can occasionally find me playing about town, largely in jam/open-mic scenarios. As a (very) amateur audio engineer and recording artist, I wanted to share a few tunes I&apos;ve thoroughly ruined — listen at your own risk!
+          </p>
+        </div>
       </div>
 
       {queue.length > 0 && (
-        <input
-          className={Style.searchInput}
-          type="text"
-          placeholder="Search tracks..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-        />
+        <div className={Style.searchWrap}>
+          <i className={`fa-solid fa-magnifying-glass ${Style.searchIcon}`} />
+          <input
+            className={Style.searchInput}
+            type="text"
+            placeholder="Search tracks, artists, descriptions..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+          />
+        </div>
       )}
 
       {noContent ? (
         <div className={Style.empty}>
+          <i className="fa-solid fa-music" style={{ fontSize: '2rem', opacity: 0.2 }} />
           <p>No tracks published yet. Check back soon!</p>
         </div>
       ) : (
         <>
-          {/* Dumps on this page */}
+          {/* Dumps */}
           {visibleDumps.map((dump) => {
             const dumpTracks = visibleDumpMap[dump.id];
             return (
               <div key={dump.id} className={Style.dumpSection}>
                 <div className={Style.dumpHeader}>
-                  <Link href={`/music/dump/${dump.id}`} className={Style.dumpTitleLink}>
-                    <h2 className={Style.dumpTitle}>{dump.name}</h2>
-                  </Link>
-                  {dump.artists && <p className={Style.dumpArtists}>{dump.artists}</p>}
-                  {dump.description && <p className={Style.dumpDesc}>{dump.description}</p>}
+                  <div className={Style.dumpArt} style={{ background: trackGradient(dump.name) }}>
+                    <i className="fa-solid fa-layer-group" />
+                  </div>
+                  <div className={Style.dumpMeta}>
+                    <span className={Style.dumpLabel}>Collection</span>
+                    <Link href={musicHref(`/dump/${dump.id}`)} className={Style.dumpTitleLink}>
+                      <h2 className={Style.dumpTitle}>{dump.name}</h2>
+                    </Link>
+                    {dump.artists && <p className={Style.dumpArtists}>{dump.artists}</p>}
+                    {dump.description && <p className={Style.dumpDesc}>{dump.description}</p>}
+                    <span className={Style.dumpCount}>{dumpTracks.length} track{dumpTracks.length !== 1 ? 's' : ''}</span>
+                  </div>
                 </div>
                 <div className={Style.trackList}>
-                  {dumpTracks.map((track) => (
+                  {dumpTracks.map((track, i) => (
                     <TrackCard
                       key={track.id}
                       track={track}
+                      trackNum={i + 1}
                       index={filteredIndexMap.get(track.id) ?? 0}
                       currentTrack={currentTrack}
                       isPlaying={isPlaying}
@@ -192,13 +209,14 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
             );
           })}
 
-          {/* Loose Tracks on this page */}
+          {/* Loose Tracks */}
           {visibleLoose.length > 0 && (
             <div className={Style.trackList}>
-              {visibleLoose.map((track) => (
+              {visibleLoose.map((track, i) => (
                 <TrackCard
                   key={track.id}
                   track={track}
+                  trackNum={visibleDumps.length > 0 ? null : i + 1}
                   index={filteredIndexMap.get(track.id) ?? 0}
                   currentTrack={currentTrack}
                   isPlaying={isPlaying}
@@ -212,21 +230,11 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
           {/* Pagination */}
           {totalPages > 1 && (
             <div className={Style.pagination}>
-              <button
-                className={Style.pageBtn}
-                disabled={page === 0}
-                onClick={() => setPage(page - 1)}
-              >
+              <button className={Style.pageBtn} disabled={page === 0} onClick={() => setPage(page - 1)}>
                 <i className="fa-solid fa-chevron-left" /> Prev
               </button>
-              <span className={Style.pageInfo}>
-                {page + 1} / {totalPages}
-              </span>
-              <button
-                className={Style.pageBtn}
-                disabled={page >= totalPages - 1}
-                onClick={() => setPage(page + 1)}
-              >
+              <span className={Style.pageInfo}>{page + 1} / {totalPages}</span>
+              <button className={Style.pageBtn} disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
                 Next <i className="fa-solid fa-chevron-right" />
               </button>
             </div>
@@ -237,55 +245,71 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
   );
 }
 
-function TrackCard({ track, index, currentTrack, isPlaying, onPlay, getDownloadUrl }) {
+function TrackCard({ track, trackNum, index, currentTrack, isPlaying, onPlay, getDownloadUrl }) {
   const isActive = currentTrack?.id === track.id;
   const formats = Array.isArray(track.formats) ? track.formats : Object.keys(track.formats);
+  const [showDownloads, setShowDownloads] = useState(false);
 
   return (
-    <div className={[Style.trackCard, isActive ? Style.active : ''].join(' ')}>
-      {/* Left: Play button */}
-      <button
-        className={Style.playBtn}
-        onClick={() => onPlay(track, index)}
-        aria-label={isActive && isPlaying ? `Pause ${track.name}` : `Play ${track.name}`}
-      >
-        {isActive && isPlaying ? (
-          <i className="fa-solid fa-pause" />
-        ) : (
-          <i className="fa-solid fa-play" />
-        )}
-      </button>
+    <div
+      className={[Style.trackCard, isActive ? Style.active : ''].join(' ')}
+      onClick={() => onPlay(track, index)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPlay(track, index); } }}
+    >
+      {/* Art / Number */}
+      <div className={Style.trackArt} style={{ background: trackGradient(track.name) }}>
+        <span className={Style.trackArtInner}>
+          {isActive && isPlaying ? (
+            <span className={Style.eqBars}>
+              <span /><span /><span />
+            </span>
+          ) : trackNum ? (
+            <span className={Style.trackNum}>{trackNum}</span>
+          ) : (
+            <i className="fa-solid fa-music" />
+          )}
+        </span>
+        {/* Play overlay on hover */}
+        <span className={Style.trackArtHover}>
+          <i className={isActive && isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play'} />
+        </span>
+      </div>
 
-      {/* Center: Track info */}
+      {/* Info */}
       <div className={Style.trackInfo}>
         <h3 className={Style.trackName}>{track.name}</h3>
         {track.artists && <p className={Style.trackArtists}>{track.artists}</p>}
-        {track.addedAt && <p className={Style.trackDate}>{new Date(track.addedAt).toLocaleDateString()}</p>}
         {track.description && <p className={Style.trackDesc}>{track.description}</p>}
+      </div>
 
-        {/* Actions row */}
-        <div className={Style.trackActionsRow}>
+      {/* Right side: date + download */}
+      <div className={Style.trackRight} onClick={(e) => e.stopPropagation()}>
+        {track.addedAt && (
+          <span className={Style.trackDate}>
+            {new Date(track.addedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+          </span>
+        )}
+        <div className={Style.trackActions}>
           <button
-            className={Style.playInline}
-            onClick={() => onPlay(track, index)}
+            className={Style.actionBtn}
+            onClick={(e) => { e.stopPropagation(); setShowDownloads(!showDownloads); }}
+            aria-label="Download options"
+            title="Download"
           >
-            <i className={isActive && isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play'} />
-            {isActive && isPlaying ? ' Pause' : ' Play in Browser'}
+            <i className="fa-solid fa-download" />
           </button>
-
-          <div className={Style.downloadGroup}>
+        </div>
+        {showDownloads && (
+          <div className={Style.downloadDropdown}>
             {formats.map((fmt) => (
-              <a
-                key={fmt}
-                href={getDownloadUrl(track, fmt)}
-                className={Style.downloadBtn}
-              >
-                <i className="fa-solid fa-download" />
-                {' Download ' + fmt.toUpperCase()}
+              <a key={fmt} href={getDownloadUrl(track, fmt)} className={Style.downloadLink}>
+                {fmt.toUpperCase()}
               </a>
             ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

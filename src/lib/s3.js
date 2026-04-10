@@ -8,11 +8,12 @@ let _client;
 function getClient() {
   if (!_client) {
     const opts = { region: REGION };
-    const accessKey = process.env.AWS_ACCESS_KEY_ID_MUSIC || process.env.AWS_ACCESS_KEY_ID;
-    const secretKey = process.env.AWS_SECRET_ACCESS_KEY_MUSIC || process.env.AWS_SECRET_ACCESS_KEY;
+    const accessKey = process.env.AWS_ACCESS_KEY_ID_MUSIC;
+    const secretKey = process.env.AWS_SECRET_ACCESS_KEY_MUSIC;
     if (accessKey && secretKey) {
       opts.credentials = { accessKeyId: accessKey, secretAccessKey: secretKey };
     }
+    // Otherwise: SDK default credential chain (Lambda IAM role w/ session token)
     _client = new S3Client(opts);
   }
   return _client;

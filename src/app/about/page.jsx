@@ -1,6 +1,11 @@
 export const metadata = {
   title: 'About',
   description: 'Learn a little more about Aaron Rohrbacher and his endeavours in software.',
+  openGraph: {
+    title: 'About | Aaron Rohrbacher',
+    description: 'Learn a little more about Aaron Rohrbacher and his endeavours in software.',
+    url: 'https://aaronrohrbacher.com/about',
+  },
 };
 
 import { cookies } from 'next/headers';

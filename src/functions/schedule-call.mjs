@@ -19,6 +19,7 @@
 import { OAuth2Client } from 'google-auth-library';
 import { calendar as calendarApi } from '@googleapis/calendar';
 import { DateTime } from 'luxon';
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 
 const TZ = 'America/Los_Angeles';
 const HORIZON_DAYS = 90;
@@ -154,17 +155,36 @@ async function bookSlot({ slotChoice, customerName, schedulerEmail, slotIsoMap }
       sendUpdates: 'all',
       requestBody: {
         summary: `Chat with ${customerName || 'portfolio visitor'}`,
-        description: 'Scheduled via aaronrohrbacher.com',
+        description: `Scheduled via aaronrohrbacher.com\n${customerName ? `Name: ${customerName}\n` : ''}Contact: ${schedulerEmail || 'not provided'}`,
         start: { dateTime: start.toISO(), timeZone: TZ },
         end: { dateTime: end.toISO(), timeZone: TZ },
         attendees: [
-          ...(schedulerEmail ? [{ email: schedulerEmail }] : []),
+          ...(schedulerEmail && schedulerEmail.includes('@') ? [{ email: schedulerEmail }] : []),
           { email: calendarId },
         ],
         reminders: { useDefault: true },
       },
     });
-    return { ok: true, eventId: res.data.id, eventLink: res.data.htmlLink };
+    // If customer gave a phone number (not email), send SMS confirmation
+    const isPhone = schedulerEmail && !schedulerEmail.includes('@') && /\d{7,}/.test(schedulerEmail);
+    if (isPhone) {
+      try {
+        const phone = schedulerEmail.replace(/\D/g, '');
+        const e164 = phone.length === 10 ? `+1${phone}` : `+${phone}`;
+        const sns = new SNSClient({});
+        await sns.send(new PublishCommand({
+          PhoneNumber: e164,
+          Message: `Hi ${customerName || 'there'}! Your call with Aaron Rohrbacher is confirmed for ${labelForSlot(start)}. See you then!`,
+          MessageAttributes: {
+            'AWS.SNS.SMS.SMSType': { DataType: 'String', StringValue: 'Transactional' },
+          },
+        }));
+      } catch (smsErr) {
+        console.error('SMS send failed:', smsErr?.message || smsErr);
+      }
+    }
+
+    return { ok: true, eventId: res.data.id, eventLink: res.data.htmlLink, bookedLabel: labelForSlot(start) };
   } catch (err) {
     console.error('book-slot failed:', err?.message || err);
     return { ok: false, reason: 'booking_failed' };
@@ -217,6 +237,7 @@ export async function handler(event) {
       return {
         bookingOk: result.ok ? 'true' : 'false',
         bookingReason: result.reason || '',
+        bookedTime: result.bookedLabel || '',
       };
     }
 

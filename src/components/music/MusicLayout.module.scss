@@ -1,9 +1,40 @@
 @use "@/styles/variables" as vars;
 
+// ─── Animated background gradient (subtle, slow) ────────────────────────────
+@keyframes bgShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .dark {
   background-color: var(--dark);
   color: var(--white);
-  transition: all 400ms;
+  transition: background-color 400ms ease, color 400ms ease;
+
+  // Subtle animated gradient overlay in dark mode
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(
+      ellipse at 20% 0%,
+      rgba(0, 168, 120, 0.04) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 100%,
+      rgba(124, 58, 237, 0.03) 0%,
+      transparent 50%
+    );
+    opacity: 1;
+    transition: opacity 400ms;
+  }
+
+  // Keep children above the overlay
+  > * { position: relative; z-index: 1; }
 
   :global(a),
   :global(i),
@@ -21,5 +52,27 @@
 .light {
   background-color: var(--white);
   color: var(--dark);
-  transition: all 400ms;
+  transition: background-color 400ms ease, color 400ms ease;
+
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(
+      ellipse at 30% 0%,
+      rgba(0, 168, 120, 0.025) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 70% 100%,
+      rgba(124, 58, 237, 0.02) 0%,
+      transparent 50%
+    );
+    opacity: 1;
+    transition: opacity 400ms;
+  }
+
+  > * { position: relative; z-index: 1; }
 }

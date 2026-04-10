@@ -5,10 +5,12 @@ import { useAuth } from './AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Style from './AuthForm.module.scss';
+import { useMusicHref } from '@/lib/musicLinks';
 
 export default function ForgotPasswordForm() {
   const { forgotPassword, confirmPassword } = useAuth();
   const router = useRouter();
+  const musicHref = useMusicHref();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -36,7 +38,7 @@ export default function ForgotPasswordForm() {
     setLoading(true);
     try {
       await confirmPassword(email, code, newPassword);
-      router.push('/music/login');
+      router.push(musicHref('/login'));
     } catch (err) {
       setError(err.message || 'Failed to reset password');
     } finally {
@@ -96,7 +98,7 @@ export default function ForgotPasswordForm() {
           {loading ? 'Sending...' : 'Send Reset Code'}
         </button>
         <div className={Style.link}>
-          <Link href="/music/login">Back to sign in</Link>
+          <Link href={musicHref('/login')}>Back to sign in</Link>
         </div>
       </form>
     </div>

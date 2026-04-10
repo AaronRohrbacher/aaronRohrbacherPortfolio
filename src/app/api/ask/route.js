@@ -11,8 +11,8 @@ Be honest if you don't know something specific about Aaron.
 PROFESSIONAL SUMMARY:
 Lead Software Development Engineer and AI Systems Architect based in Portland, Oregon. Deep expertise in custom AI model development, LLM integration, and conversational AI systems. AWS Certified Cloud Practitioner and Developer – Associate. DevOps Engineer – Professional certification in progress.
 
-CURRENT ROLE:
-Lead Software Development Engineer at Forbes AAC (Aug 2025 – Present).
+MOST RECENT ROLE:
+Lead Software Development Engineer at Forbes AAC (Dec 2024 – Mar 2026).
 - Inherited a critically failing Ruby 2.6/Ember 3.0 platform and stabilized it within days.
 - Architected complete enterprise rebuild on Next.js, injecting compiled legacy code for continuity.
 - Rebuilt all native apps from scratch: iOS (Swift/SwiftUI), Android (Java/Kotlin), macOS (Swift/AppKit), Windows & Linux (Qt/Rust).

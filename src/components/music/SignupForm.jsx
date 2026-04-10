@@ -5,10 +5,12 @@ import { useAuth } from './AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Style from './AuthForm.module.scss';
+import { useMusicHref } from '@/lib/musicLinks';
 
 export default function SignupForm() {
   const { signUp, confirmSignUp } = useAuth();
   const router = useRouter();
+  const musicHref = useMusicHref();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
@@ -36,7 +38,7 @@ export default function SignupForm() {
     setLoading(true);
     try {
       await confirmSignUp(email, code);
-      router.push('/music/login');
+      router.push(musicHref('/login'));
     } catch (err) {
       setError(err.message || 'Confirmation failed');
     } finally {
@@ -96,7 +98,7 @@ export default function SignupForm() {
           {loading ? 'Creating...' : 'Sign Up'}
         </button>
         <div className={Style.link}>
-          Already have an account? <Link href="/music/login">Sign in</Link>
+          Already have an account? <Link href={musicHref('/login')}>Sign in</Link>
         </div>
       </form>
     </div>

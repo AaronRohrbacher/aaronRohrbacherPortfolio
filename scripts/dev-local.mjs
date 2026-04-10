@@ -56,7 +56,7 @@ function isPortOpen(port) {
 
 function getDynamoClient() {
   return new DynamoDBClient({
-    region: 'us-east-2',
+    region: 'us-west-2',
     endpoint: ENDPOINT,
     credentials: { accessKeyId: 'local', secretAccessKey: 'local' },
   });
@@ -190,7 +190,11 @@ try {
     const t = line.trim();
     if (!t || t.startsWith('#')) continue;
     const eq = t.indexOf('=');
-    if (eq > 0) envLocal[t.slice(0, eq)] = t.slice(eq + 1);
+    if (eq > 0) {
+      const val = t.slice(eq + 1);
+      // Skip empty values so they don't clobber real shell env vars
+      if (val !== '') envLocal[t.slice(0, eq)] = val;
+    }
   }
 } catch {}
 
@@ -202,7 +206,7 @@ const next = spawn('npx', ['next', 'dev'], {
     ...envLocal,
     MUSIC_TABLE_NAME: TABLE_NAME,
     DYNAMO_ENDPOINT: ENDPOINT,
-    NEXT_PUBLIC_AWS_REGION: 'us-east-2',
+    NEXT_PUBLIC_AWS_REGION: 'us-west-2',
   },
 });
 

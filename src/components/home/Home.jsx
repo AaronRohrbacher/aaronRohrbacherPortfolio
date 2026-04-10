@@ -10,17 +10,9 @@ import { info } from '@/info/Info';
 import Slider from './Slider';
 
 export default function Home({ innerRef }) {
-  // AI agent disabled — see AI_COMMENTED_OUT.md at repo root.
-  // Open the Amazon Connect chat by clicking the launcher bubble itself —
-  // that's the only thing that opens the chat window. __connectLaunch() just
-  // shows the launcher, it doesn't open the window.
   const openChatAgent = () => {
     document.getElementById('amazon-connect-open-widget-button')?.click();
   };
-  // const openChatAgent = () => {
-  //   // Dispatch a custom event that ChatAgent listens for
-  //   window.dispatchEvent(new CustomEvent('open-chat-agent'));
-  // };
 
   return (
     <Box

@@ -147,6 +147,67 @@
   gap: 1.25rem;
 }
 
+.recruitedGutter {
+  width: 0;
+  flex-shrink: 0;
+  overflow: visible;
+  position: relative;
+  margin-right: -1.25rem; // cancel out the flex gap so spine stays put
+}
+
+.recruitedBar {
+  position: absolute;
+  right: 0.75rem;
+  top: 10px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--gradient);
+  opacity: 0.5;
+  transform-origin: center top;
+  transform: rotate(180deg);
+  transition: height 0.35s ease;
+}
+
+.recruitedLabelWrap {
+  position: absolute;
+  right: calc(0.75rem + 3px + 0.4rem);
+  top: 10px;
+  writing-mode: vertical-rl;
+  transform-origin: center top;
+  transform: rotate(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  white-space: nowrap;
+  transition: opacity 0.35s ease;
+}
+
+.recruitedVisible {
+  opacity: 1;
+}
+
+.recruitedHidden {
+  opacity: 0;
+}
+
+.recruitedArrow {
+  font-size: 1.8rem;
+  line-height: 1;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.recruitedText {
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-style: italic;
+  opacity: 0.5;
+  letter-spacing: 0.03em;
+}
+
 .spine {
   display: flex;
   flex-direction: column;

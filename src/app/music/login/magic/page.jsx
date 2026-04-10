@@ -2,12 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useMusicHref } from '@/lib/musicLinks';
 
 export default function MagicLoginPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState('Signing you in...');
   const [error, setError] = useState(null);
+  const musicHref = useMusicHref();
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -23,7 +25,7 @@ export default function MagicLoginPage() {
         // Store token same way as normal sign-in
         localStorage.setItem('music_auth_token', data.idToken);
         setStatus('Success! Redirecting...');
-        router.push('/music');
+        router.push(musicHref('/'));
       })
       .catch((err) => {
         setError(err.message);
@@ -37,7 +39,7 @@ export default function MagicLoginPage() {
           <>
             <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Link Invalid</h1>
             <p style={{ opacity: 0.7, marginBottom: '1.5rem' }}>{error}</p>
-            <a href="/music/login" style={{ color: 'var(--accent-1, #0a8)', textDecoration: 'underline' }}>
+            <a href={musicHref('/login')} style={{ color: 'var(--accent-1, #0a8)', textDecoration: 'underline' }}>
               Sign in with email instead
             </a>
           </>

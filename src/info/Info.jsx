@@ -1,11 +1,11 @@
 import self from "../img/self.png"
-import site from "../img/site.png"
-import klear from "../img/klear.png"
-import thinger from "../img/thinger.png"
-import session from "../img/mock2.png"
-import heard from "../img/mock5.png"
-import fanboy from "../img/1.png"
-import appNow from "../img/mock3.png"
+import site from "../img/developer-website.png"
+import klear from "../img/klear-new.png"
+import noGui from "../img/no-gui.png"
+import session from "../img/session.png"
+import heard from "../img/heard.png"
+import fanboy from "../img/fanboy.png"
+import appNow from "../img/appNow.png"
 import move from "../img/mock4.png"
 
 // Accent colors must match $accent-1 and $accent-2 in src/styles/_variables.scss.
@@ -20,26 +20,26 @@ export const info = {
     firstName: "Aaron",
     lastName: "Rohrbacher",
     initials: "ar",
-    position: "Lead AI/ML Software Engineer & DevOps Architect",
+    position: "I'm a senior software & DevOps engineer building agentic AI",
     selfPortrait: self.src,
     gradient: `linear-gradient(135deg, var(--accent-1), var(--accent-2))`,
     baseColor: accent1,
     miniBio: [
+        {
+            emoji: '🎷',
+            text: 'And a Musician'
+        },
         {
             emoji: '🤖',
             text: 'Building Custom AI Models & Integrations'
         },
         {
             emoji: '💼',
-            text: 'Open to new opportunities — let\'s talk'
+            text: 'Seeking senior DevOps or AI platform roles'
         },
         {
             emoji: '🌎',
             text: 'Based in Portland, Oregon'
-        },
-        {
-            emoji: '🎷',
-            text: 'And a Musician'
         },
     ],
     socials: [
@@ -76,7 +76,6 @@ export const info = {
         {
             title: "Session",
             desc: "A digital audio workstation built in pure Rust for Windows, macOS, and Linux — Beta coming soon. On Linux, it connects directly to PipeWire as a client, ending a decade of DAWs requiring JACK, QJACKctl, or jack-pipewire bridges. Closed source.",
-            website: "#",
             image: session.src,
             mockupType: 'laptop',
             url: 'session — coming soon',
@@ -132,21 +131,21 @@ export const info = {
             title: "Thinger",
             desc: "A Python script that isolates every use of a given word or phrase in a video and compiles them into a new clip. As the kids say, it's keen!",
             source: "https://github.com/AaronRohrbacher/thinger",
-            image: thinger.src,
+            image: noGui.src,
             mockupType: 'laptop',
         },
         {
             title: "ai",
             desc: "A PyTorch GPT-2 implementation trained on George Carlin transcriptions. Responds to prompts in his style. WARNING: utterly vile.",
             source: "https://github.com/AaronRohrbacher/ai",
-            image: thinger.src,
+            image: noGui.src,
             mockupType: 'laptop',
         },
         {
             title: "Nuel API",
             desc: "Provisions LAMP stacks and cloud resources to client accounts, automates billing and signup, and delivers a blazing-fast PHP experience.",
             source: "https://github.com/AaronRohrbacher/nuel-api",
-            image: thinger.src,
+            image: noGui.src,
             mockupType: 'laptop',
         }
     ]

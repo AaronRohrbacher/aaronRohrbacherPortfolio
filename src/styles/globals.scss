@@ -118,12 +118,137 @@ html[data-theme="dark"] select option {
     margin-bottom: 0;
 }
 
-// Paint the AC launcher bubble with the site gradient so it matches every
-// other primary button. AC's inline style sets a solid purple via
-// `background-color`, so we also clear that. The SVG icon stays white.
+// ═════════════════════════════════════════════════════════════════════════════
+// Amazon Connect Chat Widget — outer container & launch button styling
+// Interior widget styles are set via amazon_connect('customStyles', {...})
+// in AmazonConnect.jsx. These rules handle the elements that live in the
+// host page DOM: the FAB (open/close), the iframe wrapper, and any
+// in-page bot-name overrides.
+// ═════════════════════════════════════════════════════════════════════════════
+
+// ── Launch button (FAB) ─────────────────────────────────────────────────
+// Paint with the site gradient, add glassmorphism glow, and replace the
+// default SVG icon with a headset.
 #amazon-connect-chat-widget #amazon-connect-open-widget-button {
     background: var(--gradient) !important;
     background-color: transparent !important;
+    border: none !important;
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 50% !important;
+    // Glassmorphic glow ring
+    box-shadow:
+        0 4px 20px rgba(124, 58, 237, 0.35),
+        0 0 0 3px rgba(0, 168, 120, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(8px) !important;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.3s ease !important;
+
+    &:hover {
+        transform: scale(1.08) !important;
+        box-shadow:
+            0 6px 28px rgba(124, 58, 237, 0.5),
+            0 0 0 4px rgba(0, 168, 120, 0.25),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    }
+
+    &:active {
+        transform: scale(0.96) !important;
+    }
+
+    // Hide AC's default icon
+    svg {
+        display: none !important;
+    }
+
+    // Headset icon replacement
+    &::after {
+        content: '';
+        display: block;
+        width: 28px;
+        height: 28px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9zM7 14v4H6c-.55 0-1-.45-1-1v-2c0-.55.45-1 1-1h1zm12 0c.55 0 1 .45 1 1v2c0 .55-.45 1-1 1h-1v-4h1z'/%3E%3C/svg%3E");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+}
+
+// ── Close button (X that appears when widget is open) ───────────────────
+#amazon-connect-chat-widget #amazon-connect-close-widget-button {
+    background: var(--gradient) !important;
+    background-color: transparent !important;
+    border: none !important;
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 50% !important;
+    box-shadow:
+        0 4px 20px rgba(124, 58, 237, 0.35),
+        0 0 0 3px rgba(0, 168, 120, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.3s ease !important;
+
+    &:hover {
+        transform: scale(1.08) !important;
+        box-shadow:
+            0 6px 28px rgba(124, 58, 237, 0.5),
+            0 0 0 4px rgba(0, 168, 120, 0.25),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    }
+}
+
+// ── Widget frame (the iframe wrapper) ───────────────────────────────────
+// Adds rounded corners, glassmorphism backdrop, smooth entry animation,
+// and a subtle gradient border.
+#amazon-connect-widget-frame {
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    // Frosted-glass border effect
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        0 0 0 1px rgba(124, 58, 237, 0.15),
+        0 0 60px -10px rgba(124, 58, 237, 0.1) !important;
+    // Smooth open/close transition
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    // Start state for the entrance animation
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+
+    &.show {
+        opacity: 1 !important;
+        transform: translateY(0) scale(1) !important;
+    }
+
+    &:not(.show) {
+        opacity: 0 !important;
+        transform: translateY(12px) scale(0.97) !important;
+        pointer-events: none !important;
+    }
+
+    // The iframe itself gets rounded corners too
+    iframe {
+        border-radius: 16px !important;
+        border: none !important;
+    }
+}
+
+// ── Bot participant name override ───────────────────────────────────────
+// Rename the bot display name from the default to "A-A-Bot".
+// AC renders the chat directly in the DOM (no iframe for the wrapper),
+// so we can target participant name elements.
+#amazon-connect-chat-widget [class*="ParticipantName"][class*="System"],
+#amazon-connect-chat-widget [class*="participantName"][class*="system"],
+#amazon-connect-chat-widget [class*="header-name"] {
+    font-size: 0 !important;
+    &::after {
+        content: 'A-A-Bot';
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+    }
 }
 
 footer {

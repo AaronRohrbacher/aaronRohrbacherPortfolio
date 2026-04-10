@@ -5,28 +5,35 @@ export default $config({
     return {
       name: "aaron-portfolio",
       removal: input?.stage === "production" ? "retain" : "remove",
-      protect: input?.stage === "production",
+      // protect: input?.stage === "production",
       home: "aws",
     };
   },
   async run() {
     const { readFileSync } = await import("node:fs");
     const { resolve: resolvePath } = await import("node:path");
+    const { config: loadEnv } = await import("dotenv");
+    loadEnv({ path: ".env.local" });
     const isProd = $app.stage === "production";
 
-    // Secrets — set per-stage via:
-    //   npx sst secret set <Name> <value> [--stage production]
-    // Listed together so it's obvious what needs setting on a fresh deploy.
-    const awsAccountId = new sst.Secret("AwsAccountId");
-    const connectInstanceId = new sst.Secret("ConnectInstanceId");
-    const connectAgentId = new sst.Secret("ConnectAgentId");
-    const connectQueueId = new sst.Secret("ConnectQueueId");
-    const contactEmailTo = new sst.Secret("ContactEmailTo");
-    const connectSnippetId = new sst.Secret("ConnectSnippetId");
-    const googleOauthClientId = new sst.Secret("GoogleOauthClientId");
-    const googleOauthClientSecret = new sst.Secret("GoogleOauthClientSecret");
-    const googleRefreshToken = new sst.Secret("GoogleRefreshToken");
-    const calendarEmail = new sst.Secret("CalendarEmail");
+    // Config read from .env.local
+    const awsAccountId = process.env.AWS_ACCOUNT_ID!;
+    const connectInstanceId = process.env.CONNECT_INSTANCE_ID!;
+    const connectAgentId = process.env.CONNECT_AGENT_ID!;
+    const connectQueueId = process.env.CONNECT_QUEUE_ID!;
+    const contactEmailTo = process.env.CONTACT_EMAIL_TO!;
+    const connectSnippetId = process.env.CONNECT_SNIPPET_ID!;
+    const connectSecurityKey = process.env.CONNECT_SECURITY_KEY!;
+    const connectWidgetId = process.env.CONNECT_WIDGET_ID!;
+    const googleOauthClientId = process.env.GOOGLE_OAUTH_CLIENT_ID!;
+    const googleOauthClientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET!;
+    const googleRefreshToken = process.env.GOOGLE_REFRESH_TOKEN!;
+    const calendarEmail = process.env.CALENDAR_EMAIL!;
+
+    // Music S3 bucket lives in us-east-2. BucketPolicy must target same region.
+    const musicAwsProvider = new aws.Provider("MusicRegion", {
+      region: "us-east-2",
+    });
 
     // Amazon Connect lives in us-west-2 (instance alias "doctorbader"). The
     // notify Lambda must be in the same region — Connect's Lambda-association
@@ -48,7 +55,7 @@ export default $config({
           resources: ["*"],
         }],
         environment: {
-          CONTACT_EMAIL_TO: contactEmailTo.value,
+          CONTACT_EMAIL_TO: contactEmailTo,
           NOTIFY_FROM_EMAIL: "Portfolio Connect <connect@aaronrohrbacher.com>",
         },
       },
@@ -63,7 +70,7 @@ export default $config({
         action: "lambda:InvokeFunction",
         function: connectNotifyFn.name,
         principal: "connect.amazonaws.com",
-        sourceArn: $interpolate`arn:aws:connect:${connectRegion}:${awsAccountId.value}:instance/${connectInstanceId.value}`,
+        sourceArn: `arn:aws:connect:${connectRegion}:${awsAccountId}:instance/${connectInstanceId}`,
       },
       { provider: connectAwsProvider }
     );
@@ -78,10 +85,10 @@ export default $config({
         runtime: "nodejs20.x",
         timeout: "10 seconds",
         environment: {
-          GOOGLE_OAUTH_CLIENT_ID: googleOauthClientId.value,
-          GOOGLE_OAUTH_CLIENT_SECRET: googleOauthClientSecret.value,
-          GOOGLE_REFRESH_TOKEN: googleRefreshToken.value,
-          CALENDAR_EMAIL: calendarEmail.value,
+          GOOGLE_OAUTH_CLIENT_ID: googleOauthClientId,
+          GOOGLE_OAUTH_CLIENT_SECRET: googleOauthClientSecret,
+          GOOGLE_REFRESH_TOKEN: googleRefreshToken,
+          CALENDAR_EMAIL: calendarEmail,
         },
       },
       { provider: connectAwsProvider }
@@ -93,25 +100,25 @@ export default $config({
         action: "lambda:InvokeFunction",
         function: scheduleCallFn.name,
         principal: "connect.amazonaws.com",
-        sourceArn: $interpolate`arn:aws:connect:${connectRegion}:${awsAccountId.value}:instance/${connectInstanceId.value}`,
+        sourceArn: `arn:aws:connect:${connectRegion}:${awsAccountId}:instance/${connectInstanceId}`,
       },
       { provider: connectAwsProvider }
     );
 
     // Associate Lambdas with the Connect instance so contact flows may invoke
     // them. Without this, InvokeLambdaFunction actions fail at runtime.
-    new aws.connect.LambdaFunctionAssociation(
+    const notifyAssoc = new aws.connect.LambdaFunctionAssociation(
       "ConnectNotifyAssoc",
       {
-        instanceId: connectInstanceId.value,
+        instanceId: connectInstanceId,
         functionArn: connectNotifyFn.arn,
       },
       { provider: connectAwsProvider }
     );
-    new aws.connect.LambdaFunctionAssociation(
+    const scheduleAssoc = new aws.connect.LambdaFunctionAssociation(
       "ScheduleCallAssoc",
       {
-        instanceId: connectInstanceId.value,
+        instanceId: connectInstanceId,
         functionArn: scheduleCallFn.arn,
       },
       { provider: connectAwsProvider }
@@ -124,45 +131,45 @@ export default $config({
       $output([
         connectNotifyFn.arn,
         scheduleCallFn.arn,
-        awsAccountId.value,
-        connectInstanceId.value,
-        connectAgentId.value,
-        connectQueueId.value,
-      ]).apply(([notifyArn, scheduleArn, accountId, instanceId, agentId, queueId]) => {
+      ]).apply(([notifyArn, scheduleArn]) => {
         const raw = readFileSync(resolvePath(relPath), "utf8");
         const filled = raw
-          .replaceAll("{{AWS_ACCOUNT_ID}}", accountId)
-          .replaceAll("{{CONNECT_INSTANCE_ID}}", instanceId)
-          .replaceAll("{{CONNECT_AGENT_ID}}", agentId)
-          .replaceAll("{{CONNECT_QUEUE_ID}}", queueId)
+          .replaceAll("{{AWS_ACCOUNT_ID}}", awsAccountId)
+          .replaceAll("{{CONNECT_INSTANCE_ID}}", connectInstanceId)
+          .replaceAll("{{CONNECT_AGENT_ID}}", connectAgentId)
+          .replaceAll("{{CONNECT_QUEUE_ID}}", connectQueueId)
           .replaceAll("{{NOTIFY_LAMBDA_ARN}}", notifyArn)
-          .replaceAll("{{SCHEDULE_LAMBDA_ARN}}", scheduleArn);
-        // Re-serialize to compact JSON. Also validates the file parses.
-        return JSON.stringify(JSON.parse(filled));
+          .replaceAll("{{SCHEDULE_LAMBDA_ARN}}", scheduleArn)
+          .replaceAll("{{LEX_MENU_BOT_ARN}}", "arn:aws:lex:us-west-2:544012685056:bot-alias/TK6ILFTEFS/N2JESWLMTE")
+          .replaceAll("{{LEX_TEXT_BOT_ARN}}", "arn:aws:lex:us-west-2:544012685056:bot-alias/FFIJF9WDPZ/P7SORVWGGM");
+        // Strip Metadata (Connect API rejects it) and re-serialize to compact JSON.
+        const parsed = JSON.parse(filled);
+        delete parsed.Metadata;
+        return JSON.stringify(parsed);
       });
 
     new aws.connect.ContactFlow(
       "PortfolioInboundFlow",
       {
-        instanceId: connectInstanceId.value,
+        instanceId: connectInstanceId,
         name: "Aaron Portfolio — Inbound",
         type: "CONTACT_FLOW",
         description: "First-contact experience (portfolio site)",
         content: buildFlowContent("src/connect/flows/inbound.json"),
       },
-      { provider: connectAwsProvider }
+      { provider: connectAwsProvider, dependsOn: [notifyAssoc, scheduleAssoc] }
     );
 
     new aws.connect.ContactFlow(
       "PortfolioCustomerQueueFlow",
       {
-        instanceId: connectInstanceId.value,
+        instanceId: connectInstanceId,
         name: "Aaron Portfolio — Customer Queue",
         type: "CUSTOMER_QUEUE",
         description: "Queue wait + leave-a-message (portfolio site)",
         content: buildFlowContent("src/connect/flows/customer-queue.json"),
       },
-      { provider: connectAwsProvider }
+      { provider: connectAwsProvider, dependsOn: [notifyAssoc, scheduleAssoc] }
     );
 
     // DynamoDB single-table for music data (tracks, permissions, groups)
@@ -196,22 +203,135 @@ export default $config({
     // Export table name for local scripts
     const tableName = musicTable.name;
 
+    // ── CloudFront CDN for music S3 bucket ──────────────────────────────────
+    // Serves audio files from edge with heavy caching so S3 latency is a
+    // non-issue. The stream API route redirects to this CDN after auth.
+
+    const musicOac = new aws.cloudfront.OriginAccessControl("MusicOAC", {
+      name: `music-oac-${$app.stage}`,
+      originAccessControlOriginType: "s3",
+      signingBehavior: "always",
+      signingProtocol: "sigv4",
+    });
+
+    const musicCachePolicy = new aws.cloudfront.CachePolicy("MusicCachePolicy", {
+      name: `music-cache-${$app.stage}`,
+      defaultTtl: 604800,     // 7 days
+      maxTtl: 31536000,       // 365 days
+      minTtl: 86400,          // 1 day — keep cached even if origin says otherwise
+      parametersInCacheKeyAndForwardedToOrigin: {
+        cookiesConfig: { cookieBehavior: "none" },
+        headersConfig: { headerBehavior: "none" },
+        queryStringsConfig: { queryStringBehavior: "none" },
+      },
+    });
+
+    const musicCorsPolicy = new aws.cloudfront.ResponseHeadersPolicy(
+      "MusicCorsPolicy",
+      {
+        name: `music-cors-${$app.stage}`,
+        corsConfig: {
+          accessControlAllowCredentials: false,
+          accessControlAllowHeaders: { items: ["*"] },
+          accessControlAllowMethods: { items: ["GET", "HEAD"] },
+          accessControlAllowOrigins: {
+            items: isProd
+              ? [
+                  "https://aaronrohrbacher.com",
+                  "https://www.aaronrohrbacher.com",
+                  "https://music.aaronrohrbacher.com",
+                ]
+              : ["*"],
+          },
+          accessControlMaxAgeSec: 86400,
+          originOverride: true,
+        },
+      },
+    );
+
+    const musicCdn = new aws.cloudfront.Distribution("MusicCDN", {
+      origins: [
+        {
+          domainName: "musicsforu.s3.us-east-2.amazonaws.com",
+          originId: "musicS3",
+          originAccessControlId: musicOac.id,
+        },
+      ],
+      enabled: true,
+      comment: `Music CDN (${$app.stage})`,
+      defaultCacheBehavior: {
+        allowedMethods: ["GET", "HEAD"],
+        cachedMethods: ["GET", "HEAD"],
+        targetOriginId: "musicS3",
+        viewerProtocolPolicy: "redirect-to-https",
+        cachePolicyId: musicCachePolicy.id,
+        responseHeadersPolicyId: musicCorsPolicy.id,
+        compress: true,
+      },
+      restrictions: { geoRestriction: { restrictionType: "none" } },
+      viewerCertificate: { cloudfrontDefaultCertificate: true },
+    });
+
+    // Grant CloudFront OAC read access to the music bucket
+    new aws.s3.BucketPolicy(
+      "MusicBucketPolicy",
+      {
+        bucket: "musicsforu",
+        policy: musicCdn.arn.apply((arn) =>
+          JSON.stringify({
+            Version: "2012-10-17",
+            Statement: [
+              {
+                Effect: "Allow",
+                Principal: { Service: "cloudfront.amazonaws.com" },
+                Action: "s3:GetObject",
+                Resource: "arn:aws:s3:::musicsforu/*",
+                Condition: { StringEquals: { "AWS:SourceArn": arn } },
+              },
+            ],
+          }),
+        ),
+      },
+      { provider: musicAwsProvider },
+    );
+
     new sst.aws.Nextjs("Portfolio", {
       link: [musicTable, userPool, userPoolClient],
+      permissions: [
+        {
+          actions: ["s3:GetObject", "s3:ListBucket"],
+          resources: [
+            "arn:aws:s3:::musicsforu",
+            "arn:aws:s3:::musicsforu/*",
+          ],
+        },
+        {
+          actions: ["connect:GetCurrentMetricData"],
+          resources: [
+            `arn:aws:connect:${connectRegion}:${awsAccountId}:instance/${connectInstanceId}`,
+            `arn:aws:connect:${connectRegion}:${awsAccountId}:instance/${connectInstanceId}/*`,
+          ],
+        },
+      ],
       domain: isProd
         ? {
             name: "aaronrohrbacher.com",
             aliases: ["www.aaronrohrbacher.com", "music.aaronrohrbacher.com"],
-            dns: sst.aws.dns({ zone: "aaronrohrbacher.com" }),
+            dns: sst.aws.dns({ zone: "Z0895814ZUITIQOAPVHT" }),
           }
         : undefined,
       environment: {
         NEXT_PUBLIC_COGNITO_USER_POOL_ID: userPool.id,
         NEXT_PUBLIC_COGNITO_CLIENT_ID: userPoolClient.id,
-        NEXT_PUBLIC_AWS_REGION: "us-east-2",
+        NEXT_PUBLIC_AWS_REGION: "us-west-2",
         MUSIC_TABLE_NAME: tableName,
-        NEXT_PUBLIC_CONNECT_INSTANCE_ID: connectInstanceId.value,
-        NEXT_PUBLIC_CONNECT_SNIPPET_ID: connectSnippetId.value,
+        NEXT_PUBLIC_CONNECT_WIDGET_ID: connectWidgetId,
+        NEXT_PUBLIC_CONNECT_SNIPPET_ID: connectSnippetId,
+        CONNECT_SECURITY_KEY: connectSecurityKey,
+        CONNECT_WIDGET_ID: connectWidgetId,
+        CONNECT_INSTANCE_ID: connectInstanceId,
+        CONNECT_AGENT_ID: connectAgentId,
+        MUSIC_CDN_DOMAIN: musicCdn.domainName,
       },
     });
 
@@ -219,6 +339,7 @@ export default $config({
       userPoolId: userPool.id,
       userPoolClientId: userPoolClient.id,
       tableName,
+      musicCdnDomain: musicCdn.domainName,
       connectNotifyArn: connectNotifyFn.arn,
     };
   },

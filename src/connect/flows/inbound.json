@@ -1,58 +1,66 @@
 {
   "Version": "2019-10-30",
-  "StartAction": "Find Aaron",
+  "StartAction": "greeting",
   "Metadata": {
     "entryPointPosition": { "x": 64.8, "y": 21.6 },
     "ActionMetadata": {
-      "9ecd63a0-8b01-4886-81e1-4122abc57704": { "position": { "x": 2400, "y": 75 } },
-      "e8044147-d71a-49be-a074-f1ac0c820a10": {
-        "position": { "x": 2100, "y": 75 },
-        "parameters": { "QueueId": { "displayName": "BasicQueue" } },
-        "queue": { "text": "BasicQueue" }
-      },
-      "fe6810db-1fe8-4b8d-a939-65dadbb61ef7": { "position": { "x": 1400, "y": -80 } },
-      "655eddac-5153-4959-94b6-a21d3adf14ba": { "position": { "x": 2400, "y": 600 } },
-      "Find Aaron": {
-        "position": { "x": 333.6, "y": 40.8 },
-        "isFriendlyName": true,
-        "parameters": { "AgentId": { "displayName": "aaron (Aaron Rohrbacher)" } },
-        "queue": {
-          "text": "aaron (Aaron Rohrbacher)",
-          "id": "arn:aws:connect:us-west-2:{{AWS_ACCOUNT_ID}}:instance/{{CONNECT_INSTANCE_ID}}/agent/{{CONNECT_AGENT_ID}}"
-        }
-      },
-      "aa100001-0000-0000-0000-000000000001": { "position": { "x": 700, "y": -80 } },
-      "aa100001-0000-0000-0000-000000000002": { "position": { "x": 1050, "y": -200 } },
-      "aa100001-0000-0000-0000-000000000003": { "position": { "x": 700, "y": 200 } },
-      "aa100001-0000-0000-0000-000000000007": { "position": { "x": 1050, "y": 120 } },
-      "aa100001-0000-0000-0000-000000000010": { "position": { "x": 1700, "y": 900 } },
-      "aa100001-0000-0000-0000-000000000011": { "position": { "x": 2050, "y": 900 } },
-      "c0a801a1-0001-4001-8001-c0a801a10001": { "position": { "x": 600, "y": 900 } },
-      "c0a801a1-0001-4001-8001-c0a801a10002": { "position": { "x": 600, "y": 1080 } },
-      "c0a801a1-0001-4001-8001-c0a801a10003": { "position": { "x": 600, "y": 1260 } },
-      "c0a801a1-0001-4001-8001-c0a801a10004": { "position": { "x": 600, "y": 1440 } },
-      "c0a801a1-0001-4001-8001-c0a801a10005": { "position": { "x": 600, "y": 1620 } },
-      "c0a801a1-0001-4001-8001-c0a801a10006": { "position": { "x": 600, "y": 1800 } },
-      "cc300001-0000-0000-0000-000000000001": { "position": { "x": 1100, "y": 900 } },
-      "cc300001-0000-0000-0000-000000000002": { "position": { "x": 1100, "y": 1050 } },
-      "cc300001-0000-0000-0000-000000000003": { "position": { "x": 1100, "y": 1200 } },
-      "cc300001-0000-0000-0000-000000000004": { "position": { "x": 1450, "y": 1200 } },
-      "cc300001-0000-0000-0000-000000000005": { "position": { "x": 1100, "y": 1350 } },
-      "cc300001-0000-0000-0000-000000000006": { "position": { "x": 1100, "y": 1500 } },
-      "cc300001-0000-0000-0000-000000000007": { "position": { "x": 1100, "y": 1650 } },
-      "cc300001-0000-0000-0000-000000000008": { "position": { "x": 1100, "y": 1800 } },
-      "cc300001-0000-0000-0000-000000000009": { "position": { "x": 1100, "y": 1950 } },
-      "cc300001-0000-0000-0000-000000000010": { "position": { "x": 1100, "y": 2100 } },
-      "cc300001-0000-0000-0000-000000000011": { "position": { "x": 1100, "y": 2250 } },
-      "cc300001-0000-0000-0000-000000000012": { "position": { "x": 1100, "y": 2400 } },
-      "cc300001-0000-0000-0000-000000000013": { "position": { "x": 1100, "y": 2550 } },
-      "cc300001-0000-0000-0000-000000000014": { "position": { "x": 1450, "y": 2550 } },
-      "cc300001-0000-0000-0000-000000000015": { "position": { "x": 1450, "y": 2700 } },
-      "cc300001-0000-0000-0000-000000000016": { "position": { "x": 1450, "y": 1500 } }
+      "greeting":              { "position": { "x": 200, "y": 40 }, "isFriendlyName": true },
+      "check-online":          { "position": { "x": 500, "y": 40 }, "isFriendlyName": true },
+      "online-menu":           { "position": { "x": 850, "y": -100 }, "isFriendlyName": true },
+      "connecting-msg":        { "position": { "x": 1200, "y": -400 }, "isFriendlyName": true },
+      "set-voice":             { "position": { "x": 1200, "y": -250 }, "isFriendlyName": true },
+      "set-video":             { "position": { "x": 1200, "y": -100 }, "isFriendlyName": true },
+      "set-queue":             { "position": { "x": 1500, "y": -300 }, "isFriendlyName": true },
+      "transfer-queue":        { "position": { "x": 1800, "y": -300 }, "isFriendlyName": true },
+      "offline-menu":          { "position": { "x": 850, "y": 300 }, "isFriendlyName": true },
+      "store-choice-msg":      { "position": { "x": 300, "y": 600 }, "isFriendlyName": true },
+      "store-choice-sched":    { "position": { "x": 600, "y": 600 }, "isFriendlyName": true },
+      "store-choice-vm":       { "position": { "x": 900, "y": 600 }, "isFriendlyName": true },
+      "collect-name":          { "position": { "x": 600, "y": 800 }, "isFriendlyName": true },
+      "store-name":            { "position": { "x": 600, "y": 960 }, "isFriendlyName": true },
+      "format-name":           { "position": { "x": 600, "y": 1040 }, "isFriendlyName": true },
+      "store-formatted-name":  { "position": { "x": 600, "y": 1120 }, "isFriendlyName": true },
+      "greet-by-name":         { "position": { "x": 600, "y": 1200 }, "isFriendlyName": true },
+      "collect-contact":       { "position": { "x": 600, "y": 1320 }, "isFriendlyName": true },
+      "store-contact":         { "position": { "x": 600, "y": 1500 }, "isFriendlyName": true },
+      "route-after-contact":   { "position": { "x": 600, "y": 1680 }, "isFriendlyName": true },
+      "collect-message":       { "position": { "x": 200, "y": 1860 }, "isFriendlyName": true },
+      "store-message":         { "position": { "x": 200, "y": 2040 }, "isFriendlyName": true },
+      "send-notify":           { "position": { "x": 200, "y": 2220 }, "isFriendlyName": true },
+      "msg-confirm":           { "position": { "x": 200, "y": 2400 }, "isFriendlyName": true },
+      "vm-check-channel":      { "position": { "x": 1100, "y": 1580 }, "isFriendlyName": true },
+      "vm-voice-record-on":    { "position": { "x": 1400, "y": 1580 }, "isFriendlyName": true },
+      "vm-voice-greeting":     { "position": { "x": 1400, "y": 1680 }, "isFriendlyName": true },
+      "vm-voice-wait":         { "position": { "x": 1400, "y": 1770 }, "isFriendlyName": true },
+      "vm-voice-confirm":      { "position": { "x": 1400, "y": 1860 }, "isFriendlyName": true },
+      "vm-collect-message":    { "position": { "x": 1100, "y": 1680 }, "isFriendlyName": true },
+      "vm-store-message":      { "position": { "x": 1100, "y": 1770 }, "isFriendlyName": true },
+      "vm-msg":                { "position": { "x": 1100, "y": 1860 }, "isFriendlyName": true },
+      "vm-notify":             { "position": { "x": 1100, "y": 2040 }, "isFriendlyName": true },
+      "sched-intro":           { "position": { "x": 650, "y": 1860 }, "isFriendlyName": true },
+      "sched-list-slots":      { "position": { "x": 650, "y": 2040 }, "isFriendlyName": true },
+      "sched-check-count":     { "position": { "x": 650, "y": 2220 }, "isFriendlyName": true },
+      "sched-no-slots":        { "position": { "x": 950, "y": 2220 }, "isFriendlyName": true },
+      "sched-show-menu":       { "position": { "x": 650, "y": 2400 }, "isFriendlyName": true },
+      "sched-pick-slot":       { "position": { "x": 650, "y": 2580 }, "isFriendlyName": true },
+      "sched-store-1":         { "position": { "x": 650, "y": 2740 }, "isFriendlyName": true },
+      "sched-store-2":         { "position": { "x": 800, "y": 2740 }, "isFriendlyName": true },
+      "sched-store-3":         { "position": { "x": 950, "y": 2740 }, "isFriendlyName": true },
+      "sched-store-4":         { "position": { "x": 1100, "y": 2740 }, "isFriendlyName": true },
+      "sched-store-5":         { "position": { "x": 1250, "y": 2740 }, "isFriendlyName": true },
+      "sched-page-fwd":        { "position": { "x": 950, "y": 2580 }, "isFriendlyName": true },
+      "sched-book":            { "position": { "x": 650, "y": 2920 }, "isFriendlyName": true },
+      "sched-check-ok":        { "position": { "x": 650, "y": 3100 }, "isFriendlyName": true },
+      "sched-notify":          { "position": { "x": 650, "y": 3200 }, "isFriendlyName": true },
+      "sched-done":            { "position": { "x": 650, "y": 3300 }, "isFriendlyName": true },
+      "sched-error":           { "position": { "x": 950, "y": 3300 }, "isFriendlyName": true },
+      "partial-notify":        { "position": { "x": 2000, "y": 600 }, "isFriendlyName": true },
+      "thank-you":             { "position": { "x": 600, "y": 3480 }, "isFriendlyName": true },
+      "disconnect":            { "position": { "x": 600, "y": 3660 }, "isFriendlyName": true }
     },
     "Annotations": [],
-    "name": "Sample inbound flow (first contact experience)",
-    "description": "First contact experience",
+    "name": "A-A-Bot inbound flow",
+    "description": "Chat: greets, checks availability, routes via Lex-powered menus.",
     "type": "contactFlow",
     "status": "PUBLISHED",
     "hash": {}
@@ -60,512 +68,372 @@
   "Actions": [
 
     {
-      "Parameters": {
-        "MetricType": "NumberOfAgentsOnline",
-        "AgentId": "arn:aws:connect:us-west-2:{{AWS_ACCOUNT_ID}}:instance/{{CONNECT_INSTANCE_ID}}/agent/{{CONNECT_AGENT_ID}}"
-      },
-      "Identifier": "Find Aaron",
+      "Parameters": { "Text": "Thank you for visiting Aaron's portfolio, we appreciate you taking the time. I'm A-A-bot, Aaron's digital assistant. One moment while I contact Aaron for you..." },
+      "Identifier": "greeting",
+      "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "check-online", "Errors": [{ "NextAction": "check-online", "ErrorType": "NoMatchingError" }] }
+    },
+
+    {
+      "Parameters": { "MetricType": "NumberOfAgentsOnline", "AgentId": "arn:aws:connect:us-west-2:{{AWS_ACCOUNT_ID}}:instance/{{CONNECT_INSTANCE_ID}}/agent/{{CONNECT_AGENT_ID}}" },
+      "Identifier": "check-online",
       "Type": "CheckMetricData",
       "Transitions": {
-        "NextAction": "c0a801a1-0001-4001-8001-c0a801a10001",
+        "NextAction": "offline-menu",
+        "Conditions": [{ "NextAction": "online-menu", "Condition": { "Operator": "NumberGreaterThan", "Operands": ["0"] } }],
+        "Errors": [
+          { "NextAction": "offline-menu", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "offline-menu", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Looks like he's online and ready to take your call! Would you like to:\n\n1. Chat with Aaron (the human one) live right here?\n2. Start a voice call with Aaron? It runs right in this chat box, and uses your device's microphone and speakers.\n3. Start a video call with Aaron? It runs right in this chat box, and uses your device's microphone, camera, and speakers.\n4. Leave Aaron a message? I'll e-mail it to him.\n5. Schedule a 30-minute call for a more convenient time for you?",
+        "LexV2Bot": { "AliasArn": "{{LEX_MENU_BOT_ARN}}" }
+      },
+      "Identifier": "online-menu",
+      "Type": "ConnectParticipantWithLexBot",
+      "Transitions": {
+        "NextAction": "offline-menu",
         "Conditions": [
-          {
-            "NextAction": "aa100001-0000-0000-0000-000000000001",
-            "Condition": { "Operator": "NumberGreaterThan", "Operands": ["0"] }
-          }
+          { "NextAction": "connecting-msg",     "Condition": { "Operator": "Equals", "Operands": ["SelectOne"] } },
+          { "NextAction": "set-voice",          "Condition": { "Operator": "Equals", "Operands": ["SelectTwo"] } },
+          { "NextAction": "set-video",          "Condition": { "Operator": "Equals", "Operands": ["SelectThree"] } },
+          { "NextAction": "store-choice-msg",   "Condition": { "Operator": "Equals", "Operands": ["SelectFour"] } },
+          { "NextAction": "store-choice-sched", "Condition": { "Operator": "Equals", "Operands": ["SelectFive"] } }
         ],
         "Errors": [
-          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10001", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10001", "ErrorType": "NoMatchingError" }
+          { "NextAction": "offline-menu", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "offline-menu", "ErrorType": "NoMatchingError" },
+          { "NextAction": "offline-menu", "ErrorType": "InputTimeLimitExceeded" }
         ]
       }
     },
 
+    { "Parameters": { "Attributes": { "callType": "voice" } }, "Identifier": "set-voice", "Type": "UpdateContactAttributes",
+      "Transitions": { "NextAction": "connecting-msg", "Errors": [{ "NextAction": "connecting-msg", "ErrorType": "NoMatchingError" }] } },
+
+    { "Parameters": { "Attributes": { "callType": "video" } }, "Identifier": "set-video", "Type": "UpdateContactAttributes",
+      "Transitions": { "NextAction": "connecting-msg", "Errors": [{ "NextAction": "connecting-msg", "ErrorType": "NoMatchingError" }] } },
+
+    { "Parameters": { "Text": "Connecting you now — hang on a sec." }, "Identifier": "connecting-msg", "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "set-queue", "Errors": [{ "NextAction": "set-queue", "ErrorType": "NoMatchingError" }] } },
+
+    { "Parameters": { "QueueId": "arn:aws:connect:us-west-2:{{AWS_ACCOUNT_ID}}:instance/{{CONNECT_INSTANCE_ID}}/queue/{{CONNECT_QUEUE_ID}}" }, "Identifier": "set-queue", "Type": "UpdateContactTargetQueue",
+      "Transitions": { "NextAction": "transfer-queue", "Errors": [{ "NextAction": "offline-menu", "ErrorType": "NoMatchingError" }] } },
+
+    { "Parameters": {}, "Identifier": "transfer-queue", "Type": "TransferContactToQueue",
+      "Transitions": { "NextAction": "offline-menu", "Errors": [{ "NextAction": "offline-menu", "ErrorType": "QueueAtCapacity" }, { "NextAction": "offline-menu", "ErrorType": "NoMatchingError" }] } },
+
     {
       "Parameters": {
-        "Text": "Hey! Aaron's around. How do you want to connect?\n\n1 — Chat\n2 — Voice\n3 — Video\n4 — Schedule a call\n\nReply 1-4.",
-        "ResponseValidation": { "ResponseType": "TEXT" }
+        "Text": "I'm sorry, Aaron has stepped away. Can I:\n\n1. Take a message? I'll e-mail it to him.\n2. Schedule a 30-minute call with Aaron at a convenient time for you?",
+        "LexV2Bot": { "AliasArn": "{{LEX_MENU_BOT_ARN}}" }
       },
-      "Identifier": "aa100001-0000-0000-0000-000000000001",
-      "Type": "GetParticipantInput",
+      "Identifier": "offline-menu",
+      "Type": "ConnectParticipantWithLexBot",
       "Transitions": {
-        "NextAction": "aa100001-0000-0000-0000-000000000002",
+        "NextAction": "partial-notify",
         "Conditions": [
-          { "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7", "Condition": { "Operator": "Equals", "Operands": ["1"] } },
-          { "NextAction": "aa100001-0000-0000-0000-000000000003", "Condition": { "Operator": "Equals", "Operands": ["2"] } },
-          { "NextAction": "aa100001-0000-0000-0000-000000000007", "Condition": { "Operator": "Equals", "Operands": ["3"] } },
-          { "NextAction": "cc300001-0000-0000-0000-000000000001", "Condition": { "Operator": "Equals", "Operands": ["4"] } }
+          { "NextAction": "store-choice-msg",   "Condition": { "Operator": "Equals", "Operands": ["SelectOne"] } },
+          { "NextAction": "store-choice-sched", "Condition": { "Operator": "Equals", "Operands": ["SelectTwo"] } }
         ],
         "Errors": [
-          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10001", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10001", "ErrorType": "NoMatchingError" }
+          { "NextAction": "partial-notify", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "partial-notify", "ErrorType": "NoMatchingError" },
+          { "NextAction": "partial-notify", "ErrorType": "InputTimeLimitExceeded" }
         ]
       }
     },
 
+    { "Parameters": { "Attributes": { "offlineChoice": "1" } }, "Identifier": "store-choice-msg", "Type": "UpdateContactAttributes",
+      "Transitions": { "NextAction": "collect-name", "Errors": [{ "NextAction": "collect-name", "ErrorType": "NoMatchingError" }] } },
+
+    { "Parameters": { "Attributes": { "offlineChoice": "2" } }, "Identifier": "store-choice-sched", "Type": "UpdateContactAttributes",
+      "Transitions": { "NextAction": "collect-name", "Errors": [{ "NextAction": "collect-name", "ErrorType": "NoMatchingError" }] } },
+
+    { "Parameters": { "Attributes": { "offlineChoice": "3" } }, "Identifier": "store-choice-vm", "Type": "UpdateContactAttributes",
+      "Transitions": { "NextAction": "collect-name", "Errors": [{ "NextAction": "collect-name", "ErrorType": "NoMatchingError" }] } },
+
+    {
+      "Parameters": { "Text": "Can I start with your name please?", "LexV2Bot": { "AliasArn": "{{LEX_TEXT_BOT_ARN}}" } },
+      "Identifier": "collect-name",
+      "Type": "ConnectParticipantWithLexBot",
+      "Transitions": {
+        "NextAction": "store-name",
+        "Conditions": [{ "NextAction": "store-name", "Condition": { "Operator": "Equals", "Operands": ["CollectText"] } }],
+        "Errors": [
+          { "NextAction": "store-name", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "partial-notify", "ErrorType": "NoMatchingError" },
+          { "NextAction": "partial-notify", "ErrorType": "InputTimeLimitExceeded" }
+        ]
+      }
+    },
+
+    { "Parameters": { "Attributes": { "customerName": "$.Lex.Slots.userInput" } }, "Identifier": "store-name", "Type": "UpdateContactAttributes",
+      "Transitions": { "NextAction": "format-name", "Errors": [{ "NextAction": "format-name", "ErrorType": "NoMatchingError" }] } },
+
     {
       "Parameters": {
-        "Text": "You got it — routing you over to chat."
+        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": { "action": "format-name", "customerName": "$.Attributes.customerName" }
       },
-      "Identifier": "aa100001-0000-0000-0000-000000000002",
+      "Identifier": "format-name", "Type": "InvokeLambdaFunction",
+      "Transitions": { "NextAction": "store-formatted-name", "Errors": [{ "NextAction": "greet-by-name", "ErrorType": "NoMatchingError" }] }
+    },
+
+    { "Parameters": { "Attributes": { "customerName": "$.External.formattedName" } }, "Identifier": "store-formatted-name", "Type": "UpdateContactAttributes",
+      "Transitions": { "NextAction": "greet-by-name", "Errors": [{ "NextAction": "greet-by-name", "ErrorType": "NoMatchingError" }] } },
+
+    {
+      "Parameters": { "Text": "Nice to meet you, $.Attributes.customerName! I'm A-A-bot." },
+      "Identifier": "greet-by-name",
       "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "collect-contact", "Errors": [{ "NextAction": "collect-contact", "ErrorType": "NoMatchingError" }] }
+    },
+
+    {
+      "Parameters": { "Text": "Please provide your 10-digit phone number, your e-mail address, or both:", "LexV2Bot": { "AliasArn": "{{LEX_TEXT_BOT_ARN}}" } },
+      "Identifier": "collect-contact",
+      "Type": "ConnectParticipantWithLexBot",
       "Transitions": {
-        "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7",
+        "NextAction": "store-contact",
+        "Conditions": [{ "NextAction": "store-contact", "Condition": { "Operator": "Equals", "Operands": ["CollectText"] } }],
         "Errors": [
-          { "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7", "ErrorType": "NoMatchingError" }
+          { "NextAction": "store-contact", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "partial-notify", "ErrorType": "NoMatchingError" },
+          { "NextAction": "partial-notify", "ErrorType": "InputTimeLimitExceeded" }
         ]
       }
     },
 
-    {
-      "Parameters": {
-        "Attributes": { "callType": "voice" }
-      },
-      "Identifier": "aa100001-0000-0000-0000-000000000003",
-      "Type": "UpdateContactAttributes",
-      "Transitions": {
-        "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7",
-        "Errors": [
-          { "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
+    { "Parameters": { "Attributes": { "contactInfo": "$.Lex.Slots.userInput" } }, "Identifier": "store-contact", "Type": "UpdateContactAttributes",
+      "Transitions": { "NextAction": "route-after-contact", "Errors": [{ "NextAction": "route-after-contact", "ErrorType": "NoMatchingError" }] } },
 
     {
-      "Parameters": {
-        "Attributes": { "callType": "video" }
-      },
-      "Identifier": "aa100001-0000-0000-0000-000000000007",
-      "Type": "UpdateContactAttributes",
-      "Transitions": {
-        "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7",
-        "Errors": [
-          { "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}",
-        "InvocationTimeLimitSeconds": "8",
-        "LambdaInvocationAttributes": {
-          "notifyType": "partial",
-          "contactId": "$.ContactId",
-          "channel": "$.Channel",
-          "endpoint": "$.CustomerEndpoint.Address",
-          "customerName": "$.Attributes.customerName",
-          "contactInfo": "$.Attributes.contactInfo"
-        }
-      },
-      "Identifier": "aa100001-0000-0000-0000-000000000010",
-      "Type": "InvokeLambdaFunction",
-      "Transitions": {
-        "NextAction": "aa100001-0000-0000-0000-000000000011",
-        "Errors": [
-          { "NextAction": "aa100001-0000-0000-0000-000000000011", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "Text": "Aaron was pinged that you came by. Contact info's on the site if you want to try again. Take care!"
-      },
-      "Identifier": "aa100001-0000-0000-0000-000000000011",
-      "Type": "MessageParticipant",
-      "Transitions": {
-        "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba",
-        "Errors": [
-          { "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "Text": "Connecting you now — hang on a sec."
-      },
-      "Identifier": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7",
-      "Type": "MessageParticipant",
-      "Transitions": {
-        "NextAction": "e8044147-d71a-49be-a074-f1ac0c820a10",
-        "Errors": [
-          { "NextAction": "e8044147-d71a-49be-a074-f1ac0c820a10", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "QueueId": "arn:aws:connect:us-west-2:{{AWS_ACCOUNT_ID}}:instance/{{CONNECT_INSTANCE_ID}}/queue/{{CONNECT_QUEUE_ID}}"
-      },
-      "Identifier": "e8044147-d71a-49be-a074-f1ac0c820a10",
-      "Type": "UpdateContactTargetQueue",
-      "Transitions": {
-        "NextAction": "9ecd63a0-8b01-4886-81e1-4122abc57704",
-        "Errors": [
-          { "NextAction": "fe6810db-1fe8-4b8d-a939-65dadbb61ef7", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {},
-      "Identifier": "9ecd63a0-8b01-4886-81e1-4122abc57704",
-      "Type": "TransferContactToQueue",
-      "Transitions": {
-        "NextAction": "e8044147-d71a-49be-a074-f1ac0c820a10",
-        "Errors": [
-          { "NextAction": "e8044147-d71a-49be-a074-f1ac0c820a10", "ErrorType": "QueueAtCapacity" },
-          { "NextAction": "e8044147-d71a-49be-a074-f1ac0c820a10", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {},
-      "Identifier": "655eddac-5153-4959-94b6-a21d3adf14ba",
-      "Type": "DisconnectParticipant",
-      "Transitions": {}
-    },
-
-    {
-      "Parameters": {
-        "Text": "Aaron's offline at the moment. Happy to take a message — what's your name?",
-        "ResponseValidation": { "ResponseType": "TEXT" }
-      },
-      "Identifier": "c0a801a1-0001-4001-8001-c0a801a10001",
-      "Type": "GetParticipantInput",
-      "Transitions": {
-        "NextAction": "c0a801a1-0001-4001-8001-c0a801a10002",
-        "Conditions": [],
-        "Errors": [
-          { "NextAction": "aa100001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "aa100001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "Attributes": { "customerName": "$.StoredCustomerInput" }
-      },
-      "Identifier": "c0a801a1-0001-4001-8001-c0a801a10002",
-      "Type": "UpdateContactAttributes",
-      "Transitions": {
-        "NextAction": "c0a801a1-0001-4001-8001-c0a801a10003",
-        "Errors": [
-          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10003", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "Text": "And a way to reach you — email or phone?",
-        "ResponseValidation": { "ResponseType": "TEXT" }
-      },
-      "Identifier": "c0a801a1-0001-4001-8001-c0a801a10003",
-      "Type": "GetParticipantInput",
-      "Transitions": {
-        "NextAction": "c0a801a1-0001-4001-8001-c0a801a10004",
-        "Conditions": [],
-        "Errors": [
-          { "NextAction": "aa100001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "aa100001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "Attributes": { "contactInfo": "$.StoredCustomerInput" }
-      },
-      "Identifier": "c0a801a1-0001-4001-8001-c0a801a10004",
-      "Type": "UpdateContactAttributes",
-      "Transitions": {
-        "NextAction": "c0a801a1-0001-4001-8001-c0a801a10005",
-        "Errors": [
-          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10005", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}",
-        "InvocationTimeLimitSeconds": "8",
-        "LambdaInvocationAttributes": {
-          "notifyType": "message",
-          "contactId": "$.ContactId",
-          "channel": "$.Channel",
-          "endpoint": "$.CustomerEndpoint.Address",
-          "customerName": "$.Attributes.customerName",
-          "contactInfo": "$.Attributes.contactInfo"
-        }
-      },
-      "Identifier": "c0a801a1-0001-4001-8001-c0a801a10005",
-      "Type": "InvokeLambdaFunction",
-      "Transitions": {
-        "NextAction": "c0a801a1-0001-4001-8001-c0a801a10006",
-        "Errors": [
-          { "NextAction": "c0a801a1-0001-4001-8001-c0a801a10006", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "Text": "Thanks, $.Attributes.customerName — Aaron's got your message and will be in touch shortly. Appreciate you stopping by!"
-      },
-      "Identifier": "c0a801a1-0001-4001-8001-c0a801a10006",
-      "Type": "MessageParticipant",
-      "Transitions": {
-        "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba",
-        "Errors": [
-          { "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": { "Text": "Cool — let me grab Aaron's calendar. One sec..." },
-      "Identifier": "cc300001-0000-0000-0000-000000000001",
-      "Type": "MessageParticipant",
-      "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000002",
-        "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000002", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "LambdaFunctionARN": "{{SCHEDULE_LAMBDA_ARN}}",
-        "InvocationTimeLimitSeconds": "8",
-        "LambdaInvocationAttributes": {
-          "action": "list-slots",
-          "minDate": "$.Attributes.scheduleMinDate"
-        }
-      },
-      "Identifier": "cc300001-0000-0000-0000-000000000002",
-      "Type": "InvokeLambdaFunction",
-      "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000003",
-        "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000015", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": { "ComparisonValue": "$.External.slotsCount" },
-      "Identifier": "cc300001-0000-0000-0000-000000000003",
+      "Parameters": { "ComparisonValue": "$.Attributes.offlineChoice" },
+      "Identifier": "route-after-contact",
       "Type": "Compare",
       "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000005",
+        "NextAction": "collect-message",
         "Conditions": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000004", "Condition": { "Operator": "Equals", "Operands": ["0"] } }
+          { "NextAction": "collect-message", "Condition": { "Operator": "Equals", "Operands": ["1"] } },
+          { "NextAction": "sched-intro",     "Condition": { "Operator": "Equals", "Operands": ["2"] } },
+          { "NextAction": "vm-check-channel",  "Condition": { "Operator": "Equals", "Operands": ["3"] } }
         ],
-        "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000005", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "cc300001-0000-0000-0000-000000000005", "ErrorType": "NoMatchingError" }
-        ]
+        "Errors": [{ "NextAction": "collect-message", "ErrorType": "NoMatchingCondition" }]
       }
     },
 
     {
-      "Parameters": { "Text": "Hmm, Aaron's calendar is slammed for the next two weeks. Try again soon, or leave a message and he'll reach out to find time." },
-      "Identifier": "cc300001-0000-0000-0000-000000000004",
-      "Type": "MessageParticipant",
+      "Parameters": { "Text": "What would you like the message to say?", "LexV2Bot": { "AliasArn": "{{LEX_TEXT_BOT_ARN}}" } },
+      "Identifier": "collect-message",
+      "Type": "ConnectParticipantWithLexBot",
       "Transitions": {
-        "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba",
+        "NextAction": "store-message",
+        "Conditions": [{ "NextAction": "store-message", "Condition": { "Operator": "Equals", "Operands": ["CollectText"] } }],
         "Errors": [
-          { "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba", "ErrorType": "NoMatchingError" }
+          { "NextAction": "store-message", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "partial-notify", "ErrorType": "NoMatchingError" },
+          { "NextAction": "partial-notify", "ErrorType": "InputTimeLimitExceeded" }
         ]
       }
     },
 
-    {
-      "Parameters": { "Text": "$.External.slotsMenuText" },
-      "Identifier": "cc300001-0000-0000-0000-000000000005",
-      "Type": "MessageParticipant",
-      "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000006",
-        "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000006", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
+    { "Parameters": { "Attributes": { "customerMessage": "$.Lex.Slots.userInput" } }, "Identifier": "store-message", "Type": "UpdateContactAttributes",
+      "Transitions": { "NextAction": "send-notify", "Errors": [{ "NextAction": "send-notify", "ErrorType": "NoMatchingError" }] } },
 
     {
       "Parameters": {
-        "Text": "Pick one (reply with the number):",
-        "ResponseValidation": { "ResponseType": "TEXT" }
-      },
-      "Identifier": "cc300001-0000-0000-0000-000000000006",
-      "Type": "GetParticipantInput",
-      "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000007",
-        "Conditions": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000016", "Condition": { "Operator": "Equals", "Operands": ["0"] } }
-        ],
-        "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000015", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "cc300001-0000-0000-0000-000000000015", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": { "Attributes": { "slotChoice": "$.StoredCustomerInput" } },
-      "Identifier": "cc300001-0000-0000-0000-000000000007",
-      "Type": "UpdateContactAttributes",
-      "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000008",
-        "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000008", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "Text": "Got it. What's your name?",
-        "ResponseValidation": { "ResponseType": "TEXT" }
-      },
-      "Identifier": "cc300001-0000-0000-0000-000000000008",
-      "Type": "GetParticipantInput",
-      "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000009",
-        "Conditions": [],
-        "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000015", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "cc300001-0000-0000-0000-000000000015", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": { "Attributes": { "customerName": "$.StoredCustomerInput" } },
-      "Identifier": "cc300001-0000-0000-0000-000000000009",
-      "Type": "UpdateContactAttributes",
-      "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000010",
-        "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "Text": "And the best email for the calendar invite?",
-        "ResponseValidation": { "ResponseType": "TEXT" }
-      },
-      "Identifier": "cc300001-0000-0000-0000-000000000010",
-      "Type": "GetParticipantInput",
-      "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000011",
-        "Conditions": [],
-        "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000015", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "cc300001-0000-0000-0000-000000000015", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": { "Attributes": { "schedulerEmail": "$.StoredCustomerInput" } },
-      "Identifier": "cc300001-0000-0000-0000-000000000011",
-      "Type": "UpdateContactAttributes",
-      "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000012",
-        "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000012", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
-
-    {
-      "Parameters": {
-        "LambdaFunctionARN": "{{SCHEDULE_LAMBDA_ARN}}",
-        "InvocationTimeLimitSeconds": "8",
+        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
         "LambdaInvocationAttributes": {
-          "action": "book-slot",
-          "slotChoice": "$.Attributes.slotChoice",
-          "customerName": "$.Attributes.customerName",
-          "schedulerEmail": "$.Attributes.schedulerEmail",
-          "slot1Iso": "$.External.slot1Iso",
-          "slot2Iso": "$.External.slot2Iso",
-          "slot3Iso": "$.External.slot3Iso",
-          "slot4Iso": "$.External.slot4Iso",
-          "slot5Iso": "$.External.slot5Iso"
+          "notifyType": "message", "contactId": "$.ContactId", "channel": "$.Channel",
+          "endpoint": "$.CustomerEndpoint.Address", "customerName": "$.Attributes.customerName",
+          "contactInfo": "$.Attributes.contactInfo", "customerMessage": "$.Attributes.customerMessage",
+          "visitorIp": "$.Attributes.visitorIp"
         }
       },
-      "Identifier": "cc300001-0000-0000-0000-000000000012",
-      "Type": "InvokeLambdaFunction",
-      "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000013",
-        "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000015", "ErrorType": "NoMatchingError" }
-        ]
-      }
+      "Identifier": "send-notify", "Type": "InvokeLambdaFunction",
+      "Transitions": { "NextAction": "msg-confirm", "Errors": [{ "NextAction": "msg-confirm", "ErrorType": "NoMatchingError" }] }
     },
 
+    { "Parameters": { "Text": "Got it — your message has been sent to Aaron. He'll be in touch soon." }, "Identifier": "msg-confirm", "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "thank-you", "Errors": [{ "NextAction": "thank-you", "ErrorType": "NoMatchingError" }] } },
+
     {
-      "Parameters": { "ComparisonValue": "$.External.bookingOk" },
-      "Identifier": "cc300001-0000-0000-0000-000000000013",
+      "Parameters": { "ComparisonValue": "$.Channel" },
+      "Identifier": "vm-check-channel",
       "Type": "Compare",
       "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000015",
+        "NextAction": "vm-collect-message",
         "Conditions": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000014", "Condition": { "Operator": "Equals", "Operands": ["true"] } }
+          { "NextAction": "vm-voice-record-on", "Condition": { "Operator": "Equals", "Operands": ["VOICE"] } }
+        ],
+        "Errors": [{ "NextAction": "vm-collect-message", "ErrorType": "NoMatchingCondition" }]
+      }
+    },
+
+    { "Parameters": { "RecordingBehavior": { "RecordedParticipants": ["Customer"] } }, "Identifier": "vm-voice-record-on", "Type": "UpdateContactRecordingBehavior",
+      "Transitions": { "NextAction": "vm-voice-greeting", "Errors": [], "Conditions": [] } },
+
+    { "Parameters": { "Text": "Please leave your message for Aaron after the tone. Press any key when you're done, or just hang up." }, "Identifier": "vm-voice-greeting", "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "vm-voice-wait", "Errors": [{ "NextAction": "vm-voice-wait", "ErrorType": "NoMatchingError" }] } },
+
+    {
+      "Parameters": { "Text": " ", "StoreInput": "False", "InputTimeLimitSeconds": "120" },
+      "Identifier": "vm-voice-wait", "Type": "GetParticipantInput",
+      "Transitions": {
+        "NextAction": "vm-voice-confirm",
+        "Conditions": [],
+        "Errors": [
+          { "NextAction": "vm-voice-confirm", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "vm-voice-confirm", "ErrorType": "NoMatchingError" },
+          { "NextAction": "vm-voice-confirm", "ErrorType": "InputTimeLimitExceeded" }
+        ]
+      }
+    },
+
+    { "Parameters": { "Text": "Got it — Aaron will listen to your message and get back to you." }, "Identifier": "vm-voice-confirm", "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "vm-notify", "Errors": [{ "NextAction": "vm-notify", "ErrorType": "NoMatchingError" }] } },
+
+    {
+      "Parameters": { "Text": "Go ahead — what would you like Aaron to know?", "LexV2Bot": { "AliasArn": "{{LEX_TEXT_BOT_ARN}}" } },
+      "Identifier": "vm-collect-message",
+      "Type": "ConnectParticipantWithLexBot",
+      "Transitions": {
+        "NextAction": "vm-store-message",
+        "Conditions": [{ "NextAction": "vm-store-message", "Condition": { "Operator": "Equals", "Operands": ["CollectText"] } }],
+        "Errors": [
+          { "NextAction": "vm-store-message", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "partial-notify", "ErrorType": "NoMatchingError" },
+          { "NextAction": "partial-notify", "ErrorType": "InputTimeLimitExceeded" }
+        ]
+      }
+    },
+
+    { "Parameters": { "Attributes": { "customerMessage": "$.Lex.Slots.userInput" } }, "Identifier": "vm-store-message", "Type": "UpdateContactAttributes",
+      "Transitions": { "NextAction": "vm-msg", "Errors": [{ "NextAction": "vm-msg", "ErrorType": "NoMatchingError" }] } },
+
+    { "Parameters": { "Text": "Got it — I've passed your message along to Aaron. He'll reach out soon." }, "Identifier": "vm-msg", "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "vm-notify", "Errors": [{ "NextAction": "vm-notify", "ErrorType": "NoMatchingError" }] } },
+
+    {
+      "Parameters": {
+        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "notifyType": "voicemail_request", "contactId": "$.ContactId", "channel": "$.Channel",
+          "endpoint": "$.CustomerEndpoint.Address", "customerName": "$.Attributes.customerName",
+          "contactInfo": "$.Attributes.contactInfo", "customerMessage": "$.Attributes.customerMessage",
+          "visitorIp": "$.Attributes.visitorIp"
+        }
+      },
+      "Identifier": "vm-notify", "Type": "InvokeLambdaFunction",
+      "Transitions": { "NextAction": "thank-you", "Errors": [{ "NextAction": "thank-you", "ErrorType": "NoMatchingError" }] }
+    },
+
+    { "Parameters": { "Text": "Let me grab Aaron's calendar. One sec..." }, "Identifier": "sched-intro", "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "sched-list-slots", "Errors": [{ "NextAction": "sched-list-slots", "ErrorType": "NoMatchingError" }] } },
+
+    {
+      "Parameters": { "LambdaFunctionARN": "{{SCHEDULE_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": { "action": "list-slots", "minDate": "$.Attributes.scheduleMinDate" } },
+      "Identifier": "sched-list-slots", "Type": "InvokeLambdaFunction",
+      "Transitions": { "NextAction": "sched-check-count", "Errors": [{ "NextAction": "sched-error", "ErrorType": "NoMatchingError" }] }
+    },
+
+    { "Parameters": { "ComparisonValue": "$.External.slotsCount" }, "Identifier": "sched-check-count", "Type": "Compare",
+      "Transitions": { "NextAction": "sched-show-menu", "Conditions": [{ "NextAction": "sched-no-slots", "Condition": { "Operator": "Equals", "Operands": ["0"] } }],
+        "Errors": [{ "NextAction": "sched-show-menu", "ErrorType": "NoMatchingCondition" }] } },
+
+    { "Parameters": { "Text": "Aaron's calendar is fully booked right now. Try the contact page at aaronrohrbacher.com/contact and he'll find time." }, "Identifier": "sched-no-slots", "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "thank-you", "Errors": [{ "NextAction": "thank-you", "ErrorType": "NoMatchingError" }] } },
+
+    { "Parameters": { "Text": "$.External.slotsMenuText" }, "Identifier": "sched-show-menu", "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "sched-pick-slot", "Errors": [{ "NextAction": "sched-pick-slot", "ErrorType": "NoMatchingError" }] } },
+
+    {
+      "Parameters": { "Text": "Reply 1–5 to book, or 0 to see more.", "LexV2Bot": { "AliasArn": "{{LEX_MENU_BOT_ARN}}" } },
+      "Identifier": "sched-pick-slot", "Type": "ConnectParticipantWithLexBot",
+      "Transitions": {
+        "NextAction": "sched-error",
+        "Conditions": [
+          { "NextAction": "sched-page-fwd", "Condition": { "Operator": "Equals", "Operands": ["SelectZero"] } },
+          { "NextAction": "sched-store-1",  "Condition": { "Operator": "Equals", "Operands": ["SelectOne"] } },
+          { "NextAction": "sched-store-2",  "Condition": { "Operator": "Equals", "Operands": ["SelectTwo"] } },
+          { "NextAction": "sched-store-3",  "Condition": { "Operator": "Equals", "Operands": ["SelectThree"] } },
+          { "NextAction": "sched-store-4",  "Condition": { "Operator": "Equals", "Operands": ["SelectFour"] } },
+          { "NextAction": "sched-store-5",  "Condition": { "Operator": "Equals", "Operands": ["SelectFive"] } }
         ],
         "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000015", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "cc300001-0000-0000-0000-000000000015", "ErrorType": "NoMatchingError" }
+          { "NextAction": "sched-error", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "sched-error", "ErrorType": "NoMatchingError" },
+          { "NextAction": "sched-error", "ErrorType": "InputTimeLimitExceeded" }
         ]
       }
     },
 
-    {
-      "Parameters": { "Text": "Done — check your email for the invite. Looking forward to it!" },
-      "Identifier": "cc300001-0000-0000-0000-000000000014",
-      "Type": "MessageParticipant",
-      "Transitions": {
-        "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba",
-        "Errors": [
-          { "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    },
+    { "Parameters": { "Attributes": { "slotChoice": "1" } }, "Identifier": "sched-store-1", "Type": "UpdateContactAttributes", "Transitions": { "NextAction": "sched-book", "Errors": [{ "NextAction": "sched-book", "ErrorType": "NoMatchingError" }] } },
+    { "Parameters": { "Attributes": { "slotChoice": "2" } }, "Identifier": "sched-store-2", "Type": "UpdateContactAttributes", "Transitions": { "NextAction": "sched-book", "Errors": [{ "NextAction": "sched-book", "ErrorType": "NoMatchingError" }] } },
+    { "Parameters": { "Attributes": { "slotChoice": "3" } }, "Identifier": "sched-store-3", "Type": "UpdateContactAttributes", "Transitions": { "NextAction": "sched-book", "Errors": [{ "NextAction": "sched-book", "ErrorType": "NoMatchingError" }] } },
+    { "Parameters": { "Attributes": { "slotChoice": "4" } }, "Identifier": "sched-store-4", "Type": "UpdateContactAttributes", "Transitions": { "NextAction": "sched-book", "Errors": [{ "NextAction": "sched-book", "ErrorType": "NoMatchingError" }] } },
+    { "Parameters": { "Attributes": { "slotChoice": "5" } }, "Identifier": "sched-store-5", "Type": "UpdateContactAttributes", "Transitions": { "NextAction": "sched-book", "Errors": [{ "NextAction": "sched-book", "ErrorType": "NoMatchingError" }] } },
+
+    { "Parameters": { "Attributes": { "scheduleMinDate": "$.External.lastSlotIso" } }, "Identifier": "sched-page-fwd", "Type": "UpdateContactAttributes",
+      "Transitions": { "NextAction": "sched-list-slots", "Errors": [{ "NextAction": "sched-list-slots", "ErrorType": "NoMatchingError" }] } },
 
     {
-      "Parameters": { "Text": "Hmm, that didn't go through. Try the contact form on the site and Aaron will sort it out." },
-      "Identifier": "cc300001-0000-0000-0000-000000000015",
-      "Type": "MessageParticipant",
-      "Transitions": {
-        "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba",
-        "Errors": [
-          { "NextAction": "655eddac-5153-4959-94b6-a21d3adf14ba", "ErrorType": "NoMatchingError" }
-        ]
-      }
+      "Parameters": { "LambdaFunctionARN": "{{SCHEDULE_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "action": "book-slot", "slotChoice": "$.Attributes.slotChoice",
+          "customerName": "$.Attributes.customerName", "schedulerEmail": "$.Attributes.contactInfo",
+          "slot1Iso": "$.External.slot1Iso", "slot2Iso": "$.External.slot2Iso",
+          "slot3Iso": "$.External.slot3Iso", "slot4Iso": "$.External.slot4Iso", "slot5Iso": "$.External.slot5Iso"
+        } },
+      "Identifier": "sched-book", "Type": "InvokeLambdaFunction",
+      "Transitions": { "NextAction": "sched-check-ok", "Errors": [{ "NextAction": "sched-error", "ErrorType": "NoMatchingError" }] }
     },
 
+    { "Parameters": { "ComparisonValue": "$.External.bookingOk" }, "Identifier": "sched-check-ok", "Type": "Compare",
+      "Transitions": { "NextAction": "sched-error", "Conditions": [{ "NextAction": "sched-notify", "Condition": { "Operator": "Equals", "Operands": ["true"] } }],
+        "Errors": [{ "NextAction": "sched-error", "ErrorType": "NoMatchingCondition" }] } },
+
     {
-      "Parameters": { "Attributes": { "scheduleMinDate": "$.External.lastSlotIso" } },
-      "Identifier": "cc300001-0000-0000-0000-000000000016",
-      "Type": "UpdateContactAttributes",
-      "Transitions": {
-        "NextAction": "cc300001-0000-0000-0000-000000000002",
-        "Errors": [
-          { "NextAction": "cc300001-0000-0000-0000-000000000002", "ErrorType": "NoMatchingError" }
-        ]
-      }
-    }
+      "Parameters": {
+        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "notifyType": "schedule", "contactId": "$.ContactId", "channel": "$.Channel",
+          "endpoint": "$.CustomerEndpoint.Address", "customerName": "$.Attributes.customerName",
+          "contactInfo": "$.Attributes.contactInfo", "visitorIp": "$.Attributes.visitorIp",
+          "bookedTime": "$.External.bookedTime"
+        }
+      },
+      "Identifier": "sched-notify", "Type": "InvokeLambdaFunction",
+      "Transitions": { "NextAction": "sched-done", "Errors": [{ "NextAction": "sched-done", "ErrorType": "NoMatchingError" }] }
+    },
+
+    { "Parameters": { "Text": "Done — you're booked! Aaron will reach out to confirm." }, "Identifier": "sched-done", "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "thank-you", "Errors": [{ "NextAction": "thank-you", "ErrorType": "NoMatchingError" }] } },
+
+    { "Parameters": { "Text": "That didn't go through. Try the contact page at aaronrohrbacher.com/contact and Aaron will sort it out." }, "Identifier": "sched-error", "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "thank-you", "Errors": [{ "NextAction": "thank-you", "ErrorType": "NoMatchingError" }] } },
+
+    {
+      "Parameters": { "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "notifyType": "partial", "contactId": "$.ContactId", "channel": "$.Channel",
+          "endpoint": "$.CustomerEndpoint.Address", "customerName": "$.Attributes.customerName",
+          "contactInfo": "$.Attributes.contactInfo", "visitorIp": "$.Attributes.visitorIp"
+        } },
+      "Identifier": "partial-notify", "Type": "InvokeLambdaFunction",
+      "Transitions": { "NextAction": "thank-you", "Errors": [{ "NextAction": "thank-you", "ErrorType": "NoMatchingError" }] }
+    },
+
+    { "Parameters": { "Text": "Thank you very much for visiting Aaron's site. Take care!" }, "Identifier": "thank-you", "Type": "MessageParticipant",
+      "Transitions": { "NextAction": "disconnect", "Errors": [{ "NextAction": "disconnect", "ErrorType": "NoMatchingError" }] } },
+
+    { "Parameters": {}, "Identifier": "disconnect", "Type": "DisconnectParticipant", "Transitions": {} }
 
   ]
 }
