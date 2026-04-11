@@ -5,6 +5,167 @@ import Style from './MusicAdmin.module.scss';
 
 const AUDIO_EXTS = ['.mp3', '.wav', '.aiff', '.aif'];
 
+function isAudioFile(file) {
+  const name = (file?.name || '').toLowerCase();
+  return AUDIO_EXTS.some((ext) => name.endsWith(ext));
+}
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  let n = bytes;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return `${n.toFixed(n >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+function dedupeFiles(existing, incoming) {
+  const key = (f) => `${f.name}::${f.size}::${f.lastModified || ''}`;
+  const seen = new Set(existing.map(key));
+  const out = [...existing];
+  for (const f of incoming) {
+    const k = key(f);
+    if (!seen.has(k)) { seen.add(k); out.push(f); }
+  }
+  return out;
+}
+
+function FileDropZone({ files, onFilesChange, disabled, idPrefix }) {
+  const [dragActive, setDragActive] = useState(false);
+  const [rejectMsg, setRejectMsg] = useState('');
+  const dragCounter = useRef(0);
+  const inputRef = useRef(null);
+  const inputId = `${idPrefix}-file-input`;
+
+  function handleFiles(list) {
+    const arr = list ? [...list] : [];
+    if (arr.length === 0) return;
+    const accepted = arr.filter(isAudioFile);
+    const rejected = arr.filter((f) => !isAudioFile(f));
+    if (rejected.length > 0) {
+      setRejectMsg(
+        `Skipped ${rejected.length} file${rejected.length > 1 ? 's' : ''} ` +
+        `(only .mp3, .wav, .aiff, .aif allowed): ${rejected.map((r) => r.name).join(', ')}`
+      );
+    } else {
+      setRejectMsg('');
+    }
+    if (accepted.length > 0) {
+      onFilesChange(dedupeFiles(files, accepted));
+    }
+  }
+
+  function onDragEnter(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (disabled) return;
+    dragCounter.current += 1;
+    if (e.dataTransfer?.types?.includes('Files')) setDragActive(true);
+  }
+
+  function onDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (disabled) return;
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+  }
+
+  function onDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current -= 1;
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0;
+      setDragActive(false);
+    }
+  }
+
+  function onDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current = 0;
+    setDragActive(false);
+    if (disabled) return;
+    handleFiles(e.dataTransfer?.files);
+  }
+
+  function removeAt(idx) {
+    onFilesChange(files.filter((_, i) => i !== idx));
+  }
+
+  return (
+    <div>
+      <div
+        className={[Style.dropZone, dragActive ? Style.dropZoneActive : ''].join(' ')}
+        onDragEnter={onDragEnter}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+      >
+        <p>{dragActive ? 'Drop audio files here' : 'Drag & drop audio files here'}</p>
+        <small>.mp3 · .wav · .aiff · .aif</small>
+        <div className={Style.dropZoneActions}>
+          <button
+            type="button"
+            className={Style.selectFilesBtn}
+            disabled={disabled}
+            onClick={() => inputRef.current?.click()}
+          >
+            Select files
+          </button>
+          {files.length > 0 && (
+            <button
+              type="button"
+              className={Style.selectFilesBtn}
+              disabled={disabled}
+              onClick={() => { onFilesChange([]); setRejectMsg(''); }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        <input
+          ref={inputRef}
+          id={inputId}
+          type="file"
+          multiple
+          accept=".mp3,.wav,.aiff,.aif,audio/*"
+          className={Style.hiddenFileInput}
+          disabled={disabled}
+          onChange={(e) => {
+            handleFiles(e.target.files);
+            // reset so picking the same file twice re-triggers onChange
+            e.target.value = '';
+          }}
+        />
+      </div>
+
+      {rejectMsg && <p className={Style.inlineError}>{rejectMsg}</p>}
+
+      {files.length > 0 && (
+        <div className={Style.fileList}>
+          {files.map((f, idx) => (
+            <div key={`${f.name}-${f.size}-${idx}`} className={Style.fileRow}>
+              <span className={Style.fileName} title={f.name}>{f.name}</span>
+              <span className={Style.fileSize}>{formatBytes(f.size)}</span>
+              <button
+                type="button"
+                className={Style.removeFileBtn}
+                onClick={() => removeAt(idx)}
+                disabled={disabled}
+                aria-label={`Remove ${f.name}`}
+                title="Remove"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DumpManager({ getAuthHeaders, onRefresh }) {
   const [dumps, setDumps] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +176,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
   const [form, setForm] = useState({ name: '', description: '', artists: '', visibility: 'public' });
   const [editing, setEditing] = useState(null);
   const [shareCopied, setShareCopied] = useState(null);
-  const fileRef = useRef(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   async function createShareLink(dumpId) {
     try {
@@ -56,10 +217,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
     if (!form.name.trim()) return;
     setError('');
 
-    const files = fileRef.current?.files;
-    const audioFiles = files ? [...files].filter((f) =>
-      AUDIO_EXTS.some((ext) => f.name.toLowerCase().endsWith(ext))
-    ) : [];
+    const audioFiles = selectedFiles.filter(isAudioFile);
 
     if (audioFiles.length === 0) {
       setError('Add at least one audio file (MP3, WAV, or AIFF) before creating the dump.');
@@ -135,7 +293,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
 
       setForm({ name: '', description: '', artists: '', visibility: 'public' });
       setCreating(false);
-      if (fileRef.current) fileRef.current.value = '';
+      setSelectedFiles([]);
       fetchDumps();
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -197,47 +355,76 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
         </button>
       ) : (
         <div className={Style.createForm}>
-          <input
-            className={Style.input}
-            placeholder="Dump name / release title"
-            value={form.name}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-          />
-          <textarea
-            className={Style.input}
-            rows={2}
-            placeholder="Description"
-            value={form.description}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-          />
-          <input
-            className={Style.input}
-            placeholder="Artists"
-            value={form.artists}
-            onChange={(e) => setForm((f) => ({ ...f, artists: e.target.value }))}
-          />
-          <select
-            className={Style.input}
-            value={form.visibility}
-            onChange={(e) => setForm((f) => ({ ...f, visibility: e.target.value }))}
-          >
-            <option value="public">Public</option>
-            <option value="authenticated">Auth Required</option>
-            <option value="restricted">Restricted</option>
-          </select>
-          <label className={Style.fileLabel}>
-            Audio Files
+          <div className={Style.fieldGroup}>
+            <label className={Style.fieldLabel} htmlFor="dump-name">Dump name</label>
             <input
-              ref={fileRef}
-              type="file"
-              multiple
-              accept=".mp3,.wav,.aiff,.aif,audio/*"
-              className={Style.fileInput}
+              id="dump-name"
+              className={Style.input}
+              placeholder="Release title"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             />
-          </label>
-          {uploading && <p className={Style.savingBadge}>{uploadProgress}</p>}
+          </div>
+
+          <div className={Style.fieldGroup}>
+            <label className={Style.fieldLabel} htmlFor="dump-artists">Artists</label>
+            <input
+              id="dump-artists"
+              className={Style.input}
+              placeholder="Comma-separated"
+              value={form.artists}
+              onChange={(e) => setForm((f) => ({ ...f, artists: e.target.value }))}
+            />
+          </div>
+
+          <div className={Style.fieldGroup}>
+            <label className={Style.fieldLabel} htmlFor="dump-description">Description</label>
+            <textarea
+              id="dump-description"
+              className={Style.input}
+              rows={2}
+              placeholder="Optional"
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            />
+          </div>
+
+          <div className={Style.fieldGroup}>
+            <label className={Style.fieldLabel} htmlFor="dump-visibility">Visibility</label>
+            <select
+              id="dump-visibility"
+              className={Style.input}
+              value={form.visibility}
+              onChange={(e) => setForm((f) => ({ ...f, visibility: e.target.value }))}
+            >
+              <option value="public">Public</option>
+              <option value="authenticated">Auth Required</option>
+              <option value="restricted">Restricted</option>
+            </select>
+          </div>
+
+          <hr className={Style.sectionDivider} />
+
+          <div className={Style.fieldGroup}>
+            <label className={Style.fieldLabel}>Audio files</label>
+            <FileDropZone
+              files={selectedFiles}
+              onFilesChange={setSelectedFiles}
+              disabled={uploading}
+              idPrefix="create"
+            />
+          </div>
+
+          {uploading && <p className={Style.uploadStatus}>{uploadProgress}</p>}
+
           <div className={Style.modalActions}>
-            <button className={Style.btnSecondary} onClick={() => setCreating(false)}>Cancel</button>
+            <button
+              className={Style.btnSecondary}
+              onClick={() => { setCreating(false); setSelectedFiles([]); }}
+              disabled={uploading}
+            >
+              Cancel
+            </button>
             <button className={Style.btn} onClick={createDump} disabled={uploading}>
               {uploading ? 'Uploading...' : 'Create & Upload'}
             </button>
@@ -337,14 +524,11 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
   const [uploadError, setUploadError] = useState('');
-  const editFileRef = useRef(null);
+  const [editFiles, setEditFiles] = useState([]);
   const trackIds = (dump.tracks || []).map((t) => t.id);
 
   async function uploadMore() {
-    const files = editFileRef.current?.files;
-    const audioFiles = files ? [...files].filter((f) =>
-      AUDIO_EXTS.some((ext) => f.name.toLowerCase().endsWith(ext))
-    ) : [];
+    const audioFiles = editFiles.filter(isAudioFile);
     if (audioFiles.length === 0) {
       setUploadError('Pick at least one audio file (MP3, WAV, or AIFF).');
       return;
@@ -395,7 +579,7 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
           body: JSON.stringify({ tracks: updated }),
         });
       }
-      if (editFileRef.current) editFileRef.current.value = '';
+      setEditFiles([]);
       setUploadProgress('');
       if (onRefresh) await onRefresh();
     } catch (err) {
@@ -652,30 +836,26 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
             </div>
           )}
 
-          <div>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Add tracks to this dump</label>
-            <input
-              type="file"
-              ref={editFileRef}
-              multiple
-              accept=".mp3,.wav,.aiff,.aif"
+          <div className={Style.fieldGroup}>
+            <label className={Style.fieldLabel}>Add tracks to this dump</label>
+            <FileDropZone
+              files={editFiles}
+              onFilesChange={setEditFiles}
               disabled={uploading}
-              style={{ display: 'block', marginTop: '0.35rem' }}
+              idPrefix="edit"
             />
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+            <div className={Style.dropZoneActions} style={{ marginTop: '0.5rem' }}>
               <button
                 type="button"
                 className={Style.btn}
                 onClick={uploadMore}
-                disabled={uploading}
+                disabled={uploading || editFiles.length === 0}
               >
-                {uploading ? 'Uploading...' : 'Upload & Add'}
+                {uploading ? 'Uploading...' : `Upload & Add${editFiles.length > 0 ? ` (${editFiles.length})` : ''}`}
               </button>
-              {uploadProgress && <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{uploadProgress}</span>}
+              {uploadProgress && <span className={Style.uploadStatus}>{uploadProgress}</span>}
             </div>
-            {uploadError && (
-              <p style={{ color: '#d14', fontSize: '0.8rem', margin: '0.4rem 0 0' }}>{uploadError}</p>
-            )}
+            {uploadError && <p className={Style.inlineError}>{uploadError}</p>}
           </div>
 
           <div className={Style.metaInfo}>
