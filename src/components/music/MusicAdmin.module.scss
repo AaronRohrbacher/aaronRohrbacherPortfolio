@@ -517,6 +517,180 @@
   font-size: 0.82rem;
 }
 
+// ─── Field groups (modal/create form) ───────────────────────────────────────
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  & + & {
+    margin-top: 0.25rem;
+  }
+}
+
+.fieldLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0.65;
+  letter-spacing: 0.01em;
+}
+
+.sectionDivider {
+  height: 1px;
+  background: rgba(128, 128, 128, 0.1);
+  margin: 0.35rem 0 0.25rem;
+  border: none;
+}
+
+// ─── File drop zone ─────────────────────────────────────────────────────────
+.dropZone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1rem;
+  border: 1.5px dashed rgba(128, 128, 128, 0.28);
+  border-radius: 12px;
+  background: rgba(128, 128, 128, 0.03);
+  text-align: center;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+
+  p {
+    margin: 0;
+    font-size: 0.8rem;
+    opacity: 0.55;
+  }
+
+  small {
+    font-size: 0.68rem;
+    opacity: 0.4;
+  }
+}
+
+.dropZoneActive {
+  border-color: var(--accent-2);
+  background: rgba(124, 58, 237, 0.08);
+  transform: scale(1.005);
+
+  p { opacity: 0.9; }
+}
+
+.dropZoneActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+
+.selectFilesBtn {
+  padding: 0.42rem 0.95rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid rgba(128, 128, 128, 0.22);
+  background: rgba(128, 128, 128, 0.06);
+  color: inherit;
+  cursor: pointer;
+  transition: all 200ms;
+
+  &:hover {
+    border-color: var(--accent-2);
+    background: rgba(124, 58, 237, 0.06);
+  }
+
+  &:disabled { opacity: 0.35; cursor: not-allowed; }
+}
+
+.hiddenFileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ─── Selected file list ─────────────────────────────────────────────────────
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  padding: 0.4rem;
+  border: 1px solid rgba(128, 128, 128, 0.1);
+  border-radius: 10px;
+  background: rgba(128, 128, 128, 0.02);
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  background: rgba(128, 128, 128, 0.03);
+  transition: background 200ms;
+
+  &:hover { background: rgba(128, 128, 128, 0.07); }
+}
+
+.fileName {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: monospace;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.fileSize {
+  font-size: 0.68rem;
+  opacity: 0.4;
+  font-variant-numeric: tabular-nums;
+}
+
+.removeFileBtn {
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.4;
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.88rem;
+  line-height: 1;
+  transition: all 200ms;
+
+  &:hover {
+    opacity: 1;
+    background: rgba(255, 96, 87, 0.12);
+    color: var(--red);
+  }
+}
+
+.inlineError {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: var(--red);
+}
+
+.uploadStatus {
+  margin: 0.25rem 0 0;
+  font-size: 0.76rem;
+  opacity: 0.6;
+  font-weight: 500;
+}
+
 // ─── Sub List ───────────────────────────────────────────────────────────────
 .subList {
   margin-left: 2rem;
