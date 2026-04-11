@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { promptInsertLink } from '@/lib/richText';
 import Style from './MusicAdmin.module.scss';
 import { useAuth } from './AuthContext';
 import { useMusicPlayer } from './MusicPlayerContext';
@@ -36,7 +37,8 @@ export default function MusicAdmin() {
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('created');
+  const [sortBy, setSortBy] = useState('manual');
+  const [sortDir, setSortDir] = useState('asc');
 
   const fetchTracks = useCallback(async () => {
     setLoading(true);
@@ -231,18 +233,31 @@ export default function MusicAdmin() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
-              Sort by
-              <select
-                className={Style.selectSmall}
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                Sort by
+                <select
+                  className={Style.selectSmall}
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="manual">Manual (my order)</option>
+                  <option value="created">Date created</option>
+                  <option value="uploaded">Date uploaded to S3</option>
+                  <option value="name">Name</option>
+                </select>
+              </label>
+              <button
+                type="button"
+                className={Style.iconBtn}
+                onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+                title={`Sort direction: ${sortDir === 'asc' ? 'ascending' : 'descending'} (click to flip)`}
               >
-                <option value="created">Date created</option>
-                <option value="uploaded">Date uploaded to S3</option>
-                <option value="name">Name</option>
-              </select>
-            </label>
+                <i className={`fa-solid fa-arrow-${sortDir === 'asc' ? 'down-short-wide' : 'up-short-wide'}`} />
+                {' '}
+                {sortDir === 'asc' ? 'Asc' : 'Desc'}
+              </button>
+            </div>
             {tracks.length === 0 && (
               <p className={Style.emptyMsg}>No tracks found in the S3 bucket.</p>
             )}
@@ -261,19 +276,24 @@ export default function MusicAdmin() {
                 matchesDump
               );
             }).slice().sort((a, b) => {
+              // Direction sign: asc → natural (lowest first for numbers, A→Z for strings),
+              // desc → flipped. Applied per-mode so behavior stays intuitive.
+              const sign = sortDir === 'asc' ? 1 : -1;
+              if (sortBy === 'manual') {
+                return ((a.order ?? 0) - (b.order ?? 0)) * sign;
+              }
               if (sortBy === 'name') {
-                return (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' });
+                return (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }) * sign;
               }
               if (sortBy === 'uploaded') {
-                // Fall back to addedAt if s3UploadedAt is missing on a row.
                 const av = a.s3UploadedAt || a.addedAt || '';
                 const bv = b.s3UploadedAt || b.addedAt || '';
-                return bv.localeCompare(av); // newest first
+                return av.localeCompare(bv) * sign;
               }
-              // Default: Date created (addedAt), newest first.
+              // Default: Date created (addedAt).
               const av = a.addedAt || '';
               const bv = b.addedAt || '';
-              return bv.localeCompare(av);
+              return av.localeCompare(bv) * sign;
             }).map((track, index) => (
               <div
                 key={track.id}
@@ -503,6 +523,8 @@ function TrackEditor({ track, dumps = [], onSave, onCancel, getAuthHeaders }) {
     delete next.dumpId;
     return next;
   });
+  const artistsRef = useRef(null);
+  const descriptionRef = useRef(null);
   const [perms, setPerms] = useState({ users: [], groups: [] });
   const [allUsers, setAllUsers] = useState([]);
   const [allGroups, setAllGroups] = useState([]);
@@ -619,23 +641,45 @@ function TrackEditor({ track, dumps = [], onSave, onCancel, getAuthHeaders }) {
             />
           </label>
           <label>
-            Artists
+            <span className={Style.labelRow}>
+              Artists
+              <button
+                type="button"
+                className={Style.linkBtn}
+                onClick={() => promptInsertLink(artistsRef, form.artists || '', (v) => set('artists', v))}
+                title="Insert link"
+              >
+                <i className="fa-solid fa-link" /> Link
+              </button>
+            </span>
             <textarea
+              ref={artistsRef}
               className={Style.input}
               rows={2}
-              value={form.artists}
+              value={form.artists || ''}
               onChange={(e) => set('artists', e.target.value)}
               placeholder="e.g., Aaron Rohrbacher on keys, with Sarah on vocals..."
             />
           </label>
           <label>
-            Description
+            <span className={Style.labelRow}>
+              Description
+              <button
+                type="button"
+                className={Style.linkBtn}
+                onClick={() => promptInsertLink(descriptionRef, form.description || '', (v) => set('description', v))}
+                title="Insert link"
+              >
+                <i className="fa-solid fa-link" /> Link
+              </button>
+            </span>
             <textarea
+              ref={descriptionRef}
               className={Style.input}
               rows={3}
-              value={form.description}
+              value={form.description || ''}
               onChange={(e) => set('description', e.target.value)}
-              placeholder="Tell listeners about this track..."
+              placeholder="Tell listeners about this track... (you can paste URLs or click + Link)"
             />
           </label>
           <label>

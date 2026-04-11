@@ -3,14 +3,19 @@ import { loadDumps } from '@/lib/trackStore';
 /**
  * Music sitemap — served at /music-sitemap.xml.
  * Uses the music.aaronrohrbacher.com canonical subdomain for every URL.
- * Lists the music index + every published dump so Google can index each
- * release individually.
+ * Lists the music index + every published *public* dump so Google can index
+ * each release individually.
  *
- * Cached for 1 hour at the edge; Next.js revalidates this route on demand.
+ * Non-public dumps (visibility = 'authenticated' | 'restricted') are
+ * intentionally excluded — the sitemap is a search-engine hint file and
+ * must never leak URLs a crawler can't legitimately reach.
+ *
+ * Rendered dynamically so DB changes reflect without a redeploy.
  */
 const MUSIC_BASE = 'https://music.aaronrohrbacher.com';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
   const now = new Date().toISOString().split('T')[0];
@@ -18,7 +23,9 @@ export async function GET() {
   let dumps = [];
   try {
     const all = await loadDumps();
-    dumps = all.filter((d) => d.published);
+    dumps = all.filter(
+      (d) => d.published && (d.visibility || 'public') === 'public'
+    );
   } catch {
     // If the store is unreachable at build/edge time, serve a bare sitemap
     // rather than 500 — we'd rather Google see the index than nothing.
@@ -28,8 +35,8 @@ export async function GET() {
   const urls = [
     { loc: `${MUSIC_BASE}/`, lastmod: now, changefreq: 'weekly', priority: '1.0' },
     ...dumps.map((d) => ({
-      loc: `${MUSIC_BASE}/dump/${encodeURIComponent(d.id)}`,
-      lastmod: (d.createdAt || now).split('T')[0],
+      loc: `${MUSIC_BASE}/dump/${encodeURIComponent(d.slug || d.id)}`,
+      lastmod: ((d.updatedAt || d.createdAt) || now).split('T')[0],
       changefreq: 'weekly',
       priority: '0.8',
     })),

@@ -6,6 +6,7 @@ import Style from './MusicPlaylist.module.scss';
 import { useAuth } from './AuthContext';
 import { useMusicPlayer } from './MusicPlayerContext';
 import { useMusicHref } from '@/lib/musicLinks';
+import { renderRichText } from '@/lib/richText';
 
 const DEFAULT_PER_PAGE = 10;
 
@@ -69,17 +70,11 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
       const dumpList = data.dumps || [];
       setTracks(looseTracks);
       setDumps(dumpList);
-      const seen = new Set();
-      const allTracks = [
-        ...dumpList.flatMap((d) => d.tracks || []),
-        ...looseTracks,
-      ].filter((t) => {
-        if (seen.has(t.id)) return false;
-        seen.add(t.id);
-        return true;
-      });
-      setQueue(allTracks);
-      setPlayerQueue(allTracks);
+      // Main-page queue is loose tracks only. Tracks that live inside a dump
+      // are reachable by clicking into the dump page — they don't get
+      // queued/played from the main list.
+      setQueue(looseTracks);
+      setPlayerQueue(looseTracks);
     } catch (err) {
       if (!hasInitial) setError(err.message);
     } finally {
@@ -101,46 +96,31 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
   // search engines.
   const noContent = !loading && !error && tracks.length === 0 && dumps.length === 0;
 
-  const filtered = search.trim()
-    ? queue.filter((t) => {
-        const q = search.toLowerCase();
-        const trackDumpIds = Array.isArray(t.dumpIds) ? t.dumpIds : t.dumpId ? [t.dumpId] : [];
-        const matchesDump = trackDumpIds.some((id) =>
-          dumps.find((d) => d.id === id)?.name?.toLowerCase().includes(q)
-        );
-        return (
-          t.name?.toLowerCase().includes(q) ||
-          t.artists?.toLowerCase().includes(q) ||
-          t.description?.toLowerCase().includes(q) ||
-          matchesDump
-        );
-      })
+  // Main-page search runs over BOTH the loose track queue and the dump list
+  // — each kind has its own filter. Clicking a dump card navigates to the
+  // dump page for its tracks; the main page never inlines dump contents.
+  const q = search.trim().toLowerCase();
+  const filteredLoose = q
+    ? queue.filter((t) => (
+        t.name?.toLowerCase().includes(q) ||
+        t.artists?.toLowerCase().includes(q) ||
+        t.description?.toLowerCase().includes(q)
+      ))
     : queue;
 
-  const totalPages = Math.ceil(filtered.length / perPage);
+  const visibleDumps = q
+    ? dumps.filter((d) => (
+        d.name?.toLowerCase().includes(q) ||
+        d.artists?.toLowerCase().includes(q) ||
+        d.description?.toLowerCase().includes(q)
+      ))
+    : dumps;
+
+  const totalPages = Math.ceil(filteredLoose.length / perPage);
   const pageStart = page * perPage;
   const pageEnd = pageStart + perPage;
-  const visibleQueue = filtered.slice(pageStart, pageEnd);
-
-  const visibleDumpMap = {};
-  const visibleLoose = [];
-  const seenLooseIds = new Set();
-  for (const t of visibleQueue) {
-    const trackDumpIds = Array.isArray(t.dumpIds) ? t.dumpIds : t.dumpId ? [t.dumpId] : [];
-    // A track may live in multiple dumps; group into the first known dump
-    // that exists in our rendered dumps list so it doesn't get double-counted.
-    const matchingDumpId = trackDumpIds.find((id) => dumps.some((d) => d.id === id));
-    if (matchingDumpId) {
-      if (!visibleDumpMap[matchingDumpId]) visibleDumpMap[matchingDumpId] = [];
-      visibleDumpMap[matchingDumpId].push(t);
-    } else if (!seenLooseIds.has(t.id)) {
-      visibleLoose.push(t);
-      seenLooseIds.add(t.id);
-    }
-  }
-  const visibleDumps = dumps.filter((d) => visibleDumpMap[d.id]);
-
-  const filteredIndexMap = new Map(filtered.map((t) => [t.id, queue.indexOf(t)]));
+  const visibleLoose = filteredLoose.slice(pageStart, pageEnd);
+  const filteredIndexMap = new Map(filteredLoose.map((t, i) => [t.id, i]));
 
   return (
     <div className={Style.page}>
@@ -190,44 +170,39 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
         </div>
       ) : (
         <>
-          {/* Dumps */}
-          {visibleDumps.map((dump) => {
-            const dumpTracks = visibleDumpMap[dump.id];
-            return (
-              <div key={dump.id} className={Style.dumpSection}>
-                <div className={Style.dumpHeader}>
-                  <div className={Style.dumpArt} style={{ background: trackGradient(dump.name) }}>
-                    <i className="fa-solid fa-layer-group" />
-                  </div>
-                  <div className={Style.dumpMeta}>
-                    <span className={Style.dumpLabel}>Collection</span>
-                    <Link href={musicHref(`/dump/${dump.id}`)} className={Style.dumpTitleLink}>
-                      <h2 className={Style.dumpTitle}>{dump.name}</h2>
-                    </Link>
-                    {dump.artists && <p className={Style.dumpArtists}>{dump.artists}</p>}
-                    {dump.description && <p className={Style.dumpDesc}>{dump.description}</p>}
-                    <span className={Style.dumpCount}>{dumpTracks.length} track{dumpTracks.length !== 1 ? 's' : ''}</span>
-                  </div>
-                </div>
-                <div className={Style.trackList}>
-                  {dumpTracks.map((track, i) => (
-                    <TrackCard
-                      key={track.id}
-                      track={track}
-                      trackNum={i + 1}
-                      index={filteredIndexMap.get(track.id) ?? 0}
-                      currentTrack={currentTrack}
-                      isPlaying={isPlaying}
-                      onPlay={handlePlay}
-                      getDownloadUrl={getDownloadUrl}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+          {/* Dumps — card only, click to view tracks on the dump page */}
+          {visibleDumps.length > 0 && (
+            <div className={Style.dumpGrid}>
+              {visibleDumps.map((dump) => {
+                const handle = dump.slug || dump.id;
+                const trackCount = dump.tracks?.length || 0;
+                return (
+                  <Link
+                    key={dump.id}
+                    href={musicHref(`/dump/${handle}`)}
+                    className={Style.dumpCardLink}
+                  >
+                    <div className={Style.dumpHeader}>
+                      <div className={Style.dumpArt} style={{ background: trackGradient(dump.name) }}>
+                        <i className="fa-solid fa-layer-group" />
+                      </div>
+                      <div className={Style.dumpMeta}>
+                        <span className={Style.dumpLabel}>Collection</span>
+                        <h2 className={Style.dumpTitle}>{dump.name}</h2>
+                        {dump.artists && <p className={Style.dumpArtists}>{renderRichText(dump.artists)}</p>}
+                        {dump.description && <p className={Style.dumpDesc}>{renderRichText(dump.description)}</p>}
+                        <span className={Style.dumpCount}>
+                          {trackCount} track{trackCount === 1 ? '' : 's'}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
 
-          {/* Loose Tracks */}
+          {/* Loose Tracks — tracks NOT inside any published dump */}
           {visibleLoose.length > 0 && (
             <div className={Style.trackList}>
               {visibleLoose.map((track, i) => (
@@ -298,8 +273,8 @@ function TrackCard({ track, trackNum, index, currentTrack, isPlaying, onPlay, ge
       {/* Info */}
       <div className={Style.trackInfo}>
         <h3 className={Style.trackName}>{track.name}</h3>
-        {track.artists && <p className={Style.trackArtists}>{track.artists}</p>}
-        {track.description && <p className={Style.trackDesc}>{track.description}</p>}
+        {track.artists && <p className={Style.trackArtists}>{renderRichText(track.artists)}</p>}
+        {track.description && <p className={Style.trackDesc}>{renderRichText(track.description)}</p>}
       </div>
 
       {/* Right side: date + download */}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Style from './MusicAdmin.module.scss';
+import { promptInsertLink } from '@/lib/richText';
 
 const AUDIO_EXTS = ['.mp3', '.wav', '.aiff', '.aif'];
 
@@ -184,6 +185,16 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
   const [editing, setEditing] = useState(null);
   const [shareCopied, setShareCopied] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [sortBy, setSortBy] = useState('manual');
+  const [sortDir, setSortDir] = useState('asc');
+  // Create form can also attach pre-existing tracks to the new dump — no
+  // upload required at all. Stored as a Set of track IDs.
+  const [createExistingTrackIds, setCreateExistingTrackIds] = useState(() => new Set());
+  const [createAllTracks, setCreateAllTracks] = useState([]);
+  const [createTracksLoading, setCreateTracksLoading] = useState(false);
+  const [createTrackSearch, setCreateTrackSearch] = useState('');
+  const createArtistsRef = useRef(null);
+  const createDescriptionRef = useRef(null);
 
   async function createShareLink(dumpId) {
     try {
@@ -195,7 +206,11 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create link');
-      const url = `${window.location.origin}/music/dump/${encodeURIComponent(dumpId)}?share=${data.link.token}`;
+      // Prefer the human-friendly slug for shared URLs; fall back to the
+      // raw dump id for legacy rows that haven't been resaved yet.
+      const target = dumps.find((d) => d.id === dumpId);
+      const handle = target?.slug || dumpId;
+      const url = `${window.location.origin}/music/dump/${encodeURIComponent(handle)}?share=${data.link.token}`;
       await navigator.clipboard.writeText(url);
       setShareCopied(dumpId);
       setTimeout(() => setShareCopied(null), 3000);
@@ -220,16 +235,32 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
 
   useEffect(() => { fetchDumps(); }, [fetchDumps]);
 
+  // Lazy-load the existing-tracks list the first time the user opens the
+  // create form — saves a fetch until they actually want to pick tracks.
+  useEffect(() => {
+    if (!creating || createAllTracks.length > 0 || createTracksLoading) return;
+    let cancelled = false;
+    (async () => {
+      setCreateTracksLoading(true);
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch('/api/music/tracks?raw=1', { headers });
+        const data = await res.json();
+        if (!cancelled) setCreateAllTracks(data.tracks || []);
+      } catch {} finally {
+        if (!cancelled) setCreateTracksLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [creating]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function createDump() {
     if (!form.name.trim()) return;
     setError('');
 
+    // Uploads are optional now. The dump can be created empty, with only
+    // existing-track assignments, with only new uploads, or with both.
     const audioFiles = selectedFiles.filter(isAudioFile);
-
-    if (audioFiles.length === 0) {
-      setError('Add at least one audio file (MP3, WAV, or AIFF) before creating the dump.');
-      return;
-    }
 
     try {
       const headers = await getAuthHeaders();
@@ -241,6 +272,31 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       const dump = data.dump;
+
+      // Attach any pre-selected existing tracks to the new dump first (no
+      // upload needed). Per-track PUT fires the backend's sibling sync.
+      if (createExistingTrackIds.size > 0) {
+        for (const t of createAllTracks) {
+          if (!createExistingTrackIds.has(t.id)) continue;
+          const currentDumpIds = Array.isArray(t.dumpIds)
+            ? t.dumpIds
+            : t.dumpId
+            ? [t.dumpId]
+            : [];
+          if (currentDumpIds.includes(dump.id)) continue;
+          const next = {
+            ...t,
+            dumpIds: [...currentDumpIds, dump.id],
+            visibility: form.visibility,
+          };
+          delete next.dumpId;
+          await fetch('/api/music/tracks', {
+            method: 'PUT',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ track: next }),
+          });
+        }
+      }
 
       if (audioFiles.length > 0) {
         setUploading(true);
@@ -310,6 +366,8 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
       setForm({ name: '', description: '', artists: '', visibility: 'public' });
       setCreating(false);
       setSelectedFiles([]);
+      setCreateExistingTrackIds(new Set());
+      setCreateTrackSearch('');
       fetchDumps();
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -347,6 +405,53 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
     }
   }
 
+  // Move a dump up/down in the visible (sorted) list. Renumbers every dump
+  // in the current manual order so the persisted `order` field reflects the
+  // new arrangement. Batch-persists via the admin endpoint's array body.
+  async function moveDump(index, direction) {
+    // Operate on the MANUAL order, not the currently-sorted view. If the
+    // user is looking at a non-manual sort, up/down still walks them through
+    // the manual order — but flip to manual first for clarity.
+    if (sortBy !== 'manual') setSortBy('manual');
+    const ordered = [...dumps].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const fromIdx = ordered.findIndex((d) => d.id === sortedDumps[index]?.id);
+    if (fromIdx === -1) return;
+    const swapIdx = fromIdx + direction;
+    if (swapIdx < 0 || swapIdx >= ordered.length) return;
+    [ordered[fromIdx], ordered[swapIdx]] = [ordered[swapIdx], ordered[fromIdx]];
+    const renumbered = ordered.map((d, i) => ({ ...d, order: i }));
+    setDumps(renumbered);
+    try {
+      const headers = await getAuthHeaders();
+      await fetch('/api/music/admin/dumps', {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dumps: renumbered.map((d) => ({ id: d.id, order: d.order })) }),
+      });
+    } catch (err) {
+      setError(err.message);
+      fetchDumps();
+    }
+  }
+
+  // Apply search + sort to the dumps list. Manual respects the persisted
+  // order field; date uses createdAt; name uses localeCompare. Direction
+  // flips per-mode with a sign.
+  const sortedDumps = (() => {
+    const sign = sortDir === 'asc' ? 1 : -1;
+    const sorted = dumps.slice().sort((a, b) => {
+      if (sortBy === 'name') {
+        return (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }) * sign;
+      }
+      if (sortBy === 'created') {
+        return (a.createdAt || '').localeCompare(b.createdAt || '') * sign;
+      }
+      // Manual (default)
+      return ((a.order ?? 0) - (b.order ?? 0)) * sign;
+    });
+    return sorted;
+  })();
+
   if (loading) {
     return (
       <div className={Style.loadingWrap}>
@@ -383,23 +488,45 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
           </div>
 
           <div className={Style.fieldGroup}>
-            <label className={Style.fieldLabel} htmlFor="dump-artists">Artists</label>
+            <div className={Style.labelRow}>
+              <label className={Style.fieldLabel} htmlFor="dump-artists">Artists</label>
+              <button
+                type="button"
+                className={Style.linkBtn}
+                onClick={() => promptInsertLink(createArtistsRef, form.artists || '', (v) => setForm((f) => ({ ...f, artists: v })))}
+                title="Insert link"
+              >
+                <i className="fa-solid fa-link" /> Link
+              </button>
+            </div>
             <input
               id="dump-artists"
+              ref={createArtistsRef}
               className={Style.input}
-              placeholder="Comma-separated"
+              placeholder="Comma-separated. Paste URLs or click + Link."
               value={form.artists}
               onChange={(e) => setForm((f) => ({ ...f, artists: e.target.value }))}
             />
           </div>
 
           <div className={Style.fieldGroup}>
-            <label className={Style.fieldLabel} htmlFor="dump-description">Description</label>
+            <div className={Style.labelRow}>
+              <label className={Style.fieldLabel} htmlFor="dump-description">Description</label>
+              <button
+                type="button"
+                className={Style.linkBtn}
+                onClick={() => promptInsertLink(createDescriptionRef, form.description || '', (v) => setForm((f) => ({ ...f, description: v })))}
+                title="Insert link"
+              >
+                <i className="fa-solid fa-link" /> Link
+              </button>
+            </div>
             <textarea
               id="dump-description"
+              ref={createDescriptionRef}
               className={Style.input}
               rows={2}
-              placeholder="Optional"
+              placeholder="Optional. Paste URLs or click + Link."
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
             />
@@ -422,7 +549,67 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
           <hr className={Style.sectionDivider} />
 
           <div className={Style.fieldGroup}>
-            <label className={Style.fieldLabel}>Audio files</label>
+            <label className={Style.fieldLabel}>Add existing tracks (optional)</label>
+            <p className={Style.fieldHint}>
+              Pick tracks already in the library to include in this dump. No upload needed.
+            </p>
+            <input
+              className={Style.input}
+              type="text"
+              placeholder="Search tracks by name or artist..."
+              value={createTrackSearch}
+              onChange={(e) => setCreateTrackSearch(e.target.value)}
+              style={{ marginBottom: '0.5rem' }}
+            />
+            <div className={Style.subList} style={{ maxHeight: '220px', overflowY: 'auto' }}>
+              {createTracksLoading && <p className={Style.emptyMsg}>Loading tracks...</p>}
+              {!createTracksLoading && createAllTracks.length === 0 && (
+                <p className={Style.emptyMsg}>No tracks in library yet</p>
+              )}
+              {!createTracksLoading &&
+                createAllTracks
+                  .filter((t) => {
+                    if (!createTrackSearch.trim()) return true;
+                    const q = createTrackSearch.toLowerCase();
+                    return (
+                      t.name?.toLowerCase().includes(q) ||
+                      t.id?.toLowerCase().includes(q) ||
+                      t.artists?.toLowerCase().includes(q)
+                    );
+                  })
+                  .map((t) => {
+                    const checked = createExistingTrackIds.has(t.id);
+                    return (
+                      <label key={t.id} className={Style.memberCheckRow}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            setCreateExistingTrackIds((prev) => {
+                              const s = new Set(prev);
+                              if (checked) s.delete(t.id);
+                              else s.add(t.id);
+                              return s;
+                            })
+                          }
+                        />
+                        <span>
+                          {t.name}
+                          {t.artists && <span className={Style.trackId}> — {t.artists}</span>}
+                        </span>
+                      </label>
+                    );
+                  })}
+            </div>
+            {createExistingTrackIds.size > 0 && (
+              <p className={Style.fieldHint} style={{ marginTop: '0.35rem' }}>
+                {createExistingTrackIds.size} track{createExistingTrackIds.size === 1 ? '' : 's'} will be added to this dump.
+              </p>
+            )}
+          </div>
+
+          <div className={Style.fieldGroup}>
+            <label className={Style.fieldLabel}>Upload new audio files (optional)</label>
             <FileDropZone
               files={selectedFiles}
               onFilesChange={setSelectedFiles}
@@ -436,20 +623,57 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
           <div className={Style.modalActions}>
             <button
               className={Style.btnSecondary}
-              onClick={() => { setCreating(false); setSelectedFiles([]); }}
+              onClick={() => {
+                setCreating(false);
+                setSelectedFiles([]);
+                setCreateExistingTrackIds(new Set());
+                setCreateTrackSearch('');
+              }}
               disabled={uploading}
             >
               Cancel
             </button>
             <button className={Style.btn} onClick={createDump} disabled={uploading}>
-              {uploading ? 'Uploading...' : 'Create & Upload'}
+              {uploading
+                ? 'Uploading...'
+                : selectedFiles.filter(isAudioFile).length > 0
+                ? `Create & Upload${createExistingTrackIds.size > 0 ? ' + Attach' : ''}`
+                : createExistingTrackIds.size > 0
+                ? 'Create & Attach'
+                : 'Create Dump'}
             </button>
           </div>
         </div>
       )}
 
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          Sort by
+          <select
+            className={Style.selectSmall}
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            aria-label="Sort dumps by"
+          >
+            <option value="manual">Manual (my order)</option>
+            <option value="created">Date created</option>
+            <option value="name">Name</option>
+          </select>
+        </label>
+        <button
+          type="button"
+          className={Style.iconBtn}
+          onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+          title={`Sort direction: ${sortDir === 'asc' ? 'ascending' : 'descending'} (click to flip)`}
+        >
+          <i className={`fa-solid fa-arrow-${sortDir === 'asc' ? 'down-short-wide' : 'up-short-wide'}`} />
+          {' '}
+          {sortDir === 'asc' ? 'Asc' : 'Desc'}
+        </button>
+      </div>
+
       <div className={Style.list}>
-        {dumps.map((dump) => (
+        {sortedDumps.map((dump, index) => (
           <div key={dump.id}>
             <div className={[Style.item, dump.published ? Style.published : Style.unpublished].join(' ')}>
               <div className={Style.statusDot} title={dump.published ? 'Published' : 'Unpublished'} />
@@ -462,6 +686,12 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
                 </span>
               </div>
               <div className={Style.itemActions}>
+                <button className={Style.iconBtn} onClick={() => moveDump(index, -1)} title="Move up">
+                  <i className="fa-solid fa-chevron-up" />
+                </button>
+                <button className={Style.iconBtn} onClick={() => moveDump(index, 1)} title="Move down">
+                  <i className="fa-solid fa-chevron-down" />
+                </button>
                 <button className={Style.iconBtn} onClick={() => setEditing(dump)}>
                   Edit
                 </button>
@@ -493,7 +723,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
             )}
           </div>
         ))}
-        {dumps.length === 0 && (
+        {sortedDumps.length === 0 && (
           <p className={Style.emptyMsg}>No dumps yet. Create one above.</p>
         )}
       </div>
@@ -541,6 +771,8 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
   const [uploadProgress, setUploadProgress] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [editFiles, setEditFiles] = useState([]);
+  const editArtistsRef = useRef(null);
+  const editDescriptionRef = useRef(null);
   // Tracks in this dump — from the server-rendered `dump.tracks` on mount,
   // kept in local state so checkbox toggles update immediately without a full
   // refresh.
@@ -795,9 +1027,16 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
 
   return (
     <div className={Style.overlay}>
-      <div className={Style.modal}>
+      <div className={[Style.modal, Style.modalWide].join(' ')}>
         <h2>Edit Dump</h2>
+        <p className={Style.fieldHint} style={{ marginTop: '-0.4rem' }}>
+          Editing <strong>{dump.name}</strong>
+        </p>
+
         <div className={Style.formGrid}>
+          {/* ─── Details ────────────────────────────── */}
+          <h3 className={Style.editorSectionHeader}>Details</h3>
+
           <label>
             Name
             <input
@@ -807,20 +1046,44 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
             />
           </label>
           <label>
-            Artists
+            <span className={Style.labelRow}>
+              Artists
+              <button
+                type="button"
+                className={Style.linkBtn}
+                onClick={() => promptInsertLink(editArtistsRef, form.artists || '', (v) => set('artists', v))}
+                title="Insert link"
+              >
+                <i className="fa-solid fa-link" /> Link
+              </button>
+            </span>
             <input
+              ref={editArtistsRef}
               className={Style.input}
               value={form.artists || ''}
               onChange={(e) => set('artists', e.target.value)}
+              placeholder="Paste URLs or click + Link"
             />
           </label>
           <label>
-            Description
+            <span className={Style.labelRow}>
+              Description
+              <button
+                type="button"
+                className={Style.linkBtn}
+                onClick={() => promptInsertLink(editDescriptionRef, form.description || '', (v) => set('description', v))}
+                title="Insert link"
+              >
+                <i className="fa-solid fa-link" /> Link
+              </button>
+            </span>
             <textarea
+              ref={editDescriptionRef}
               className={Style.input}
               rows={3}
               value={form.description || ''}
               onChange={(e) => set('description', e.target.value)}
+              placeholder="Paste URLs or click + Link"
             />
           </label>
           <label>
@@ -836,9 +1099,66 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
             </select>
           </label>
 
+          {/* ─── Tracks (existing picker FIRST — most common case) ───── */}
+          <hr className={Style.sectionDivider} />
+          <h3 className={Style.editorSectionHeader}>
+            Tracks ({dumpTrackIds.size} in dump)
+          </h3>
+          <p className={Style.fieldHint}>
+            A track can live in multiple dumps. Check to add, uncheck to remove.
+          </p>
+          <input
+            className={Style.searchInput}
+            type="text"
+            placeholder="Search tracks..."
+            value={trackSearch}
+            onChange={(e) => setTrackSearch(e.target.value)}
+            style={{ marginBottom: '0.5rem' }}
+          />
+          <div className={Style.subList} style={{ maxHeight: '260px', overflowY: 'auto' }}>
+            {tracksLoading && <p className={Style.emptyMsg}>Loading tracks...</p>}
+            {!tracksLoading && allTracks.length === 0 && (
+              <p className={Style.emptyMsg}>No tracks found</p>
+            )}
+            {!tracksLoading &&
+              allTracks
+                .filter((t) => {
+                  if (!trackSearch.trim()) return true;
+                  const q = trackSearch.toLowerCase();
+                  return (
+                    t.name?.toLowerCase().includes(q) ||
+                    t.id?.toLowerCase().includes(q) ||
+                    t.artists?.toLowerCase().includes(q)
+                  );
+                })
+                .map((t) => {
+                  const inDump = dumpTrackIds.has(t.id);
+                  const key = `track:${t.id}`;
+                  const isPending = !!trackPending[key];
+                  return (
+                    <label key={t.id} className={Style.memberCheckRow}>
+                      <input
+                        type="checkbox"
+                        checked={inDump}
+                        disabled={isPending}
+                        onChange={() => toggleTrackInDump(t)}
+                      />
+                      <span className={isPending ? Style.pendingLabel : undefined}>
+                        {t.name}
+                        {t.artists && (
+                          <span className={Style.trackId}> — {t.artists}</span>
+                        )}
+                      </span>
+                    </label>
+                  );
+                })}
+          </div>
+
+          {/* ─── Permissions (only if restricted) ────────────────── */}
           {form.visibility === 'restricted' && (
             <div className={Style.permSection}>
-              <h3>Permissions</h3>
+              <hr className={Style.sectionDivider} />
+              <h3 className={Style.editorSectionHeader}>Permissions</h3>
               <p style={{ fontSize: '0.75rem', opacity: 0.5, margin: '0 0 0.5rem' }}>
                 Applied to all {trackIds.length} track{trackIds.length !== 1 ? 's' : ''} in this dump.
               </p>
@@ -926,83 +1246,32 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
             </div>
           )}
 
-          <div className={Style.fieldGroup}>
-            <label className={Style.fieldLabel}>Upload new tracks to this dump</label>
-            <FileDropZone
-              files={editFiles}
-              onFilesChange={setEditFiles}
-              disabled={uploading}
-              idPrefix="edit"
-            />
-            <div className={Style.dropZoneActions} style={{ marginTop: '0.5rem' }}>
-              <button
-                type="button"
-                className={Style.btn}
-                onClick={uploadMore}
-                disabled={uploading || editFiles.length === 0}
-              >
-                {uploading ? 'Uploading...' : `Upload & Add${editFiles.length > 0 ? ` (${editFiles.length})` : ''}`}
-              </button>
-              {uploadProgress && <span className={Style.uploadStatus}>{uploadProgress}</span>}
-            </div>
-            {uploadError && <p className={Style.inlineError}>{uploadError}</p>}
+          {/* ─── Upload new tracks ────────────────────────── */}
+          <hr className={Style.sectionDivider} />
+          <h3 className={Style.editorSectionHeader}>Upload new tracks</h3>
+          <p className={Style.fieldHint}>
+            Drop audio files here to upload and attach them to this dump.
+          </p>
+          <FileDropZone
+            files={editFiles}
+            onFilesChange={setEditFiles}
+            disabled={uploading}
+            idPrefix="edit"
+          />
+          <div className={Style.dropZoneActions} style={{ marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              className={Style.btn}
+              onClick={uploadMore}
+              disabled={uploading || editFiles.length === 0}
+            >
+              {uploading ? 'Uploading...' : `Upload & Add${editFiles.length > 0 ? ` (${editFiles.length})` : ''}`}
+            </button>
+            {uploadProgress && <span className={Style.uploadStatus}>{uploadProgress}</span>}
           </div>
+          {uploadError && <p className={Style.inlineError}>{uploadError}</p>}
 
-          <div>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-              Add existing tracks to this dump ({dumpTrackIds.size} in dump)
-            </label>
-            <p style={{ fontSize: '0.75rem', opacity: 0.6, margin: '0.25rem 0 0.5rem' }}>
-              A track can belong to multiple dumps. Check to add, uncheck to remove.
-            </p>
-            <input
-              className={Style.searchInput}
-              type="text"
-              placeholder="Search tracks..."
-              value={trackSearch}
-              onChange={(e) => setTrackSearch(e.target.value)}
-              style={{ marginBottom: '0.5rem' }}
-            />
-            <div className={Style.subList} style={{ maxHeight: '260px', overflowY: 'auto' }}>
-              {tracksLoading && <p className={Style.emptyMsg}>Loading tracks...</p>}
-              {!tracksLoading && allTracks.length === 0 && (
-                <p className={Style.emptyMsg}>No tracks found</p>
-              )}
-              {!tracksLoading &&
-                allTracks
-                  .filter((t) => {
-                    if (!trackSearch.trim()) return true;
-                    const q = trackSearch.toLowerCase();
-                    return (
-                      t.name?.toLowerCase().includes(q) ||
-                      t.id?.toLowerCase().includes(q) ||
-                      t.artists?.toLowerCase().includes(q)
-                    );
-                  })
-                  .map((t) => {
-                    const inDump = dumpTrackIds.has(t.id);
-                    const key = `track:${t.id}`;
-                    const isPending = !!trackPending[key];
-                    return (
-                      <label key={t.id} className={Style.memberCheckRow}>
-                        <input
-                          type="checkbox"
-                          checked={inDump}
-                          disabled={isPending}
-                          onChange={() => toggleTrackInDump(t)}
-                        />
-                        <span className={isPending ? Style.pendingLabel : undefined}>
-                          {t.name}
-                          {t.artists && (
-                            <span className={Style.trackId}> — {t.artists}</span>
-                          )}
-                        </span>
-                      </label>
-                    );
-                  })}
-            </div>
-          </div>
-
+          <hr className={Style.sectionDivider} />
           <div className={Style.metaInfo}>
             <span>ID: <code>{form.id}</code></span>
             <span>Tracks: {trackIds.length}</span>

@@ -209,6 +209,13 @@ export default function MagicLinksManager({ getAuthHeaders }) {
                   created {new Date(link.createdAt).toLocaleDateString()}
                   {link.createdBy ? ` by ${link.createdBy}` : ''}
                 </span>
+                <span className={Style.formats}>
+                  {`used ${link.useCount || 0}×`}
+                  {link.lastUsedAt
+                    ? ` · last ${new Date(link.lastUsedAt).toLocaleString()}`
+                    : ' · never used'}
+                  {link.lastUsedIp ? ` · from ${link.lastUsedIp}` : ''}
+                </span>
               </div>
               <div className={Style.itemActions}>
                 <button className={Style.iconBtn} onClick={() => copyLink(link)}>

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDump, getDumpTracks, getTrackPermissions, redeemDumpShareLink } from '@/lib/trackStore';
+import { getDump, getDumpByHandle, getDumpTracks, getTrackPermissions, redeemDumpShareLink } from '@/lib/trackStore';
 import { authenticateRequest } from '@/lib/verifyToken';
 import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
 
@@ -7,20 +7,26 @@ import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
  * GET /api/music/dump?id=xxx[&share=<token>]
  * Public endpoint for viewing a single dump + its tracks (with permission checks).
  * A valid `share` token bound to this dump bypasses visibility checks.
+ *
+ * The `id` param accepts EITHER a raw dump id (`dump-1234…`) or a human-
+ * friendly slug (`my-album`). Slug resolution falls back to id lookup so
+ * existing links keep working.
  */
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
+  const handle = searchParams.get('id');
   const shareToken = searchParams.get('share');
-  if (!id) {
+  if (!handle) {
     return NextResponse.json({ error: 'Missing dump id' }, { status: 400 });
   }
 
   try {
-    const dump = await getDump(id);
+    const dump = await getDumpByHandle(handle);
     if (!dump) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
+    // All downstream lookups must use the real dump.id (not the slug).
+    const id = dump.id;
 
     const user = await authenticateRequest(request);
 
@@ -28,10 +34,10 @@ export async function GET(request) {
     // published state, visibility, or sign-in status.
     let shareGrant = false;
     if (shareToken) {
-      const redeemed = await redeemDumpShareLink(shareToken);
+      const redeemed = await redeemDumpShareLink(shareToken, requestMeta(request));
       if (redeemed && redeemed.dumpId === id) {
         shareGrant = true;
-        logEvent({
+        await logEvent({
           type: EVENT_TYPES.SHARE_REDEEM,
           targetType: 'dump',
           targetId: id,
@@ -94,6 +100,7 @@ export async function GET(request) {
     return NextResponse.json({
       dump: {
         id: dump.id,
+        slug: dump.slug || null,
         name: dump.name,
         description: dump.description,
         artists: dump.artists,

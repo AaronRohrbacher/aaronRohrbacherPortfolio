@@ -3,15 +3,16 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Style from './WaveformPlayer.module.scss';
 
+// Fat, gappy bars for a modern bargraph look. Each bar = one amplitude slice.
 const WS_OPTS = {
-  waveColor: 'rgba(128, 128, 128, 0.3)',
-  progressColor: 'rgba(0, 168, 120, 0.8)',
+  waveColor: 'rgba(128, 128, 128, 0.35)',
+  progressColor: 'rgba(0, 168, 120, 0.85)',
   cursorColor: 'rgba(124, 58, 237, 0.85)',
   cursorWidth: 2,
-  barWidth: 2,
-  barGap: 1,
-  barRadius: 2,
-  height: 64,
+  barWidth: 5,
+  barGap: 3,
+  barRadius: 3,
+  height: 72,
   normalize: true,
 };
 
@@ -86,6 +87,15 @@ export default function WaveformPlayer({ streamUrls, isPlaying, onPlayPause, onE
         });
         ws.on('timeupdate', (t) => { if (!destroyed) setCurrentTime(t); });
         ws.on('seeking', (t) => { if (!destroyed) setCurrentTime(t); });
+        // Snap to true zero on clicks within ~1s of the start so "click the
+        // very beginning to restart" actually does, instead of landing at 0.03.
+        ws.on('interaction', (t) => {
+          if (destroyed) return;
+          if (t < 1) {
+            try { ws.seekTo(0); } catch {}
+            setCurrentTime(0);
+          }
+        });
         ws.on('finish', () => { if (!destroyed && onEnd) onEnd(); });
         ws.on('error', () => {
           // WaveSurfer failed to decode this format — try next
@@ -135,6 +145,13 @@ export default function WaveformPlayer({ streamUrls, isPlaying, onPlayPause, onE
     return `${m}:${s.toString().padStart(2, '0')}`;
   }
 
+  function seekToStart() {
+    const ws = wavesurferRef.current;
+    if (!ws || !ready) return;
+    try { ws.seekTo(0); } catch {}
+    setCurrentTime(0);
+  }
+
   return (
     <div className={Style.player}>
       <div className={Style.controls}>
@@ -143,6 +160,15 @@ export default function WaveformPlayer({ streamUrls, isPlaying, onPlayPause, onE
             <i className="fa-solid fa-backward-step" />
           </button>
         )}
+        <button
+          className={Style.transportBtn}
+          onClick={seekToStart}
+          aria-label="Restart track"
+          title="Restart (0:00)"
+          disabled={!ready}
+        >
+          <i className="fa-solid fa-rotate-left" />
+        </button>
         <button className={Style.playPauseBtn} onClick={onPlayPause} aria-label={isPlaying ? 'Pause' : 'Play'}>
           <i className={isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play'} />
         </button>

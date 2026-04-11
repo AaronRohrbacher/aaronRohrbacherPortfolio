@@ -15,19 +15,19 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Missing token' }, { status: 400 });
   }
 
-  const result = await redeemMagicLink(token);
+  const result = await redeemMagicLink(token, meta);
   if (!result) {
-    logEvent({ type: EVENT_TYPES.MAGIC_REDEEM_FAIL, detail: 'invalid or expired', ...meta });
+    await logEvent({ type: EVENT_TYPES.MAGIC_REDEEM_FAIL, detail: 'invalid or expired', ...meta });
     return NextResponse.json({ error: 'Invalid or expired link' }, { status: 401 });
   }
 
   const user = await getUser(result.email);
   if (!user) {
-    logEvent({ type: EVENT_TYPES.MAGIC_REDEEM_FAIL, actor: result.email, detail: 'user missing', ...meta });
+    await logEvent({ type: EVENT_TYPES.MAGIC_REDEEM_FAIL, actor: result.email, detail: 'user missing', ...meta });
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
   const tokens = await issueTokens(user);
-  logEvent({ type: EVENT_TYPES.MAGIC_REDEEM, actor: result.email, ...meta });
+  await logEvent({ type: EVENT_TYPES.MAGIC_REDEEM, actor: result.email, ...meta });
   return NextResponse.json(tokens);
 }

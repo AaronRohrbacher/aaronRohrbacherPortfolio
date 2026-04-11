@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { putItem, getItem, query, deleteItem, batchWrite, scanByPkPrefixes } from './dynamo';
+import { putItem, getItem, query, deleteItem, batchWrite, scanByPkPrefixes, updateItem } from './dynamo';
 
 // --- Track CRUD ---
 
@@ -346,6 +346,22 @@ export async function getGroupMembers(groupName) {
 
 // --- Dumps (Releases) ---
 
+// Slugify a dump name for URL use: lowercase, ASCII-ish, hyphen-separated,
+// no underscores. Falls back to the dump id if the name slugifies to empty.
+export function slugifyDumpName(name) {
+  if (!name) return '';
+  return String(name)
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '') // strip diacritics
+    .replace(/[^a-z0-9\s-]+/g, '')   // drop anything that isn't alnum / space / hyphen
+    .trim()
+    .replace(/[\s_]+/g, '-')         // spaces + underscores → hyphen
+    .replace(/-+/g, '-')             // collapse runs
+    .replace(/^-+|-+$/g, '')         // trim edges
+    .slice(0, 80);
+}
+
 function dumpToItem(dump) {
   return {
     PK: `DUMP#${dump.id}`,
@@ -359,6 +375,9 @@ function dumpToItem(dump) {
     visibility: dump.visibility || 'public',
     published: dump.published || false,
     createdAt: dump.createdAt || new Date().toISOString(),
+    updatedAt: dump.updatedAt || new Date().toISOString(),
+    slug: dump.slug || null,
+    order: Number.isFinite(dump.order) ? dump.order : 0,
   };
 }
 
@@ -371,6 +390,9 @@ function itemToDump(item) {
     visibility: item.visibility || 'public',
     published: item.published || false,
     createdAt: item.createdAt,
+    updatedAt: item.updatedAt || item.createdAt,
+    slug: item.slug || null,
+    order: Number.isFinite(item.order) ? item.order : 0,
   };
 }
 
@@ -384,8 +406,51 @@ export async function getDump(dumpId) {
   return item ? itemToDump(item) : null;
 }
 
+// Look up a dump by slug. Since slugs aren't indexed, we load the full list
+// and scan — dump count stays small and this path is only hit from the
+// public /music/dump/[handle] route. Legacy rows without a slug fall back
+// to their id-based slug so old URLs keep working.
+export async function getDumpBySlug(slug) {
+  if (!slug) return null;
+  const dumps = await loadDumps();
+  return dumps.find((d) => (d.slug || d.id) === slug) || null;
+}
+
+// Resolve a handle that may be either a slug OR a dump id. Prefers id exact
+// match first (fast path — one getItem call), then falls back to slug scan.
+export async function getDumpByHandle(handle) {
+  if (!handle) return null;
+  const direct = await getDump(handle);
+  if (direct) return direct;
+  return getDumpBySlug(handle);
+}
+
 export async function saveDump(dump) {
-  await putItem(dumpToItem(dump));
+  // Ensure every dump has a unique, URL-safe slug. On create (no existing
+  // slug) OR on rename (slug doesn't match the current name), regenerate.
+  // Uniqueness is enforced by appending -2, -3, … against the current set.
+  let nextDump = { ...dump, updatedAt: new Date().toISOString() };
+  const base = slugifyDumpName(dump.name) || String(dump.id || '').toLowerCase();
+  const currentSlug = dump.slug || null;
+  const baseMatches = currentSlug && (currentSlug === base || currentSlug.startsWith(base + '-'));
+
+  if (!baseMatches) {
+    const all = await loadDumps();
+    const taken = new Set(
+      all
+        .filter((d) => d.id !== dump.id)
+        .map((d) => d.slug || d.id)
+    );
+    let candidate = base;
+    let n = 2;
+    while (taken.has(candidate)) {
+      candidate = `${base}-${n++}`;
+    }
+    nextDump.slug = candidate;
+  }
+
+  await putItem(dumpToItem(nextDump));
+  return nextDump;
 }
 
 // Delete a dump and clean up all (track, dump) assignments pointing at it.
@@ -546,6 +611,9 @@ function shareItemToRecord(item) {
     createdBy: item.createdBy,
     createdAt: item.createdAt,
     expiresAt: item.expiresAt || null,
+    useCount: Number(item.useCount) || 0,
+    lastUsedAt: item.lastUsedAt || null,
+    lastUsedIp: item.lastUsedIp || null,
   };
 }
 
@@ -588,13 +656,31 @@ async function createShareLink(kind, targetId, createdBy, { expiresInDays = null
   };
 }
 
-async function redeemShareLink(kind, token) {
+async function redeemShareLink(kind, token, meta = {}) {
   const cfg = SHARE_KINDS[kind];
   if (!cfg) return null;
-  const item = await getItem(`${cfg.prefix}#${token}`, `${cfg.prefix}#${token}`);
+  const pk = `${cfg.prefix}#${token}`;
+  const item = await getItem(pk, pk);
   if (!item) return null;
   if (!isShareLinkLive(item)) return null;
-  return shareItemToRecord(item);
+
+  // Track USE with an atomic ADD — concurrent redemptions (e.g. a group all
+  // clicking at once) can't drop counts the way a read-modify-write would.
+  // Wrapped so a persistence failure never breaks redemption; on failure we
+  // fall back to the already-loaded item so the caller still gets a record.
+  // IP is best-effort — missing header (rare) just means no IP recorded.
+  let updated = item;
+  try {
+    const set = { lastUsedAt: new Date().toISOString() };
+    if (meta && typeof meta.ip === 'string' && meta.ip) {
+      set.lastUsedIp = meta.ip;
+    }
+    updated = (await updateItem(pk, pk, { add: { useCount: 1 }, set })) || item;
+  } catch (err) {
+    console.error('[share-link] failed to record use', err);
+  }
+
+  return shareItemToRecord(updated);
 }
 
 async function getShareLinksForTarget(kind, targetId) {
@@ -656,8 +742,8 @@ export async function createMagicLink(email, createdBy, expiresInDays = null, la
   return { token: link.token, email: link.email, expiresAt: link.expiresAt };
 }
 
-export async function redeemMagicLink(token) {
-  const link = await redeemShareLink('login', token);
+export async function redeemMagicLink(token, meta = {}) {
+  const link = await redeemShareLink('login', token, meta);
   if (!link) return null;
   return { email: link.email, token: link.token };
 }
@@ -686,8 +772,8 @@ export async function createDumpShareLink(dumpId, createdBy, expiresInDays = nul
   return { token: link.token, dumpId: link.dumpId, expiresAt: link.expiresAt };
 }
 
-export async function redeemDumpShareLink(token) {
-  const link = await redeemShareLink('dump', token);
+export async function redeemDumpShareLink(token, meta = {}) {
+  const link = await redeemShareLink('dump', token, meta);
   if (!link) return null;
   return { dumpId: link.dumpId, token: link.token };
 }
@@ -717,8 +803,8 @@ export async function createTrackShareLink(trackId, createdBy, expiresInDays = n
   return { token: link.token, trackId: link.trackId, expiresAt: link.expiresAt };
 }
 
-export async function redeemTrackShareLink(token) {
-  const link = await redeemShareLink('track', token);
+export async function redeemTrackShareLink(token, meta = {}) {
+  const link = await redeemShareLink('track', token, meta);
   if (!link) return null;
   return { trackId: link.trackId, token: link.token };
 }

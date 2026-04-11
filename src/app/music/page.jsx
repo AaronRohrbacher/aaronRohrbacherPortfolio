@@ -38,14 +38,26 @@ export default async function MusicPage() {
     const merged = mergeTracks(saved, bucketTracks);
 
     const dumps = await loadDumps();
-    const publishedDumpIds = new Set(dumps.filter((d) => d.published).map((d) => d.id));
+    // SSR is always anonymous: only publicly-visible published dumps cascade
+    // publish state onto their tracks. Non-public dumps (authenticated /
+    // restricted) must not surface here regardless of their publish flag.
+    const publishedDumpIds = new Set(
+      dumps
+        .filter((d) => d.published && (d.visibility || 'public') === 'public')
+        .map((d) => d.id)
+    );
 
-    // Track is visible if published directly OR belongs to ANY published dump
-    const allTracks = merged.filter((t) => {
-      const dumpIds = Array.isArray(t.dumpIds) ? t.dumpIds : [];
-      const effectivelyPublished = t.published || dumpIds.some((id) => publishedDumpIds.has(id));
-      return effectivelyPublished && (t.visibility || 'public') === 'public';
-    });
+    // Track is visible if published directly OR belongs to ANY published dump.
+    // Sort by the admin-assigned manual order so the public front page
+    // reflects the explicit ordering set in the admin Tracks tab.
+    const allTracks = merged
+      .filter((t) => {
+        const dumpIds = Array.isArray(t.dumpIds) ? t.dumpIds : [];
+        const effectivelyPublished = t.published || dumpIds.some((id) => publishedDumpIds.has(id));
+        return effectivelyPublished && (t.visibility || 'public') === 'public';
+      })
+      .slice()
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const dumpMap = {};
     const loose = [];
 
@@ -76,7 +88,16 @@ export default async function MusicPage() {
 
     initialDumps = dumps
       .filter((d) => d.published && dumpMap[d.id]?.length > 0)
-      .map((d) => ({ id: d.id, name: d.name, artists: d.artists, description: d.description, tracks: dumpMap[d.id] }));
+      .slice()
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .map((d) => ({
+        id: d.id,
+        slug: d.slug || null,
+        name: d.name,
+        artists: d.artists,
+        description: d.description,
+        tracks: dumpMap[d.id],
+      }));
     initialTracks = loose;
   } catch (err) {
     console.error('SSR music fetch error:', err);

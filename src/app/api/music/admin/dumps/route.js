@@ -42,6 +42,24 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
+
+    // Batch reorder path: { dumps: [{ id, order }, ...] } — only persists the
+    // order field on each row (plus whatever else the client sent). Used by
+    // the admin Dumps tab's move up/down buttons so a single drag updates
+    // multiple rows in one call.
+    if (Array.isArray(body.dumps)) {
+      const all = await loadDumps();
+      const byId = new Map(all.map((d) => [d.id, d]));
+      const saved = [];
+      for (const patch of body.dumps) {
+        const existing = byId.get(patch.id);
+        if (!existing) continue;
+        const merged = { ...existing, ...patch };
+        saved.push(await saveDump(merged));
+      }
+      return NextResponse.json({ dumps: saved });
+    }
+
     const dump = {
       id: body.id || `dump-${Date.now()}`,
       name: body.name || 'Untitled',
@@ -50,9 +68,13 @@ export async function POST(request) {
       visibility: body.visibility || 'public',
       published: body.published ?? false,
       createdAt: body.createdAt || new Date().toISOString(),
+      slug: body.slug || null,
+      order: Number.isFinite(body.order) ? body.order : 0,
     };
-    await saveDump(dump);
-    return NextResponse.json({ dump });
+    // saveDump generates / uniques the slug and returns the persisted shape
+    // (including updatedAt). Use that so the client sees the final slug.
+    const saved = await saveDump(dump);
+    return NextResponse.json({ dump: saved });
   } catch (err) {
     console.error('Create dump error:', err);
     return NextResponse.json({ error: 'Failed to create dump' }, { status: 500 });

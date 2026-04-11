@@ -30,7 +30,7 @@ export async function POST(request) {
   if (!track) return NextResponse.json({ error: 'Track not found' }, { status: 404 });
 
   const link = await createTrackShareLink(trackId, admin.email, expiresInDays || null, label || null);
-  logEvent({
+  await logEvent({
     type: EVENT_TYPES.SHARE_CREATE,
     actor: admin.email,
     targetType: 'track',

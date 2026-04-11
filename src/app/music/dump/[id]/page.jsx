@@ -7,6 +7,7 @@ import { useAuth } from '@/components/music/AuthContext';
 import { useMusicPlayer } from '@/components/music/MusicPlayerContext';
 import Link from 'next/link';
 import { useMusicHref } from '@/lib/musicLinks';
+import { renderRichText } from '@/lib/richText';
 
 export default function DumpPage() {
   const { id } = useParams();
@@ -113,8 +114,8 @@ export default function DumpPage() {
       <div className={Style.dumpSection}>
         <div className={Style.dumpHeader}>
           <h1 className={Style.dumpTitle}>{dump.name}</h1>
-          {dump.artists && <p className={Style.dumpArtists}>{dump.artists}</p>}
-          {dump.description && <p className={Style.dumpDesc}>{dump.description}</p>}
+          {dump.artists && <p className={Style.dumpArtists}>{renderRichText(dump.artists)}</p>}
+          {dump.description && <p className={Style.dumpDesc}>{renderRichText(dump.description)}</p>}
         </div>
         <div className={Style.trackList}>
           {tracks.map((track, index) => (
@@ -163,8 +164,8 @@ function TrackCard({ track, index, currentTrack, isPlaying, onPlay, getDownloadU
       </button>
       <div className={Style.trackInfo}>
         <h3 className={Style.trackName}>{track.name}</h3>
-        {track.artists && <p className={Style.trackArtists}>{track.artists}</p>}
-        {track.description && <p className={Style.trackDesc}>{track.description}</p>}
+        {track.artists && <p className={Style.trackArtists}>{renderRichText(track.artists)}</p>}
+        {track.description && <p className={Style.trackDesc}>{renderRichText(track.description)}</p>}
         <div className={Style.trackActionsRow}>
           <div className={Style.downloadGroup}>
             {formats.map((fmt) => (

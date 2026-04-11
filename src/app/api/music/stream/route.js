@@ -39,15 +39,16 @@ export async function GET(request) {
     // visibility / sign-in. Two kinds of share token are accepted:
     //   - dump-share: token bound to any of this track's parent dumps
     //   - track-share: token bound to this specific track
+    const reqMeta = requestMeta(request);
     let shareGrant = false;
     const trackDumpIds = Array.isArray(track.dumpIds) ? track.dumpIds : [];
     if (shareToken) {
       if (trackDumpIds.length > 0) {
-        const redeemed = await redeemDumpShareLink(shareToken);
+        const redeemed = await redeemDumpShareLink(shareToken, reqMeta);
         if (redeemed && trackDumpIds.includes(redeemed.dumpId)) shareGrant = true;
       }
       if (!shareGrant) {
-        const redeemed = await redeemTrackShareLink(shareToken);
+        const redeemed = await redeemTrackShareLink(shareToken, reqMeta);
         if (redeemed && redeemed.trackId === id) shareGrant = true;
       }
     }
@@ -96,7 +97,7 @@ export async function GET(request) {
       );
     }
 
-    logEvent({
+    await logEvent({
       type: download ? EVENT_TYPES.DOWNLOAD : EVENT_TYPES.STREAM,
       actor: user?.email || (shareGrant ? `share:${shareToken.slice(0, 8)}` : null),
       targetType: 'track',

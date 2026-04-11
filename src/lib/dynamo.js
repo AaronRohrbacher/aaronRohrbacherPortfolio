@@ -7,6 +7,7 @@ import {
   ScanCommand,
   DeleteCommand,
   BatchWriteCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 
 const TABLE_NAME = process.env.MUSIC_TABLE_NAME || 'MusicData';
@@ -102,6 +103,50 @@ export async function scanByPkPrefixes(prefixes) {
   } while (lastKey);
 
   return items;
+}
+
+/**
+ * Atomic partial update. `updates` shape: { add?: {field: number}, set?: {field: value} }.
+ * `add` uses DynamoDB's ADD operator — concurrency-safe for counters.
+ * Returns the updated item (ReturnValues: ALL_NEW).
+ */
+export async function updateItem(pk, sk, updates = {}) {
+  const { add = {}, set = {} } = updates;
+  const setParts = [];
+  const addParts = [];
+  const names = {};
+  const values = {};
+
+  for (const [k, v] of Object.entries(set)) {
+    if (v === undefined) continue;
+    names[`#s_${k}`] = k;
+    values[`:s_${k}`] = v;
+    setParts.push(`#s_${k} = :s_${k}`);
+  }
+  for (const [k, v] of Object.entries(add)) {
+    if (v === undefined) continue;
+    names[`#a_${k}`] = k;
+    values[`:a_${k}`] = v;
+    addParts.push(`#a_${k} :a_${k}`);
+  }
+
+  if (setParts.length === 0 && addParts.length === 0) return null;
+
+  const expr = [];
+  if (setParts.length) expr.push('SET ' + setParts.join(', '));
+  if (addParts.length) expr.push('ADD ' + addParts.join(', '));
+
+  const result = await getDocClient().send(
+    new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { PK: pk, SK: sk },
+      UpdateExpression: expr.join(' '),
+      ExpressionAttributeNames: names,
+      ExpressionAttributeValues: values,
+      ReturnValues: 'ALL_NEW',
+    })
+  );
+  return result.Attributes || null;
 }
 
 export async function deleteItem(pk, sk) {

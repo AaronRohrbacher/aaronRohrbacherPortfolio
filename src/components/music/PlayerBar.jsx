@@ -5,6 +5,7 @@ import Style from './PlayerBar.module.scss';
 import WaveformPlayer from './WaveformPlayer';
 import { useMusicPlayer } from './MusicPlayerContext';
 import { useAuth } from './AuthContext';
+import { renderRichText } from '@/lib/richText';
 
 export default function PlayerBar() {
   const { getAuthHeaders } = useAuth();
@@ -45,7 +46,9 @@ export default function PlayerBar() {
           </button>
           <div className={Style.miniInfo} onClick={() => setMinimized(false)}>
             <span className={Style.miniTitle}>{currentTrack.name}</span>
-            {currentTrack.artists && <span className={Style.miniArtist}>{currentTrack.artists}</span>}
+            {currentTrack.artists && (
+              <span className={Style.miniArtist}>{renderRichText(currentTrack.artists)}</span>
+            )}
           </div>
           <div className={Style.miniActions}>
             <button className={Style.miniActionBtn} onClick={() => setMinimized(false)} aria-label="Expand player">
@@ -65,7 +68,7 @@ export default function PlayerBar() {
             <span className={Style.nowPlayingLabel}>Now Playing</span>
             <h3 className={Style.expandedTitle}>{currentTrack.name}</h3>
             {currentTrack.artists && (
-              <p className={Style.expandedArtist}>{currentTrack.artists}</p>
+              <p className={Style.expandedArtist}>{renderRichText(currentTrack.artists)}</p>
             )}
           </div>
           <div className={Style.expandedActions}>

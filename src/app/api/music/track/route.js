@@ -34,12 +34,13 @@ export async function GET(request) {
 
     const user = await authenticateRequest(request);
 
+    const meta = requestMeta(request);
     let shareGrant = false;
     if (shareToken) {
-      const trackRedeemed = await redeemTrackShareLink(shareToken);
+      const trackRedeemed = await redeemTrackShareLink(shareToken, meta);
       if (trackRedeemed && trackRedeemed.trackId === id) {
         shareGrant = true;
-        logEvent({
+        await logEvent({
           type: EVENT_TYPES.SHARE_REDEEM,
           targetType: 'track',
           targetId: id,
@@ -48,10 +49,10 @@ export async function GET(request) {
         });
       }
       if (!shareGrant && track.dumpId) {
-        const dumpRedeemed = await redeemDumpShareLink(shareToken);
+        const dumpRedeemed = await redeemDumpShareLink(shareToken, meta);
         if (dumpRedeemed && dumpRedeemed.dumpId === track.dumpId) {
           shareGrant = true;
-          logEvent({
+          await logEvent({
             type: EVENT_TYPES.SHARE_REDEEM,
             targetType: 'dump',
             targetId: track.dumpId,

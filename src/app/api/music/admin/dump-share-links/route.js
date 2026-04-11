@@ -30,7 +30,7 @@ export async function POST(request) {
   if (!dump) return NextResponse.json({ error: 'Dump not found' }, { status: 404 });
 
   const link = await createDumpShareLink(dumpId, admin.email, expiresInDays || null, label || null);
-  logEvent({
+  await logEvent({
     type: EVENT_TYPES.SHARE_CREATE,
     actor: admin.email,
     targetType: 'dump',

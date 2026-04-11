@@ -34,9 +34,25 @@ export async function GET(request) {
       return NextResponse.json({ tracks: merged, dumps });
     }
 
-    // Load dumps early so we can cascade publish state
+    // Load dumps early so we can cascade publish state.
+    // Visibility gates which dumps are "visible" to this viewer — a dump
+    // that's published but e.g. authenticated-only must not surface to anon
+    // viewers, and its tracks must not be grouped under it in the response.
     const dumps = await loadDumps();
-    const publishedDumpIds = new Set(dumps.filter((d) => d.published).map((d) => d.id));
+    const publishedDumpIds = new Set(
+      dumps
+        .filter((d) => {
+          if (!d.published) return false;
+          if (user?.isAdmin) return true;
+          const vis = d.visibility || 'public';
+          if (vis === 'public') return true;
+          // authenticated + restricted require a signed-in user. For
+          // restricted, per-track permissions gate the actual track list,
+          // and a dump with zero visible tracks drops out below.
+          return vis === 'authenticated' || vis === 'restricted' ? !!user : false;
+        })
+        .map((d) => d.id)
+    );
 
     // A track is effectively published if it's published itself OR belongs
     // to ANY published dump.
@@ -52,6 +68,9 @@ export async function GET(request) {
     } else {
       tracks = merged.filter((t) => isEffectivelyPublished(t) && (t.visibility || 'public') === 'public');
     }
+    // Respect the admin-assigned manual order. `track.order` is a number
+    // that's mutated by the admin Tracks tab's up/down buttons.
+    tracks = tracks.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const withUrls = tracks.map((track) => {
       const streamUrls = {};
       for (const format of Object.keys(track.formats)) {
@@ -86,8 +105,11 @@ export async function GET(request) {
       }
     }
 
+    // Respect the admin-assigned manual dump order on the public listing.
     const publishedDumps = dumps
       .filter((d) => d.published && dumpMap[d.id]?.length > 0)
+      .slice()
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
       .map((d) => ({ ...d, tracks: dumpMap[d.id] }));
 
     return NextResponse.json({ tracks: loose, dumps: publishedDumps });

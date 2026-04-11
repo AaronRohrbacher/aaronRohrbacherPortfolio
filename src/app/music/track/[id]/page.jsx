@@ -7,6 +7,7 @@ import Style from '@/components/music/MusicPlaylist.module.scss';
 import { useAuth } from '@/components/music/AuthContext';
 import { useMusicPlayer } from '@/components/music/MusicPlayerContext';
 import { useMusicHref } from '@/lib/musicLinks';
+import { renderRichText } from '@/lib/richText';
 
 export default function TrackPage() {
   const { id } = useParams();
@@ -105,8 +106,8 @@ export default function TrackPage() {
       <div className={Style.dumpSection}>
         <div className={Style.dumpHeader}>
           <h1 className={Style.dumpTitle}>{track.name}</h1>
-          {track.artists && <p className={Style.dumpArtists}>{track.artists}</p>}
-          {track.description && <p className={Style.dumpDesc}>{track.description}</p>}
+          {track.artists && <p className={Style.dumpArtists}>{renderRichText(track.artists)}</p>}
+          {track.description && <p className={Style.dumpDesc}>{renderRichText(track.description)}</p>}
         </div>
         <div className={Style.trackList}>
           <div className={[Style.trackCard, isActive ? Style.active : ''].join(' ')}>
@@ -119,7 +120,7 @@ export default function TrackPage() {
             </button>
             <div className={Style.trackInfo}>
               <h3 className={Style.trackName}>{track.name}</h3>
-              {track.artists && <p className={Style.trackArtists}>{track.artists}</p>}
+              {track.artists && <p className={Style.trackArtists}>{renderRichText(track.artists)}</p>}
               <div className={Style.trackActionsRow}>
                 <div className={Style.downloadGroup}>
                   {formats.map((fmt) => (

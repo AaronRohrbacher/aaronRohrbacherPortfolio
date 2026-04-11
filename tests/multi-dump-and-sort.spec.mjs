@@ -513,7 +513,7 @@ test.describe('Admin Tracks tab sort + Members rename — UI', () => {
     await getRawTracks(request, token);
   });
 
-  test('sort dropdown shows the three options and defaults to "Date created"', async ({ page }) => {
+  test('sort dropdown shows the four options and defaults to "Manual (my order)"', async ({ page }) => {
     await signInBrowser(page);
     await page.goto('/music/admin');
     // Wait for the tracks list to render
@@ -521,11 +521,13 @@ test.describe('Admin Tracks tab sort + Members rename — UI', () => {
     // The Tracks tab is the default tab. Locate the Sort by select.
     const sortSelect = page.getByLabel('Sort by');
     await expect(sortSelect).toBeVisible();
-    await expect(sortSelect).toHaveValue('created');
+    await expect(sortSelect).toHaveValue('manual');
 
     // Option labels
     const options = await sortSelect.locator('option').allTextContents();
-    expect(options).toEqual(expect.arrayContaining(['Date created', 'Date uploaded to S3', 'Name']));
+    expect(options).toEqual(
+      expect.arrayContaining(['Manual (my order)', 'Date created', 'Date uploaded to S3', 'Name'])
+    );
   });
 
   test('switching sort to "Name" reorders the list alphabetically', async ({ page }) => {
@@ -721,5 +723,143 @@ test.describe('s3UploadedAt field', () => {
     // s3UploadedAt isn't being written at all.
     const touched = data.tracks.some((x) => x.s3UploadedAt === x.addedAt);
     expect(touched).toBe(true);
+  });
+});
+
+// ── Non-public dump visibility — the main /music listing ──────────────────────
+//
+// Regression: a dump that's published but NOT visibility:'public' was showing
+// up on the anon main Music page (GET /api/music/tracks without auth), even
+// though the dump page itself correctly rejected the anon viewer. The feed
+// and the dump page must agree on visibility.
+
+test.describe('Non-public dumps do not leak to anon /api/music/tracks', () => {
+  test.describe.configure({ mode: 'serial' });
+  let adminToken;
+  let privateDumpId;
+  let trackId;
+
+  test('setup: sign in, create an authenticated-only dump, attach a track', async ({ request }) => {
+    adminToken = await signIn(request);
+    expect(adminToken).toBeTruthy();
+
+    const stamp = Date.now();
+    const dump = await createDump(request, adminToken, {
+      name: `private-${stamp}`,
+      published: true,
+      visibility: 'authenticated',
+    });
+    privateDumpId = dump.id;
+    expect(privateDumpId).toBeTruthy();
+
+    const raw = await getRawTracks(request, adminToken);
+    expect(raw.tracks.length).toBeGreaterThan(0);
+    const track = raw.tracks[0];
+    trackId = track.id;
+
+    // Put the track EXCLUSIVELY in the private dump, not directly published.
+    // This way its only path to visibility is via the dump — so if the dump
+    // is properly gated, the track must not surface to anon either.
+    const next = { ...track, dumpIds: [privateDumpId], published: false, visibility: 'public' };
+    delete next.dumpId;
+    await putSingleTrack(request, adminToken, next);
+  });
+
+  test('anon GET /api/music/tracks does not include the private dump', async ({ request }) => {
+    const data = await getPublicTracks(request); // no token → anon
+    const dumpIds = (data.dumps || []).map((d) => d.id);
+    expect(dumpIds).not.toContain(privateDumpId);
+  });
+
+  test('anon GET /api/music/tracks does not surface the track either (dump was its only gateway)', async ({ request }) => {
+    const data = await getPublicTracks(request);
+    const looseIds = (data.tracks || []).map((t) => t.id);
+    const dumpTrackIds = (data.dumps || []).flatMap((d) => (d.tracks || []).map((t) => t.id));
+    expect(looseIds).not.toContain(trackId);
+    expect(dumpTrackIds).not.toContain(trackId);
+  });
+
+  test('authenticated non-admin viewer DOES see the authenticated-only dump', async ({ request }) => {
+    const email = `dumpvis-${Date.now()}@local.dev`;
+    const signup = await signUp(request, email, 'password123');
+    expect(signup.idToken).toBeTruthy();
+    const data = await getPublicTracks(request, signup.idToken);
+    const dumpIds = (data.dumps || []).map((d) => d.id);
+    expect(dumpIds).toContain(privateDumpId);
+  });
+
+  test('teardown: unlink track + delete private dump', async ({ request }) => {
+    const raw = await getRawTracks(request, adminToken);
+    const t = raw.tracks.find((x) => x.id === trackId);
+    if (t) {
+      const cleaned = { ...t, dumpIds: [], published: false };
+      delete cleaned.dumpId;
+      await putSingleTrack(request, adminToken, cleaned);
+    }
+    await deleteDump(request, adminToken, privateDumpId);
+  });
+});
+
+test.describe('Restricted dumps do not leak to anon /api/music/tracks', () => {
+  // Separate block because `restricted` has different positive-case semantics
+  // (an authed user only sees it if they have track-level perms), so we can't
+  // reuse the "authed user sees it" assertion from the authenticated case.
+  test.describe.configure({ mode: 'serial' });
+  let adminToken;
+  let restrictedDumpId;
+  let trackId;
+
+  test('setup: sign in, create a RESTRICTED dump, attach a track', async ({ request }) => {
+    adminToken = await signIn(request);
+    expect(adminToken).toBeTruthy();
+
+    const stamp = Date.now();
+    const dump = await createDump(request, adminToken, {
+      name: `restricted-${stamp}`,
+      published: true,
+      visibility: 'restricted',
+    });
+    restrictedDumpId = dump.id;
+    expect(restrictedDumpId).toBeTruthy();
+
+    const raw = await getRawTracks(request, adminToken);
+    expect(raw.tracks.length).toBeGreaterThan(0);
+    const track = raw.tracks[0];
+    trackId = track.id;
+
+    const next = { ...track, dumpIds: [restrictedDumpId], published: false, visibility: 'public' };
+    delete next.dumpId;
+    await putSingleTrack(request, adminToken, next);
+  });
+
+  test('anon GET /api/music/tracks does not include the restricted dump', async ({ request }) => {
+    const data = await getPublicTracks(request);
+    const dumpIds = (data.dumps || []).map((d) => d.id);
+    expect(dumpIds).not.toContain(restrictedDumpId);
+  });
+
+  test('anon GET /api/music/tracks does not surface the track in the restricted dump', async ({ request }) => {
+    const data = await getPublicTracks(request);
+    const looseIds = (data.tracks || []).map((t) => t.id);
+    const dumpTrackIds = (data.dumps || []).flatMap((d) => (d.tracks || []).map((t) => t.id));
+    expect(looseIds).not.toContain(trackId);
+    expect(dumpTrackIds).not.toContain(trackId);
+  });
+
+  test('admin GET /api/music/tracks DOES include the restricted dump (sanity)', async ({ request }) => {
+    const data = await getPublicTracks(request, adminToken);
+    const dumpIds = (data.dumps || []).map((d) => d.id);
+    expect(dumpIds).toContain(restrictedDumpId);
+  });
+
+  test('teardown: unlink track + delete restricted dump', async ({ request }) => {
+    const raw = await getRawTracks(request, adminToken);
+    const t = raw.tracks.find((x) => x.id === trackId);
+    if (t) {
+      const cleaned = { ...t, dumpIds: [], published: false };
+      delete cleaned.dumpId;
+      await putSingleTrack(request, adminToken, cleaned);
+    }
+    await deleteDump(request, adminToken, restrictedDumpId);
   });
 });

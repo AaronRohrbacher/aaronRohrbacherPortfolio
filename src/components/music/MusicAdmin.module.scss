@@ -6,7 +6,7 @@
 }
 
 .wrap {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
   // Clear the fixed PlayerBar (expanded ~180px) so the last list item is
@@ -389,6 +389,68 @@
     font-weight: 700;
     letter-spacing: -0.01em;
   }
+}
+
+// Wide variant for the big Dump editor — needs room for section headings,
+// track picker, permission lists, and upload dropzone without feeling cramped.
+.modalWide {
+  max-width: 760px;
+
+  @media (max-width: 800px) {
+    max-width: 95vw;
+  }
+}
+
+// Section header inside editor modals — separates Details / Tracks /
+// Permissions / Upload visually.
+.editorSectionHeader {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
+  margin: 0.4rem 0 0.5rem;
+}
+
+// Row containing a label and an inline action button (e.g. "+ Link").
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+// Small inline-action button ("+ Link") — appears next to artists/desc
+// labels to insert a markdown link at the cursor.
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 7px;
+  border: 1px solid rgba(128, 128, 128, 0.18);
+  background: rgba(128, 128, 128, 0.04);
+  color: inherit;
+  cursor: pointer;
+  transition: background 180ms, border-color 180ms;
+
+  &:hover {
+    background: rgba(0, 168, 120, 0.08);
+    border-color: var(--accent-1);
+  }
+
+  i { font-size: 0.65rem; }
+}
+
+// Small grey helper copy under a label — explains what a field does.
+.fieldHint {
+  font-size: 0.72rem;
+  opacity: 0.55;
+  margin: 0.2rem 0 0.5rem;
+  line-height: 1.4;
 }
 
 .formGrid {
@@ -842,4 +904,19 @@
 :global([data-theme="light"]) .selectSmall {
   background-color: var(--white, #fff);
   option { background-color: var(--white, #fff); }
+}
+
+// ─── Events Panel extras ────────────────────────────────────────────────────
+.sortableTh {
+  cursor: pointer;
+  user-select: none;
+  transition: color 150ms, opacity 150ms;
+
+  &:hover { opacity: 1; color: var(--accent-1); }
+}
+
+.sortIndicator {
+  margin-left: 0.25rem;
+  color: var(--accent-1);
+  font-size: 0.7rem;
 }
