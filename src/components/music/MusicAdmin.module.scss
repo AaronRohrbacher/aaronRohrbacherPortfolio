@@ -254,17 +254,17 @@
 .artistsPreview {
   font-size: 0.76rem;
   opacity: 0.5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 
 .descPreview {
   font-size: 0.7rem;
   opacity: 0.35;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
 }
 
 .itemActions {

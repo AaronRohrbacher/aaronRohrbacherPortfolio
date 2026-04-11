@@ -121,10 +121,6 @@ export default function TrackPage() {
               <h3 className={Style.trackName}>{track.name}</h3>
               {track.artists && <p className={Style.trackArtists}>{track.artists}</p>}
               <div className={Style.trackActionsRow}>
-                <button className={Style.playInline} onClick={handlePlay}>
-                  <i className={isActive && isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play'} />
-                  {isActive && isPlaying ? ' Pause' : ' Play in Browser'}
-                </button>
                 <div className={Style.downloadGroup}>
                   {formats.map((fmt) => (
                     <a key={fmt} href={getDownloadUrl(fmt)} className={Style.downloadLink}>

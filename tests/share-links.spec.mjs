@@ -635,8 +635,10 @@ test.describe('Public /music/track/[id] page', () => {
     // Track name heading
     await expect(page.locator('h1')).toContainText(trackA.name, { timeout: 10000 });
 
-    // "Play in Browser" button is present
-    await expect(page.locator('button', { hasText: 'Play in Browser' })).toBeVisible();
+    // Play button is present (icon-only on the left of the track card)
+    await expect(
+      page.locator(`button[aria-label*="Play ${trackA.name}"]`).first()
+    ).toBeVisible();
 
     // Download link(s) carry the share token. The page.jsx uses Style.downloadBtn
     // which isn't a defined class in the SCSS module, so we match by href instead

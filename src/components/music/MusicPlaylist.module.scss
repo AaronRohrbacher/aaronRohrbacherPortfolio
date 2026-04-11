@@ -319,18 +319,18 @@
   font-size: 0.76rem;
   opacity: 0.5;
   margin: 0.1rem 0 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 
 .trackDesc {
   font-size: 0.74rem;
   opacity: 0.35;
   margin: 0.15rem 0 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
 }
 
 // ─── Track Right ────────────────────────────────────────────────────────────

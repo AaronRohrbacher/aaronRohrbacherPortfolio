@@ -166,10 +166,6 @@ function TrackCard({ track, index, currentTrack, isPlaying, onPlay, getDownloadU
         {track.artists && <p className={Style.trackArtists}>{track.artists}</p>}
         {track.description && <p className={Style.trackDesc}>{track.description}</p>}
         <div className={Style.trackActionsRow}>
-          <button className={Style.playInline} onClick={() => onPlay(track, index)}>
-            <i className={isActive && isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play'} />
-            {isActive && isPlaying ? ' Pause' : ' Play in Browser'}
-          </button>
           <div className={Style.downloadGroup}>
             {formats.map((fmt) => (
               <a key={fmt} href={getDownloadUrl(track, fmt)} className={Style.downloadBtn}>
