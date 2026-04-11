@@ -3,12 +3,26 @@ import { loadAllTracks, mergeTracks, loadDumps } from '@/lib/trackStore';
 import MusicPlaylist from '@/components/music/MusicPlaylist';
 
 export const metadata = {
+  metadataBase: new URL('https://music.aaronrohrbacher.com'),
   title: 'Music',
-  description: 'Listen to and download music by Aaron Rohrbacher. Stream and download tracks in MP3, WAV, and AIFF.',
+  description:
+    'Saxophone, clarinet, and home recordings by Aaron Rohrbacher — a Portland, Oregon software engineer and amateur audio engineer. Stream and download tracks in MP3, WAV, and AIFF.',
+  alternates: {
+    canonical: 'https://music.aaronrohrbacher.com/',
+  },
   openGraph: {
     title: 'Music | Aaron Rohrbacher',
-    description: 'Listen to and download music by Aaron Rohrbacher.',
+    description:
+      'Saxophone, clarinet, and home recordings by Aaron Rohrbacher — Portland, Oregon. Stream and download MP3, WAV, AIFF.',
     type: 'music.playlist',
+    url: 'https://music.aaronrohrbacher.com/',
+    siteName: 'Aaron Rohrbacher · Music',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Music | Aaron Rohrbacher',
+    description:
+      'Saxophone, clarinet, and home recordings by Aaron Rohrbacher — Portland, Oregon. Stream and download MP3, WAV, AIFF.',
   },
 };
 
@@ -68,21 +82,58 @@ export default async function MusicPage() {
     console.error('SSR music fetch error:', err);
   }
 
-  // JSON-LD structured data for SEO
+  // JSON-LD structured data for SEO. Always include the Person/MusicGroup
+  // identity even when the playlist is empty so Google has something
+  // substantive to index instead of treating the page as a soft 404.
   const allItems = [...initialDumps.flatMap((d) => d.tracks || []), ...initialTracks];
+  const aaron = {
+    '@type': 'Person',
+    name: 'Aaron Rohrbacher',
+    url: 'https://aaronrohrbacher.com',
+    sameAs: ['https://music.aaronrohrbacher.com'],
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Portland',
+      addressRegion: 'OR',
+      addressCountry: 'US',
+    },
+  };
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'MusicPlaylist',
-    name: 'Music by Aaron Rohrbacher',
-    description: 'Listen to and download music by Aaron Rohrbacher.',
-    numTracks: allItems.length,
-    track: allItems.map((t, i) => ({
-      '@type': 'MusicRecording',
-      position: i + 1,
-      name: t.name,
-      ...(t.artists ? { byArtist: { '@type': 'Person', name: t.artists } } : {}),
-      ...(t.description ? { description: t.description } : {}),
-    })),
+    '@graph': [
+      aaron,
+      {
+        '@type': 'MusicGroup',
+        name: 'Aaron Rohrbacher',
+        member: aaron,
+        instrument: ['Tenor saxophone', 'Clarinet'],
+        url: 'https://music.aaronrohrbacher.com',
+      },
+      {
+        '@type': 'CollectionPage',
+        '@id': 'https://music.aaronrohrbacher.com/#collection',
+        url: 'https://music.aaronrohrbacher.com/',
+        name: 'Music by Aaron Rohrbacher',
+        description:
+          'Saxophone, clarinet, and home recordings by Aaron Rohrbacher — a Portland, Oregon software engineer and amateur audio engineer. Stream and download tracks in MP3, WAV, and AIFF.',
+        isPartOf: { '@type': 'WebSite', url: 'https://music.aaronrohrbacher.com', name: 'Aaron Rohrbacher · Music' },
+        creator: aaron,
+      },
+      {
+        '@type': 'MusicPlaylist',
+        name: 'Music by Aaron Rohrbacher',
+        description: 'Stream and download original recordings by Aaron Rohrbacher in MP3, WAV, and AIFF.',
+        url: 'https://music.aaronrohrbacher.com/',
+        numTracks: allItems.length,
+        track: allItems.map((t, i) => ({
+          '@type': 'MusicRecording',
+          position: i + 1,
+          name: t.name,
+          byArtist: t.artists ? { '@type': 'Person', name: t.artists } : aaron,
+          ...(t.description ? { description: t.description } : {}),
+        })),
+      },
+    ],
   };
 
   return (

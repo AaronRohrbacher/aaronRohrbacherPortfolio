@@ -95,31 +95,11 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
     return `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${format}&download=1`;
   }
 
-  if (loading) {
-    return (
-      <div className={Style.page}>
-        <div className={Style.loading}>
-          <div className={Style.spinner} />
-          <p>Loading tracks...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={Style.page}>
-        <div className={Style.error}>
-          <p>Could not load tracks: {error}</p>
-          <button className={Style.retryBtn} onClick={() => { setError(null); setLoading(true); fetchTracks(); }}>
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const noContent = tracks.length === 0 && dumps.length === 0;
+  // Render the hero (h1 + bio) ALWAYS, even while loading or on error,
+  // so the SSR HTML always carries real, indexable copy. Otherwise an
+  // empty playlist + spinner-only render gets flagged as soft 404 by
+  // search engines.
+  const noContent = !loading && !error && tracks.length === 0 && dumps.length === 0;
 
   const filtered = search.trim()
     ? queue.filter((t) => {
@@ -184,6 +164,22 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
           />
+        </div>
+      )}
+
+      {loading && (
+        <div className={Style.loading}>
+          <div className={Style.spinner} />
+          <p>Loading tracks...</p>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className={Style.error}>
+          <p>Could not load tracks: {error}</p>
+          <button className={Style.retryBtn} onClick={() => { setError(null); setLoading(true); fetchTracks(); }}>
+            Retry
+          </button>
         </div>
       )}
 

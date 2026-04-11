@@ -30,7 +30,7 @@ export async function GET() {
     ...dumps.map((d) => ({
       loc: `${MUSIC_BASE}/dump/${encodeURIComponent(d.id)}`,
       lastmod: (d.createdAt || now).split('T')[0],
-      changefreq: 'monthly',
+      changefreq: 'weekly',
       priority: '0.8',
     })),
   ];

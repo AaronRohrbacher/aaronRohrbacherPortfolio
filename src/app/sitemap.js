@@ -18,7 +18,7 @@ export default function sitemap() {
   ].map((path) => ({
     url: `${BASE}/${path}`.replace(/\/$/, '') || BASE,
     lastModified,
-    changeFrequency: path === '' ? 'weekly' : 'monthly',
+    changeFrequency: 'weekly',
     priority: path === '' ? 1.0 : 0.7,
   }));
 }
