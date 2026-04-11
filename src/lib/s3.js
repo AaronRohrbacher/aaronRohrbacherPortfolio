@@ -81,16 +81,28 @@ export async function getObject(key) {
   return client.send(command);
 }
 
+const DOWNLOAD_CONTENT_TYPES = {
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  aiff: 'audio/aiff',
+  aif: 'audio/aiff',
+};
+
 /**
- * Get a presigned URL for downloading an S3 object, with optional
- * Content-Disposition override so the browser saves it with a friendly name.
+ * Get a presigned URL for downloading an S3 object, with Content-Disposition
+ * and Content-Type overridden in the response so the browser saves it with a
+ * friendly name and a canonical mime type regardless of how the object was
+ * uploaded.
  */
 export async function getDownloadUrl(key, filename, expiresIn = 3600) {
   const client = getClient();
+  const ext = (filename.split('.').pop() || '').toLowerCase();
+  const contentType = DOWNLOAD_CONTENT_TYPES[ext] || 'application/octet-stream';
   const command = new GetObjectCommand({
     Bucket: BUCKET,
     Key: key,
     ResponseContentDisposition: `attachment; filename="${filename.replace(/"/g, '')}"`,
+    ResponseContentType: contentType,
   });
   return getSignedUrl(client, command, { expiresIn });
 }

@@ -15,12 +15,20 @@ import { putItem, getItem, query, deleteItem, batchWrite, scanByPkPrefixes } fro
 // shapes into `dumpIds: string[]`. Any write path that updates a track also
 // syncs the sibling rows and rewrites the main row with `GSI1PK: 'TRACKS'`.
 
+// Accept either `dumpIds` (canonical) or legacy `dumpId`. The presence of a
+// `dumpId` key in the input — even set to null — is treated as a legacy
+// caller's authoritative single-assignment intent: it overrides any
+// `dumpIds` array that came along for the ride from a spread copy. Callers
+// using the new shape pass `dumpIds: [...]` and omit `dumpId` entirely.
+function normalizeTrackDumpIds(track) {
+  if (track && Object.prototype.hasOwnProperty.call(track, 'dumpId')) {
+    return track.dumpId ? [track.dumpId] : [];
+  }
+  return Array.isArray(track?.dumpIds) ? track.dumpIds.filter(Boolean) : [];
+}
+
 function trackToItem(track) {
-  const dumpIds = Array.isArray(track.dumpIds)
-    ? track.dumpIds.filter(Boolean)
-    : track.dumpId
-    ? [track.dumpId]
-    : [];
+  const dumpIds = normalizeTrackDumpIds(track);
   return {
     PK: `TRACK#${track.id}`,
     SK: `TRACK#${track.id}`,
@@ -79,11 +87,7 @@ export async function loadTracks() {
 // dump) assignments stay in lockstep with the main row. `previousDumpIds` may
 // be omitted; if so we fetch the current stored state and diff against it.
 export async function saveTrack(track, previousDumpIds) {
-  const nextDumpIds = Array.isArray(track.dumpIds)
-    ? track.dumpIds.filter(Boolean)
-    : track.dumpId
-    ? [track.dumpId]
-    : [];
+  const nextDumpIds = normalizeTrackDumpIds(track);
 
   let prev = previousDumpIds;
   if (prev == null) {
@@ -122,12 +126,7 @@ export async function saveTracks(tracks) {
   }));
   await batchWrite(requests);
   for (const track of tracks) {
-    const dumpIds = Array.isArray(track.dumpIds)
-      ? track.dumpIds.filter(Boolean)
-      : track.dumpId
-      ? [track.dumpId]
-      : [];
-    for (const dumpId of dumpIds) {
+    for (const dumpId of normalizeTrackDumpIds(track)) {
       await assignTrackToDump(track.id, dumpId);
     }
   }

@@ -697,7 +697,7 @@ test.describe('Magic Links', () => {
     adminToken = await signIn(request);
   });
 
-  test('create magic link for a user', async ({ request }) => {
+  test('create magic link for a user (default no expiry)', async ({ request }) => {
     const email = `magic-${Date.now()}@local.dev`;
     await signUp(request, email, 'testpass1');
 
@@ -709,7 +709,26 @@ test.describe('Magic Links', () => {
     expect(data.ok).toBe(true);
     expect(data.link.token).toBeTruthy();
     expect(data.link.email).toBe(email);
+    // Default is no expiry — test that an explicit expiry works separately.
+    expect(data.link.expiresAt).toBeNull();
+  });
+
+  test('create magic link with explicit expiry', async ({ request }) => {
+    const email = `magic-exp-${Date.now()}@local.dev`;
+    await signUp(request, email, 'testpass1');
+
+    const res = await request.post(`${BASE}/api/music/admin/magic-links`, {
+      headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
+      data: { email, expiresInDays: 7 },
+    });
+    const data = await res.json();
+    expect(data.ok).toBe(true);
     expect(data.link.expiresAt).toBeTruthy();
+    const expiry = new Date(data.link.expiresAt);
+    const now = new Date();
+    const diffDays = (expiry - now) / 86400000;
+    expect(diffDays).toBeGreaterThan(6.5);
+    expect(diffDays).toBeLessThan(7.5);
   });
 
   test('redeem magic link logs user in', async ({ request }) => {
@@ -881,18 +900,25 @@ test.describe('Music UI', () => {
     expect(await cards.count()).toBeGreaterThanOrEqual(1);
   });
 
-  test('track card has play button and download buttons', async ({ page }) => {
+  test('track card is clickable and has download action', async ({ page }) => {
     await page.goto('/music');
     await expect(page.locator('[class*="trackCard"]').first()).toBeVisible({ timeout: 10000 });
     const card = page.locator('[class*="trackCard"]').first();
-    await expect(card.locator('[class*="playBtn"]')).toBeVisible();
-    await expect(card.locator('[class*="downloadBtn"]').first()).toBeVisible();
+    // Whole card is the play button (role=button)
+    await expect(card).toHaveAttribute('role', 'button');
+    // Download action button visible on the card
+    await expect(card.locator('[aria-label="Download options"]')).toBeVisible();
   });
 
-  test('download button href points to stream API with download=1', async ({ page }) => {
+  test('download dropdown links point to stream API with download=1', async ({ page }) => {
     await page.goto('/music');
     await expect(page.locator('[class*="trackCard"]').first()).toBeVisible({ timeout: 10000 });
-    const href = await page.locator('[class*="downloadBtn"]').first().getAttribute('href');
+    // Open the download dropdown on the first card
+    await page.locator('[class*="trackCard"]').first()
+      .locator('[aria-label="Download options"]').click();
+    const link = page.locator('[class*="downloadLink"]').first();
+    await expect(link).toBeVisible();
+    const href = await link.getAttribute('href');
     expect(href).toContain('/api/music/stream');
     expect(href).toContain('download=1');
   });
