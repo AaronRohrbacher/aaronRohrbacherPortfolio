@@ -6,6 +6,9 @@
 /.pnp
 .pnp.js
 
+# claude code worktrees
+.claude/worktrees/
+
 # testing
 /coverage
 

@@ -9,6 +9,9 @@
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
+  // Clear the fixed PlayerBar (expanded ~180px) so the last list item is
+  // scrollable above it. Safe even when no track is playing (bar hidden).
+  padding-bottom: calc(2rem + 200px);
 }
 
 .header {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getObject, getDownloadUrl } from '@/lib/s3';
-import { getTrack, getTrackPermissions, getDump, redeemDumpShareLink } from '@/lib/trackStore';
+import { getTrack, getTrackPermissions, getDump, redeemDumpShareLink, redeemTrackShareLink } from '@/lib/trackStore';
 import { authenticateRequest } from '@/lib/verifyToken';
 import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
 
@@ -35,12 +35,20 @@ export async function GET(request) {
     // Permission check
     const user = await authenticateRequest(request);
 
-    // A valid share link bound to this track's parent dump grants access
-    // regardless of publish state / visibility / sign-in.
+    // A valid share link grants access regardless of publish state /
+    // visibility / sign-in. Two kinds of share token are accepted:
+    //   - dump-share: token bound to this track's parent dump
+    //   - track-share: token bound to this specific track
     let shareGrant = false;
-    if (shareToken && track.dumpId) {
-      const redeemed = await redeemDumpShareLink(shareToken);
-      if (redeemed && redeemed.dumpId === track.dumpId) shareGrant = true;
+    if (shareToken) {
+      if (track.dumpId) {
+        const redeemed = await redeemDumpShareLink(shareToken);
+        if (redeemed && redeemed.dumpId === track.dumpId) shareGrant = true;
+      }
+      if (!shareGrant) {
+        const redeemed = await redeemTrackShareLink(shareToken);
+        if (redeemed && redeemed.trackId === id) shareGrant = true;
+      }
     }
 
     // Check if track is effectively published (directly or via published dump)

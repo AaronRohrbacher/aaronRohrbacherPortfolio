@@ -17,10 +17,10 @@ export async function POST(request) {
   const admin = await requireAdmin(request);
   if (!admin) return NextResponse.json({ error: 'Admin required' }, { status: 401 });
 
-  const { email, expiresInDays } = await request.json();
+  const { email, expiresInDays, label } = await request.json();
   if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 });
 
-  const link = await createMagicLink(email, admin.email, expiresInDays || 30);
+  const link = await createMagicLink(email, admin.email, expiresInDays || null, label || null);
   return NextResponse.json({ ok: true, link });
 }
 

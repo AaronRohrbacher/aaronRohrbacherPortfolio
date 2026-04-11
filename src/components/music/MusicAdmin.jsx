@@ -9,10 +9,11 @@ import UserManager from './UserManager';
 import GroupManager from './GroupManager';
 import DumpManager from './DumpManager';
 import EventsPanel from './EventsPanel';
+import MagicLinksManager from './MagicLinksManager';
 import { useMusicHref } from '@/lib/musicLinks';
 
 
-const TABS = ['tracks', 'dumps', 'users', 'groups', 'events', 'settings'];
+const TABS = ['tracks', 'dumps', 'users', 'groups', 'magic links', 'events', 'settings'];
 
 export default function MusicAdmin() {
   const { user, loading: authLoading, getAuthHeaders } = useAuth();
@@ -287,6 +288,7 @@ export default function MusicAdmin() {
                   >
                     {track.published ? 'Unpublish' : 'Publish'}
                   </button>
+                  <TrackMagicLinkButton track={track} getAuthHeaders={getAuthHeaders} />
                   <button className={Style.iconBtn} onClick={() => setEditing({ ...track })}>
                     Edit
                   </button>
@@ -310,6 +312,11 @@ export default function MusicAdmin() {
       {/* Groups Tab */}
       {tab === 'groups' && (
         <GroupManager getAuthHeaders={getAuthHeaders} />
+      )}
+
+      {/* Magic Links Tab */}
+      {tab === 'magic links' && (
+        <MagicLinksManager getAuthHeaders={getAuthHeaders} />
       )}
 
       {/* Events Tab */}
@@ -609,6 +616,50 @@ function TrackEditor({ track, onSave, onCancel, getAuthHeaders }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function TrackMagicLinkButton({ track, getAuthHeaders }) {
+  const [state, setState] = useState('idle'); // idle | working | copied | error
+
+  async function handleClick() {
+    setState('working');
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/music/admin/track-share-links', {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trackId: track.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create link');
+      const url = `${window.location.origin}/music/track/${encodeURIComponent(track.id)}?share=${data.link.token}`;
+      await navigator.clipboard.writeText(url);
+      setState('copied');
+      setTimeout(() => setState('idle'), 2500);
+    } catch {
+      setState('error');
+      setTimeout(() => setState('idle'), 2500);
+    }
+  }
+
+  return (
+    <button
+      className={Style.iconBtn}
+      onClick={handleClick}
+      disabled={state === 'working'}
+      title="Create a magic link for this track and copy to clipboard"
+    >
+      {state === 'copied' ? (
+        <><i className="fa-solid fa-check" /> Copied!</>
+      ) : state === 'error' ? (
+        <><i className="fa-solid fa-triangle-exclamation" /> Failed</>
+      ) : state === 'working' ? (
+        <><i className="fa-solid fa-spinner fa-spin" /> ...</>
+      ) : (
+        <><i className="fa-solid fa-link" /> Magic Link</>
+      )}
+    </button>
   );
 }
 

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/verifyToken';
 import {
-  createDumpShareLink,
-  getDumpShareLinks,
-  deleteDumpShareLink,
-  getDump,
+  createTrackShareLink,
+  getTrackShareLinks,
+  deleteTrackShareLink,
+  getTrack,
 } from '@/lib/trackStore';
 import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
 
@@ -15,51 +15,51 @@ async function requireAdmin(request) {
 }
 
 /**
- * POST /api/music/admin/dump-share-links
- * Create a direct-access share link for a single dump (no account needed).
- * Body: { dumpId, expiresInDays? }
+ * POST /api/music/admin/track-share-links
+ * Create a direct-access share link for a single track (no account needed).
+ * Body: { trackId, expiresInDays?, label? }
  */
 export async function POST(request) {
   const admin = await requireAdmin(request);
   if (!admin) return NextResponse.json({ error: 'Admin required' }, { status: 401 });
 
-  const { dumpId, expiresInDays, label } = await request.json();
-  if (!dumpId) return NextResponse.json({ error: 'dumpId required' }, { status: 400 });
+  const { trackId, expiresInDays, label } = await request.json();
+  if (!trackId) return NextResponse.json({ error: 'trackId required' }, { status: 400 });
 
-  const dump = await getDump(dumpId);
-  if (!dump) return NextResponse.json({ error: 'Dump not found' }, { status: 404 });
+  const track = await getTrack(trackId);
+  if (!track) return NextResponse.json({ error: 'Track not found' }, { status: 404 });
 
-  const link = await createDumpShareLink(dumpId, admin.email, expiresInDays || null, label || null);
+  const link = await createTrackShareLink(trackId, admin.email, expiresInDays || null, label || null);
   logEvent({
     type: EVENT_TYPES.SHARE_CREATE,
     actor: admin.email,
-    targetType: 'dump',
-    targetId: dumpId,
-    detail: `expires:${link.expiresAt}`,
+    targetType: 'track',
+    targetId: trackId,
+    detail: link.expiresAt ? `expires:${link.expiresAt}` : 'no-expiry',
     ...requestMeta(request),
   });
   return NextResponse.json({ ok: true, link });
 }
 
 /**
- * GET /api/music/admin/dump-share-links?dumpId=xxx
- * List active share links for a dump.
+ * GET /api/music/admin/track-share-links?trackId=xxx
+ * List active share links for a track.
  */
 export async function GET(request) {
   const admin = await requireAdmin(request);
   if (!admin) return NextResponse.json({ error: 'Admin required' }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
-  const dumpId = searchParams.get('dumpId');
-  if (!dumpId) return NextResponse.json({ error: 'dumpId required' }, { status: 400 });
+  const trackId = searchParams.get('trackId');
+  if (!trackId) return NextResponse.json({ error: 'trackId required' }, { status: 400 });
 
-  const links = await getDumpShareLinks(dumpId);
+  const links = await getTrackShareLinks(trackId);
   return NextResponse.json({ links });
 }
 
 /**
- * DELETE /api/music/admin/dump-share-links?token=xxx
- * Revoke a dump share link.
+ * DELETE /api/music/admin/track-share-links?token=xxx
+ * Revoke a track share link.
  */
 export async function DELETE(request) {
   const admin = await requireAdmin(request);
@@ -69,6 +69,6 @@ export async function DELETE(request) {
   const token = searchParams.get('token');
   if (!token) return NextResponse.json({ error: 'Token required' }, { status: 400 });
 
-  await deleteDumpShareLink(token);
+  await deleteTrackShareLink(token);
   return NextResponse.json({ ok: true });
 }

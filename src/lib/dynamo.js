@@ -4,6 +4,7 @@ import {
   PutCommand,
   GetCommand,
   QueryCommand,
+  ScanCommand,
   DeleteCommand,
   BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
@@ -63,6 +64,39 @@ export async function query({ pk, skPrefix, indexName, gsi1pk, gsi1skPrefix }) {
   do {
     if (lastKey) params.ExclusiveStartKey = lastKey;
     const result = await getDocClient().send(new QueryCommand(params));
+    items.push(...(result.Items || []));
+    lastKey = result.LastEvaluatedKey;
+  } while (lastKey);
+
+  return items;
+}
+
+/**
+ * Scan items whose PK begins with one of the given prefixes.
+ * Use only for low-cardinality slices (e.g. share links). Avoid on hot paths.
+ */
+export async function scanByPkPrefixes(prefixes) {
+  if (!prefixes || prefixes.length === 0) return [];
+  const exprNames = {};
+  const exprValues = {};
+  const filters = prefixes.map((p, i) => {
+    exprValues[`:p${i}`] = p;
+    return `begins_with(#pk, :p${i})`;
+  });
+  exprNames['#pk'] = 'PK';
+
+  const params = {
+    TableName: TABLE_NAME,
+    FilterExpression: filters.join(' OR '),
+    ExpressionAttributeNames: exprNames,
+    ExpressionAttributeValues: exprValues,
+  };
+
+  const items = [];
+  let lastKey;
+  do {
+    if (lastKey) params.ExclusiveStartKey = lastKey;
+    const result = await getDocClient().send(new ScanCommand(params));
     items.push(...(result.Items || []));
     lastKey = result.LastEvaluatedKey;
   } while (lastKey);
