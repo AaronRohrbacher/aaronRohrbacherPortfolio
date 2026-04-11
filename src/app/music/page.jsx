@@ -89,8 +89,7 @@ export default async function MusicPage() {
   const aaron = {
     '@type': 'Person',
     name: 'Aaron Rohrbacher',
-    url: 'https://aaronrohrbacher.com',
-    sameAs: ['https://music.aaronrohrbacher.com'],
+    url: 'https://music.aaronrohrbacher.com',
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Portland',
