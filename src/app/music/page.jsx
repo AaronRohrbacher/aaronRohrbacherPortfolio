@@ -26,11 +26,12 @@ export default async function MusicPage() {
     const dumps = await loadDumps();
     const publishedDumpIds = new Set(dumps.filter((d) => d.published).map((d) => d.id));
 
-    // Track is visible if published directly OR belongs to a published dump
-    const allTracks = merged.filter((t) =>
-      (t.published || (t.dumpId && publishedDumpIds.has(t.dumpId))) &&
-      (t.visibility || 'public') === 'public'
-    );
+    // Track is visible if published directly OR belongs to ANY published dump
+    const allTracks = merged.filter((t) => {
+      const dumpIds = Array.isArray(t.dumpIds) ? t.dumpIds : [];
+      const effectivelyPublished = t.published || dumpIds.some((id) => publishedDumpIds.has(id));
+      return effectivelyPublished && (t.visibility || 'public') === 'public';
+    });
     const dumpMap = {};
     const loose = [];
 
@@ -39,7 +40,7 @@ export default async function MusicPage() {
       name: track.name,
       description: track.description,
       artists: track.artists,
-      dumpId: track.dumpId,
+      dumpIds: track.dumpIds || [],
       addedAt: track.addedAt,
       formats: Object.keys(track.formats),
       streamUrls: Object.fromEntries(
@@ -48,9 +49,12 @@ export default async function MusicPage() {
     }));
 
     for (const t of withMeta) {
-      if (t.dumpId && publishedDumpIds.has(t.dumpId)) {
-        if (!dumpMap[t.dumpId]) dumpMap[t.dumpId] = [];
-        dumpMap[t.dumpId].push(t);
+      const publishedForTrack = (t.dumpIds || []).filter((id) => publishedDumpIds.has(id));
+      if (publishedForTrack.length > 0) {
+        for (const dumpId of publishedForTrack) {
+          if (!dumpMap[dumpId]) dumpMap[dumpId] = [];
+          dumpMap[dumpId].push(t);
+        }
       } else {
         loose.push(t);
       }

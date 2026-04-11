@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/verifyToken';
-import { loadDumps, saveDump, deleteDump, getDumpTracks, saveTracks } from '@/lib/trackStore';
+import { loadDumps, saveDump, deleteDump, getDumpTracks } from '@/lib/trackStore';
 
 async function requireAdmin(request) {
   const user = await authenticateRequest(request);
@@ -74,11 +74,8 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Dump id required' }, { status: 400 });
     }
 
-    // Unlink tracks from this dump
-    const tracks = await getDumpTracks(id);
-    const unlinked = tracks.map((t) => ({ ...t, dumpId: null }));
-    if (unlinked.length) await saveTracks(unlinked);
-
+    // deleteDump unlinks sibling rows and rewrites any legacy main-track rows
+    // so they drop the dump assignment. No separate saveTracks pass needed.
     await deleteDump(id);
     return NextResponse.json({ ok: true });
   } catch (err) {

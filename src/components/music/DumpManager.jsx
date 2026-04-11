@@ -115,17 +115,25 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
         const uploadedNames = audioFiles.map((f) =>
           f.name.replace(/\.(mp3|wav|aiff|aif)$/i, '')
         );
-        const toAssign = allTracks.filter((t) => uploadedNames.includes(t.id) && !t.dumpId);
-        if (toAssign.length > 0) {
-          const updated = allTracks.map((t) =>
-            toAssign.find((a) => a.id === t.id)
-              ? { ...t, dumpId: dump.id, visibility: form.visibility }
-              : t
-          );
+        const toAssign = allTracks.filter((t) => uploadedNames.includes(t.id));
+        // Use per-track PUT so the backend's diff-aware sibling sync fires
+        for (const t of toAssign) {
+          const currentDumpIds = Array.isArray(t.dumpIds)
+            ? t.dumpIds
+            : t.dumpId
+            ? [t.dumpId]
+            : [];
+          if (currentDumpIds.includes(dump.id)) continue;
+          const next = {
+            ...t,
+            dumpIds: [...currentDumpIds, dump.id],
+            visibility: form.visibility,
+          };
+          delete next.dumpId;
           await fetch('/api/music/tracks', {
             method: 'PUT',
             headers: { ...headers, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tracks: updated }),
+            body: JSON.stringify({ track: next }),
           });
         }
 
@@ -338,7 +346,18 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
   const [uploadProgress, setUploadProgress] = useState('');
   const [uploadError, setUploadError] = useState('');
   const editFileRef = useRef(null);
-  const trackIds = (dump.tracks || []).map((t) => t.id);
+  // Tracks in this dump — from the server-rendered `dump.tracks` on mount,
+  // kept in local state so checkbox toggles update immediately without a full
+  // refresh.
+  const [dumpTrackIds, setDumpTrackIds] = useState(
+    new Set((dump.tracks || []).map((t) => t.id))
+  );
+  const trackIds = Array.from(dumpTrackIds);
+  // All tracks in the library for the "Add existing tracks" picker
+  const [allTracks, setAllTracks] = useState([]);
+  const [tracksLoading, setTracksLoading] = useState(false);
+  const [trackSearch, setTrackSearch] = useState('');
+  const [trackPending, setTrackPending] = useState({});
 
   async function uploadMore() {
     const files = editFileRef.current?.files;
@@ -382,17 +401,24 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
       const tracksData = await tracksRes.json();
       const allTracks = tracksData.tracks || [];
       const uploadedNames = audioFiles.map((f) => f.name.replace(/\.(mp3|wav|aiff|aif)$/i, ''));
-      const toAssign = allTracks.filter((t) => uploadedNames.includes(t.id) && !t.dumpId);
-      if (toAssign.length > 0) {
-        const updated = allTracks.map((t) =>
-          toAssign.find((a) => a.id === t.id)
-            ? { ...t, dumpId: form.id, visibility: form.visibility }
-            : t
-        );
+      const toAssign = allTracks.filter((t) => uploadedNames.includes(t.id));
+      for (const t of toAssign) {
+        const currentDumpIds = Array.isArray(t.dumpIds)
+          ? t.dumpIds
+          : t.dumpId
+          ? [t.dumpId]
+          : [];
+        if (currentDumpIds.includes(form.id)) continue;
+        const next = {
+          ...t,
+          dumpIds: [...currentDumpIds, form.id],
+          visibility: form.visibility,
+        };
+        delete next.dumpId;
         await fetch('/api/music/tracks', {
           method: 'PUT',
           headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tracks: updated }),
+          body: JSON.stringify({ track: next }),
         });
       }
       if (editFileRef.current) editFileRef.current.value = '';
@@ -411,10 +437,65 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
 
   useEffect(() => {
     loadUsersAndGroups();
+    loadAllTracksList();
     if (form.visibility === 'restricted' && trackIds.length > 0) {
       loadPerms();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadAllTracksList() {
+    setTracksLoading(true);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/music/tracks?raw=1', { headers });
+      const data = await res.json();
+      setAllTracks(data.tracks || []);
+    } catch {} finally {
+      setTracksLoading(false);
+    }
+  }
+
+  async function toggleTrackInDump(track) {
+    const key = `track:${track.id}`;
+    setTrackPending((p) => ({ ...p, [key]: true }));
+    const currentDumpIds = Array.isArray(track.dumpIds)
+      ? track.dumpIds
+      : track.dumpId
+      ? [track.dumpId]
+      : [];
+    const isIn = dumpTrackIds.has(track.id);
+    const nextDumpIds = isIn
+      ? currentDumpIds.filter((d) => d !== form.id)
+      : [...currentDumpIds, form.id];
+    const next = { ...track, dumpIds: nextDumpIds };
+    delete next.dumpId;
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/music/tracks', {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ track: next }),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      setDumpTrackIds((prev) => {
+        const s = new Set(prev);
+        if (isIn) s.delete(track.id);
+        else s.add(track.id);
+        return s;
+      });
+      // Also update allTracks so subsequent toggles see the new dumpIds
+      setAllTracks((prev) =>
+        prev.map((t) => (t.id === track.id ? { ...t, dumpIds: nextDumpIds } : t))
+      );
+      if (onRefresh) await onRefresh();
+    } catch {} finally {
+      setTrackPending((p) => {
+        const n = { ...p };
+        delete n[key];
+        return n;
+      });
+    }
+  }
 
   useEffect(() => {
     if (form.visibility === 'restricted' && trackIds.length > 0 && perms.users.length === 0 && perms.groups.length === 0) {
@@ -653,7 +734,7 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
           )}
 
           <div>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Add tracks to this dump</label>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Upload new tracks to this dump</label>
             <input
               type="file"
               ref={editFileRef}
@@ -676,6 +757,61 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
             {uploadError && (
               <p style={{ color: '#d14', fontSize: '0.8rem', margin: '0.4rem 0 0' }}>{uploadError}</p>
             )}
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+              Add existing tracks to this dump ({dumpTrackIds.size} in dump)
+            </label>
+            <p style={{ fontSize: '0.75rem', opacity: 0.6, margin: '0.25rem 0 0.5rem' }}>
+              A track can belong to multiple dumps. Check to add, uncheck to remove.
+            </p>
+            <input
+              className={Style.searchInput}
+              type="text"
+              placeholder="Search tracks..."
+              value={trackSearch}
+              onChange={(e) => setTrackSearch(e.target.value)}
+              style={{ marginBottom: '0.5rem' }}
+            />
+            <div className={Style.subList} style={{ maxHeight: '260px', overflowY: 'auto' }}>
+              {tracksLoading && <p className={Style.emptyMsg}>Loading tracks...</p>}
+              {!tracksLoading && allTracks.length === 0 && (
+                <p className={Style.emptyMsg}>No tracks found</p>
+              )}
+              {!tracksLoading &&
+                allTracks
+                  .filter((t) => {
+                    if (!trackSearch.trim()) return true;
+                    const q = trackSearch.toLowerCase();
+                    return (
+                      t.name?.toLowerCase().includes(q) ||
+                      t.id?.toLowerCase().includes(q) ||
+                      t.artists?.toLowerCase().includes(q)
+                    );
+                  })
+                  .map((t) => {
+                    const inDump = dumpTrackIds.has(t.id);
+                    const key = `track:${t.id}`;
+                    const isPending = !!trackPending[key];
+                    return (
+                      <label key={t.id} className={Style.memberCheckRow}>
+                        <input
+                          type="checkbox"
+                          checked={inDump}
+                          disabled={isPending}
+                          onChange={() => toggleTrackInDump(t)}
+                        />
+                        <span className={isPending ? Style.pendingLabel : undefined}>
+                          {t.name}
+                          {t.artists && (
+                            <span className={Style.trackId}> — {t.artists}</span>
+                          )}
+                        </span>
+                      </label>
+                    );
+                  })}
+            </div>
           </div>
 
           <div className={Style.metaInfo}>

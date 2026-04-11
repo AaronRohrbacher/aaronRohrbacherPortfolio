@@ -35,19 +35,25 @@ export async function GET(request) {
     // Permission check
     const user = await authenticateRequest(request);
 
-    // A valid share link bound to this track's parent dump grants access
-    // regardless of publish state / visibility / sign-in.
+    // A valid share link bound to any of this track's parent dumps grants
+    // access regardless of publish state / visibility / sign-in.
     let shareGrant = false;
-    if (shareToken && track.dumpId) {
+    const trackDumpIds = Array.isArray(track.dumpIds) ? track.dumpIds : [];
+    if (shareToken && trackDumpIds.length > 0) {
       const redeemed = await redeemDumpShareLink(shareToken);
-      if (redeemed && redeemed.dumpId === track.dumpId) shareGrant = true;
+      if (redeemed && trackDumpIds.includes(redeemed.dumpId)) shareGrant = true;
     }
 
-    // Check if track is effectively published (directly or via published dump)
+    // Check if track is effectively published: itself OR any of its dumps
     let effectivelyPublished = track.published;
-    if (!effectivelyPublished && track.dumpId) {
-      const dump = await getDump(track.dumpId);
-      if (dump?.published) effectivelyPublished = true;
+    if (!effectivelyPublished && trackDumpIds.length > 0) {
+      for (const dumpId of trackDumpIds) {
+        const dump = await getDump(dumpId);
+        if (dump?.published) {
+          effectivelyPublished = true;
+          break;
+        }
+      }
     }
 
     // Admins / share-link holders can stream any track regardless of state
