@@ -25,7 +25,15 @@ async function localSignIn(email, password) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Sign in failed');
   setStoredToken(data.idToken);
-  return data;
+  return {
+    idToken: data.idToken,
+    user: {
+      sub: data.sub,
+      email: data.email,
+      groups: data.groups || [],
+      isAdmin: (data.groups || []).includes('admin'),
+    },
+  };
 }
 
 async function localSignUp(email, password) {
@@ -115,7 +123,19 @@ async function cognitoSignIn(email, password) {
   const authDetails = new AuthenticationDetails({ Username: email, Password: password });
   return new Promise((resolve, reject) => {
     cognitoUser.authenticateUser(authDetails, {
-      onSuccess: (session) => resolve(session),
+      onSuccess: (session) => {
+        const idToken = session.getIdToken().getJwtToken();
+        const payload = session.getIdToken().decodePayload();
+        resolve({
+          idToken,
+          user: {
+            sub: payload.sub,
+            email: payload.email,
+            groups: payload['cognito:groups'] || [],
+            isAdmin: (payload['cognito:groups'] || []).includes('admin'),
+          },
+        });
+      },
       onFailure: (err) => reject(err),
       newPasswordRequired: (userAttributes) => {
         resolve({ newPasswordRequired: true, userAttributes, cognitoUser });

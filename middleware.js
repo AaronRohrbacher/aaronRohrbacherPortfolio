@@ -4,7 +4,14 @@ import { NextResponse } from 'next/server';
 // Helpers
 // ---------------------------------------------------------------------------
 
-const PROD_MUSIC_ORIGIN = 'https://music.aaronrohrbacher.com';
+// Derive the music subdomain host from the current request host so this works
+// on prod (aaronrohrbacher.com → music.aaronrohrbacher.com) and on any future
+// stage alias (e.g. dev.aaronrohrbacher.com → music.dev.aaronrohrbacher.com)
+// without a hardcoded origin.
+function musicOriginFor(host, proto) {
+  const bare = host.replace(/^www\./, '');
+  return `${proto}://music.${bare}`;
+}
 
 // One structured log line per request. Captured by CloudWatch when deployed
 // via SST — query with Logs Insights to spot scrapers, brute-force attempts,
@@ -112,19 +119,21 @@ export function middleware(request) {
     }
   }
 
-  // ----- MAIN / WWW DOMAIN (production only — skip on localhost) -----
+  // ----- MAIN / WWW DOMAIN (non-local, non-music — all deployed stages) -----
   if (!isLocal && !isMusic) {
-    // aaronrohrbacher.com/music → redirect to music.aaronrohrbacher.com
-    // aaronrohrbacher.com/music/login → redirect to music.aaronrohrbacher.com/login
+    const proto = request.headers.get('x-forwarded-proto') || 'https';
+    const musicOrigin = musicOriginFor(host, proto);
+
+    // <stage>/music → redirect to music.<stage>
     if (pathname === '/music' || pathname.startsWith('/music/')) {
       const subpath = pathname.replace(/^\/music/, '') || '/';
-      return NextResponse.redirect(`${PROD_MUSIC_ORIGIN}${subpath}${search}`, 308);
+      return NextResponse.redirect(`${musicOrigin}${subpath}${search}`, 308);
     }
 
     // Block music API routes on the main domain
     if (pathname.startsWith('/api/music')) {
       const subpath = pathname.replace(/^\/api\/music/, '');
-      return NextResponse.redirect(`${PROD_MUSIC_ORIGIN}/api${subpath}${search}`, 308);
+      return NextResponse.redirect(`${musicOrigin}/api${subpath}${search}`, 308);
     }
   }
 

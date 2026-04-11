@@ -17,13 +17,25 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [idToken, setIdToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getCurrentUser()
-      .then((u) => setUser(u))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+    (async () => {
+      try {
+        const u = await getCurrentUser();
+        if (u) {
+          const t = await getIdToken();
+          setUser(u);
+          setIdToken(t);
+        }
+      } catch {
+        setUser(null);
+        setIdToken(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   const signIn = useCallback(async (email, password) => {
@@ -31,9 +43,9 @@ export function AuthProvider({ children }) {
     if (result.newPasswordRequired) {
       return result; // caller handles new password flow
     }
-    const u = await getCurrentUser();
-    setUser(u);
-    return u;
+    setUser(result.user);
+    setIdToken(result.idToken);
+    return result.user;
   }, []);
 
   const signUp = useCallback(async (email, password) => {
@@ -47,13 +59,16 @@ export function AuthProvider({ children }) {
   const completeNewPassword = useCallback(async (cognitoUser, newPassword) => {
     await cognitoCompleteNewPassword(cognitoUser, newPassword);
     const u = await getCurrentUser();
+    const t = await getIdToken();
     setUser(u);
+    setIdToken(t);
     return u;
   }, []);
 
   const signOut = useCallback(() => {
     cognitoSignOut();
     setUser(null);
+    setIdToken(null);
   }, []);
 
   const forgotPassword = useCallback(async (email) => {
@@ -65,9 +80,11 @@ export function AuthProvider({ children }) {
   }, []);
 
   const getAuthHeaders = useCallback(async () => {
+    if (idToken) return { Authorization: `Bearer ${idToken}` };
     const token = await getIdToken();
+    if (token) setIdToken(token);
     return token ? { Authorization: `Bearer ${token}` } : {};
-  }, []);
+  }, [idToken]);
 
   return (
     <AuthContext.Provider

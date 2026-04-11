@@ -299,7 +299,7 @@ export default $config({
       link: [musicTable, userPool, userPoolClient],
       permissions: [
         {
-          actions: ["s3:GetObject", "s3:ListBucket"],
+          actions: ["s3:GetObject", "s3:ListBucket", "s3:PutObject"],
           resources: [
             "arn:aws:s3:::musicsforu",
             "arn:aws:s3:::musicsforu/*",

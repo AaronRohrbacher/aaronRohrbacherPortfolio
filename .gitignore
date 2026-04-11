@@ -17,6 +17,7 @@
 
 # SST
 .sst/
+.open-next/
 
 # testing artifacts
 /test-results/

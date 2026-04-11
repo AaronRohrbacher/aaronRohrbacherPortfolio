@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getObject } from '@/lib/s3';
+import { getObject, getDownloadUrl } from '@/lib/s3';
 import { getTrack, getTrackPermissions, getDump, redeemDumpShareLink } from '@/lib/trackStore';
 import { authenticateRequest } from '@/lib/verifyToken';
 import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
@@ -91,26 +91,34 @@ export async function GET(request) {
       ...requestMeta(request),
     });
 
-    // Streaming: redirect to CloudFront CDN (edge-cached, much faster than
-    // proxying through Lambda). Downloads still proxy so we can set
-    // Content-Disposition: attachment.
+    // Streaming: redirect to CloudFront CDN (edge-cached).
+    // Downloads: redirect to a presigned S3 URL with Content-Disposition
+    // baked in, so the file streams directly from S3 and never hits Lambda's
+    // 6 MB response body limit.
+    const filename = `${track.name}.${format}`;
+    if (download) {
+      const url = await getDownloadUrl(key, filename);
+      // `urlOnly=1` returns the presigned URL as JSON so authenticated
+      // clients (admin panel) can navigate to it themselves, avoiding the
+      // CORS issue that would hit if a fetch followed the redirect.
+      if (searchParams.get('urlOnly') === '1') {
+        return NextResponse.json({ url });
+      }
+      return NextResponse.redirect(url, 302);
+    }
+
     const cdnDomain = process.env.MUSIC_CDN_DOMAIN;
-    if (!download && cdnDomain) {
+    if (cdnDomain) {
       const cdnUrl = `https://${cdnDomain}/${encodeURI(key)}`;
       return NextResponse.redirect(cdnUrl, 302);
     }
 
-    // Fallback: proxy through server (downloads, or CDN not configured)
+    // Fallback: proxy through server (CDN not configured, dev only)
     const s3Response = await getObject(key);
-    const filename = `${track.name}.${format}`;
-    const disposition = download
-      ? `attachment; filename="${filename}"`
-      : `inline; filename="${filename}"`;
-
     return new Response(s3Response.Body, {
       headers: {
         'Content-Type': CONTENT_TYPES[format] || 'application/octet-stream',
-        'Content-Disposition': disposition,
+        'Content-Disposition': `inline; filename="${filename}"`,
         ...(s3Response.ContentLength && { 'Content-Length': String(s3Response.ContentLength) }),
       },
     });

@@ -82,6 +82,20 @@ export async function getObject(key) {
 }
 
 /**
+ * Get a presigned URL for downloading an S3 object, with optional
+ * Content-Disposition override so the browser saves it with a friendly name.
+ */
+export async function getDownloadUrl(key, filename, expiresIn = 3600) {
+  const client = getClient();
+  const command = new GetObjectCommand({
+    Bucket: BUCKET,
+    Key: key,
+    ResponseContentDisposition: `attachment; filename="${filename.replace(/"/g, '')}"`,
+  });
+  return getSignedUrl(client, command, { expiresIn });
+}
+
+/**
  * Get a presigned URL for uploading a file to S3.
  */
 export async function getUploadUrl(key, contentType, expiresIn = 3600) {

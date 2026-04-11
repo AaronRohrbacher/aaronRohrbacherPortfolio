@@ -103,7 +103,8 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
             headers: { 'Content-Type': file.type || 'application/octet-stream' },
           });
           if (!uploadRes.ok) {
-            throw new Error(`Upload failed for ${file.name} (${uploadRes.status}). Check S3 bucket CORS settings.`);
+            const body = await uploadRes.text().catch(() => '');
+            throw new Error(`Upload failed for ${file.name}: ${uploadRes.status} ${body.slice(0, 200)}`);
           }
         }
 
@@ -373,7 +374,8 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
           headers: { 'Content-Type': file.type || 'application/octet-stream' },
         });
         if (!uploadRes.ok) {
-          throw new Error(`Upload failed for ${file.name} (${uploadRes.status}). Check S3 bucket CORS settings.`);
+          const body = await uploadRes.text().catch(() => '');
+          throw new Error(`Upload failed for ${file.name}: ${uploadRes.status} ${body.slice(0, 200)}`);
         }
       }
 

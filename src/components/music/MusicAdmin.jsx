@@ -238,15 +238,10 @@ export default function MusicAdmin() {
                           title={`Download ${fmt.toUpperCase()}`}
                           onClick={async () => {
                             const headers = await getAuthHeaders();
-                            const res = await fetch(`/api/music/stream?id=${encodeURIComponent(track.id)}&format=${fmt}&download=1`, { headers });
+                            const res = await fetch(`/api/music/stream?id=${encodeURIComponent(track.id)}&format=${fmt}&download=1&urlOnly=1`, { headers });
                             if (!res.ok) { alert('Download failed'); return; }
-                            const blob = await res.blob();
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `${track.name}.${fmt}`;
-                            a.click();
-                            URL.revokeObjectURL(url);
+                            const { url } = await res.json();
+                            window.location.href = url;
                           }}
                         >
                           <i className="fa-solid fa-download" />
