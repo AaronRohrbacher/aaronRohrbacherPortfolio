@@ -9,6 +9,9 @@
 # claude code worktrees
 .claude/worktrees/
 
+# test coverage outputs
+/coverage
+
 # testing
 /coverage
 

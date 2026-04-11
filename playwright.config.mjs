@@ -25,6 +25,12 @@ export default defineConfig({
     timeout: 30000,
     env: {
       PATH: `${extraPath}${process.env.PATH}`,
+      // Forward NODE_V8_COVERAGE so the dev server (and its child Next.js
+      // process) writes V8 coverage data to the directory the parent set.
+      // Empty string means: don't override; the child inherits process.env.
+      ...(process.env.NODE_V8_COVERAGE
+        ? { NODE_V8_COVERAGE: process.env.NODE_V8_COVERAGE }
+        : {}),
     },
   },
 });
