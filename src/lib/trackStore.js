@@ -36,6 +36,7 @@ function trackToItem(track) {
     order: track.order ?? 0,
     dumpIds,
     addedAt: track.addedAt || null,
+    s3UploadedAt: track.s3UploadedAt || null,
   };
 }
 
@@ -60,6 +61,7 @@ function itemToTrack(item) {
     order: item.order ?? 0,
     dumpIds,
     addedAt: item.addedAt || null,
+    s3UploadedAt: item.s3UploadedAt || null,
   };
 }
 
@@ -213,8 +215,15 @@ export function mergeTracks(savedTracks, bucketTracks) {
     const { formats, addedAt } = bucket;
     const existing = savedMap.get(trackName);
     if (existing) {
-      // Update formats from S3, keep addedAt if not overridden
-      merged.push({ ...existing, formats, addedAt: existing.addedAt || addedAt });
+      // Update formats from S3, keep addedAt if not overridden.
+      // Always backfill s3UploadedAt from the S3 LastModified so the field
+      // reflects the bucket's own mtime even on pre-existing rows.
+      merged.push({
+        ...existing,
+        formats,
+        addedAt: existing.addedAt || addedAt,
+        s3UploadedAt: existing.s3UploadedAt || addedAt,
+      });
     } else {
       maxOrder++;
       merged.push({
@@ -228,6 +237,7 @@ export function mergeTracks(savedTracks, bucketTracks) {
         order: maxOrder,
         dumpIds: [],
         addedAt,
+        s3UploadedAt: addedAt,
       });
     }
   }

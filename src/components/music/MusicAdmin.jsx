@@ -15,6 +15,13 @@ import { useMusicHref } from '@/lib/musicLinks';
 
 const TABS = ['tracks', 'dumps', 'users', 'groups', 'magic links', 'events', 'settings'];
 
+// Map the raw visibility enum to a user-facing label.
+// Data values stay the same ('authenticated' etc.); only the label changes.
+function visibilityLabel(visibility) {
+  if (visibility === 'authenticated') return 'members';
+  return visibility || 'public';
+}
+
 export default function MusicAdmin() {
   const { user, loading: authLoading, getAuthHeaders } = useAuth();
   const router = useRouter();
@@ -29,6 +36,7 @@ export default function MusicAdmin() {
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('created');
 
   const fetchTracks = useCallback(async () => {
     setLoading(true);
@@ -223,6 +231,18 @@ export default function MusicAdmin() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+              Sort by
+              <select
+                className={Style.selectSmall}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="created">Date created</option>
+                <option value="uploaded">Date uploaded to S3</option>
+                <option value="name">Name</option>
+              </select>
+            </label>
             {tracks.length === 0 && (
               <p className={Style.emptyMsg}>No tracks found in the S3 bucket.</p>
             )}
@@ -240,6 +260,20 @@ export default function MusicAdmin() {
                 t.description?.toLowerCase().includes(q) ||
                 matchesDump
               );
+            }).slice().sort((a, b) => {
+              if (sortBy === 'name') {
+                return (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' });
+              }
+              if (sortBy === 'uploaded') {
+                // Fall back to addedAt if s3UploadedAt is missing on a row.
+                const av = a.s3UploadedAt || a.addedAt || '';
+                const bv = b.s3UploadedAt || b.addedAt || '';
+                return bv.localeCompare(av); // newest first
+              }
+              // Default: Date created (addedAt), newest first.
+              const av = a.addedAt || '';
+              const bv = b.addedAt || '';
+              return bv.localeCompare(av);
             }).map((track, index) => (
               <div
                 key={track.id}
@@ -273,7 +307,7 @@ export default function MusicAdmin() {
                     ))}
                   </div>
                   <AdminPlayer track={track} />
-                  <span className={Style.visibilityBadge}>{track.visibility || 'public'}</span>
+                  <span className={Style.visibilityBadge}>{visibilityLabel(track.visibility || 'public')}</span>
                   {track.addedAt && <span className={Style.trackId}>{new Date(track.addedAt).toLocaleDateString()}</span>}
                   {track.artists && <span className={Style.artistsPreview}>{track.artists}</span>}
                 </div>
@@ -296,7 +330,7 @@ export default function MusicAdmin() {
                     onChange={(e) => updateTrackVisibility(track.id, e.target.value)}
                   >
                     <option value="public">Public</option>
-                    <option value="authenticated">Auth Required</option>
+                    <option value="authenticated">Members</option>
                     <option value="restricted">Restricted</option>
                   </select>
                   <button
@@ -621,7 +655,7 @@ function TrackEditor({ track, dumps = [], onSave, onCancel, getAuthHeaders }) {
               onChange={(e) => set('visibility', e.target.value)}
             >
               <option value="public">Public</option>
-              <option value="authenticated">Authenticated Only</option>
+              <option value="authenticated">Members</option>
               <option value="restricted">Restricted</option>
             </select>
           </label>

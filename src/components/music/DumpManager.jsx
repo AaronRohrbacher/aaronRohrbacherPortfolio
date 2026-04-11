@@ -5,6 +5,13 @@ import Style from './MusicAdmin.module.scss';
 
 const AUDIO_EXTS = ['.mp3', '.wav', '.aiff', '.aif'];
 
+// Map the raw visibility enum to a user-facing label.
+// Data values stay the same ('authenticated' etc.); only the label changes.
+function visibilityLabel(visibility) {
+  if (visibility === 'authenticated') return 'members';
+  return visibility || 'public';
+}
+
 export default function DumpManager({ getAuthHeaders, onRefresh }) {
   const [dumps, setDumps] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -231,7 +238,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
             onChange={(e) => setForm((f) => ({ ...f, visibility: e.target.value }))}
           >
             <option value="public">Public</option>
-            <option value="authenticated">Auth Required</option>
+            <option value="authenticated">Members</option>
             <option value="restricted">Restricted</option>
           </select>
           <label className={Style.fileLabel}>
@@ -264,7 +271,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
                 {dump.artists && <span className={Style.artistsPreview}>{dump.artists}</span>}
                 {dump.description && <span className={Style.descPreview}>{dump.description}</span>}
                 <span className={Style.formats}>
-                  {dump.tracks?.length || 0} tracks &middot; {dump.visibility} &middot; {new Date(dump.createdAt).toLocaleDateString()}
+                  {dump.tracks?.length || 0} tracks &middot; {visibilityLabel(dump.visibility)} &middot; {new Date(dump.createdAt).toLocaleDateString()}
                 </span>
               </div>
               <div className={Style.itemActions}>
@@ -640,7 +647,7 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
               onChange={(e) => set('visibility', e.target.value)}
             >
               <option value="public">Public</option>
-              <option value="authenticated">Authenticated Only</option>
+              <option value="authenticated">Members</option>
               <option value="restricted">Restricted</option>
             </select>
           </label>
