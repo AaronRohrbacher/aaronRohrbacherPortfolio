@@ -29,7 +29,14 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
   const [loading, setLoading] = useState(!hasInitial);
   const [error, setError] = useState(null);
   const [queue, setQueue] = useState(() => {
-    return [...initialDumps.flatMap((d) => d.tracks || []), ...initialTracks];
+    // Dedupe by id — a track may appear in multiple dumps
+    const seen = new Set();
+    const combined = [...initialDumps.flatMap((d) => d.tracks || []), ...initialTracks];
+    return combined.filter((t) => {
+      if (seen.has(t.id)) return false;
+      seen.add(t.id);
+      return true;
+    });
   });
   const [page, setPage] = useState(0);
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
@@ -62,10 +69,15 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
       const dumpList = data.dumps || [];
       setTracks(looseTracks);
       setDumps(dumpList);
+      const seen = new Set();
       const allTracks = [
         ...dumpList.flatMap((d) => d.tracks || []),
         ...looseTracks,
-      ];
+      ].filter((t) => {
+        if (seen.has(t.id)) return false;
+        seen.add(t.id);
+        return true;
+      });
       setQueue(allTracks);
       setPlayerQueue(allTracks);
     } catch (err) {
@@ -112,11 +124,15 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
   const filtered = search.trim()
     ? queue.filter((t) => {
         const q = search.toLowerCase();
+        const trackDumpIds = Array.isArray(t.dumpIds) ? t.dumpIds : t.dumpId ? [t.dumpId] : [];
+        const matchesDump = trackDumpIds.some((id) =>
+          dumps.find((d) => d.id === id)?.name?.toLowerCase().includes(q)
+        );
         return (
           t.name?.toLowerCase().includes(q) ||
           t.artists?.toLowerCase().includes(q) ||
           t.description?.toLowerCase().includes(q) ||
-          dumps.find((d) => d.id === t.dumpId)?.name?.toLowerCase().includes(q)
+          matchesDump
         );
       })
     : queue;
@@ -128,12 +144,18 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
 
   const visibleDumpMap = {};
   const visibleLoose = [];
+  const seenLooseIds = new Set();
   for (const t of visibleQueue) {
-    if (t.dumpId) {
-      if (!visibleDumpMap[t.dumpId]) visibleDumpMap[t.dumpId] = [];
-      visibleDumpMap[t.dumpId].push(t);
-    } else {
+    const trackDumpIds = Array.isArray(t.dumpIds) ? t.dumpIds : t.dumpId ? [t.dumpId] : [];
+    // A track may live in multiple dumps; group into the first known dump
+    // that exists in our rendered dumps list so it doesn't get double-counted.
+    const matchingDumpId = trackDumpIds.find((id) => dumps.some((d) => d.id === id));
+    if (matchingDumpId) {
+      if (!visibleDumpMap[matchingDumpId]) visibleDumpMap[matchingDumpId] = [];
+      visibleDumpMap[matchingDumpId].push(t);
+    } else if (!seenLooseIds.has(t.id)) {
       visibleLoose.push(t);
+      seenLooseIds.add(t.id);
     }
   }
   const visibleDumps = dumps.filter((d) => visibleDumpMap[d.id]);

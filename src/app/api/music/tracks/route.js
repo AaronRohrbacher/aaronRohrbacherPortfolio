@@ -38,9 +38,10 @@ export async function GET(request) {
     const dumps = await loadDumps();
     const publishedDumpIds = new Set(dumps.filter((d) => d.published).map((d) => d.id));
 
-    // A track is effectively published if it's published itself OR belongs to a published dump
+    // A track is effectively published if it's published itself OR belongs
+    // to ANY published dump.
     function isEffectivelyPublished(t) {
-      return t.published || (t.dumpId && publishedDumpIds.has(t.dumpId));
+      return t.published || (t.dumpIds || []).some((id) => publishedDumpIds.has(id));
     }
 
     let tracks;
@@ -61,20 +62,25 @@ export async function GET(request) {
         name: track.name,
         description: track.description,
         artists: track.artists,
-        dumpId: track.dumpId,
+        dumpIds: track.dumpIds || [],
         addedAt: track.addedAt,
         formats: Object.keys(track.formats),
         streamUrls,
       };
     });
 
-    // Group by dump — only group into published dumps, rest are loose
+    // Group by dump — a track can appear in multiple published dumps. If a
+    // track belongs to ANY published dump, it's grouped under those dumps
+    // (and NOT included in the loose list to avoid duplication).
     const dumpMap = {};
     const loose = [];
     for (const t of withUrls) {
-      if (t.dumpId && publishedDumpIds.has(t.dumpId)) {
-        if (!dumpMap[t.dumpId]) dumpMap[t.dumpId] = [];
-        dumpMap[t.dumpId].push(t);
+      const publishedDumpsForTrack = (t.dumpIds || []).filter((id) => publishedDumpIds.has(id));
+      if (publishedDumpsForTrack.length > 0) {
+        for (const dumpId of publishedDumpsForTrack) {
+          if (!dumpMap[dumpId]) dumpMap[dumpId] = [];
+          dumpMap[dumpId].push(t);
+        }
       } else {
         loose.push(t);
       }

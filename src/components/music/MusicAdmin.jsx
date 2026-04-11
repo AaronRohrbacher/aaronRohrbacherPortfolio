@@ -120,9 +120,27 @@ export default function MusicAdmin() {
     if (track) saveOneTrack({ ...track, visibility });
   }
 
-  function assignDump(trackId, dumpId) {
+  function setTrackDumps(trackId, dumpIds) {
     const track = tracks.find((t) => t.id === trackId);
-    if (track) saveOneTrack({ ...track, dumpId: dumpId || null });
+    if (!track) return;
+    const next = { ...track, dumpIds: Array.from(new Set(dumpIds.filter(Boolean))) };
+    // Don't leave a stale legacy dumpId around — the backend normalizes
+    // it, but strip it from what we ship over the wire too.
+    delete next.dumpId;
+    saveOneTrack(next);
+  }
+
+  function toggleTrackDump(trackId, dumpId) {
+    const track = tracks.find((t) => t.id === trackId);
+    if (!track) return;
+    const current = Array.isArray(track.dumpIds)
+      ? track.dumpIds
+      : track.dumpId
+      ? [track.dumpId]
+      : [];
+    const exists = current.includes(dumpId);
+    const next = exists ? current.filter((d) => d !== dumpId) : [...current, dumpId];
+    setTrackDumps(trackId, next);
   }
 
   function saveEdit(updated) {
@@ -211,12 +229,16 @@ export default function MusicAdmin() {
             {tracks.filter((t) => {
               if (!search.trim()) return true;
               const q = search.toLowerCase();
+              const trackDumpIds = Array.isArray(t.dumpIds) ? t.dumpIds : t.dumpId ? [t.dumpId] : [];
+              const matchesDump = trackDumpIds.some((id) =>
+                dumps.find((d) => d.id === id)?.name?.toLowerCase().includes(q)
+              );
               return (
                 t.name?.toLowerCase().includes(q) ||
                 t.id?.toLowerCase().includes(q) ||
                 t.artists?.toLowerCase().includes(q) ||
                 t.description?.toLowerCase().includes(q) ||
-                dumps.find((d) => d.id === t.dumpId)?.name?.toLowerCase().includes(q)
+                matchesDump
               );
             }).map((track, index) => (
               <div
@@ -263,16 +285,11 @@ export default function MusicAdmin() {
                   <button className={Style.iconBtn} onClick={() => moveTrack(index, 1)} title="Move down">
                     <i className="fa-solid fa-chevron-down" />
                   </button>
-                  <select
-                    className={Style.selectSmall}
-                    value={track.dumpId || ''}
-                    onChange={(e) => assignDump(track.id, e.target.value)}
-                  >
-                    <option value="">No dump</option>
-                    {dumps.map((d) => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
-                  </select>
+                  <TrackDumpsMultiSelect
+                    track={track}
+                    dumps={dumps}
+                    onToggle={(dumpId) => toggleTrackDump(track.id, dumpId)}
+                  />
                   <select
                     className={Style.selectSmall}
                     value={track.visibility || 'public'}
@@ -360,6 +377,7 @@ export default function MusicAdmin() {
       {editing && (
         <TrackEditor
           track={editing}
+          dumps={dumps}
           onSave={saveEdit}
           onCancel={() => setEditing(null)}
           getAuthHeaders={getAuthHeaders}
@@ -369,8 +387,88 @@ export default function MusicAdmin() {
   );
 }
 
-function TrackEditor({ track, onSave, onCancel, getAuthHeaders }) {
-  const [form, setForm] = useState({ ...track });
+// Compact multi-select for track-row dump assignment. Renders a details/summary
+// disclosure with checkboxes — avoids needing to open the full edit modal.
+function TrackDumpsMultiSelect({ track, dumps, onToggle }) {
+  const trackDumpIds = Array.isArray(track.dumpIds)
+    ? track.dumpIds
+    : track.dumpId
+    ? [track.dumpId]
+    : [];
+  const selected = dumps.filter((d) => trackDumpIds.includes(d.id));
+  const label =
+    selected.length === 0
+      ? 'No dumps'
+      : selected.length === 1
+      ? selected[0].name
+      : `${selected.length} dumps`;
+
+  return (
+    <details className={Style.dumpsMulti} style={{ position: 'relative' }}>
+      <summary
+        className={Style.selectSmall}
+        style={{ cursor: 'pointer', listStyle: 'none', display: 'inline-block' }}
+      >
+        {label}
+      </summary>
+      <div
+        style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          zIndex: 20,
+          background: 'var(--bg-elevated, #222)',
+          border: '1px solid rgba(255,255,255,0.15)',
+          borderRadius: 4,
+          padding: '0.4rem 0.6rem',
+          minWidth: 180,
+          maxHeight: 260,
+          overflowY: 'auto',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+        }}
+      >
+        {dumps.length === 0 && (
+          <p style={{ fontSize: '0.75rem', margin: 0, opacity: 0.6 }}>No dumps yet</p>
+        )}
+        {dumps.map((d) => {
+          const checked = trackDumpIds.includes(d.id);
+          return (
+            <label
+              key={d.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontSize: '0.75rem',
+                padding: '0.15rem 0',
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => onToggle(d.id)}
+              />
+              <span>{d.name}</span>
+            </label>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
+function TrackEditor({ track, dumps = [], onSave, onCancel, getAuthHeaders }) {
+  const [form, setForm] = useState(() => {
+    const initialDumpIds = Array.isArray(track.dumpIds)
+      ? track.dumpIds
+      : track.dumpId
+      ? [track.dumpId]
+      : [];
+    const next = { ...track, dumpIds: initialDumpIds };
+    delete next.dumpId;
+    return next;
+  });
   const [perms, setPerms] = useState({ users: [], groups: [] });
   const [allUsers, setAllUsers] = useState([]);
   const [allGroups, setAllGroups] = useState([]);
@@ -527,6 +625,47 @@ function TrackEditor({ track, onSave, onCancel, getAuthHeaders }) {
               <option value="restricted">Restricted</option>
             </select>
           </label>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+              Dumps ({form.dumpIds.length} assigned)
+            </label>
+            <p style={{ fontSize: '0.75rem', opacity: 0.6, margin: '0.25rem 0 0.5rem' }}>
+              This track appears in every selected dump.
+            </p>
+            <div
+              className={Style.subList}
+              style={{ maxHeight: '200px', overflowY: 'auto', marginTop: '0.35rem' }}
+            >
+              {dumps.length === 0 && (
+                <p className={Style.emptyMsg}>No dumps yet</p>
+              )}
+              {dumps.map((d) => {
+                const checked = form.dumpIds.includes(d.id);
+                return (
+                  <label key={d.id} className={Style.memberCheckRow}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() =>
+                        setForm((f) => ({
+                          ...f,
+                          dumpIds: checked
+                            ? f.dumpIds.filter((id) => id !== d.id)
+                            : [...f.dumpIds, d.id],
+                        }))
+                      }
+                    />
+                    <span>
+                      {d.name}
+                      {d.published ? null : (
+                        <span className={Style.trackId}> — unpublished</span>
+                      )}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
           {form.visibility === 'restricted' && (
             <div className={Style.permSection}>
               <h3>Permissions</h3>

@@ -80,7 +80,7 @@ export async function GET(request) {
       name: track.name,
       description: track.description,
       artists: track.artists,
-      dumpId: track.dumpId,
+      dumpIds: track.dumpIds || [],
       addedAt: track.addedAt,
       formats: Object.keys(track.formats),
       streamUrls: Object.fromEntries(
