@@ -10,6 +10,10 @@ export default defineConfig({
   testDir: './tests',
   timeout: 60000,
   retries: 0,
+  // All tests share the local DynamoDB Local instance via the dev server,
+  // so files must run sequentially or they'd race for table state.
+  workers: 1,
+  fullyParallel: false,
   use: {
     baseURL: 'http://localhost:3000',
     headless: true,

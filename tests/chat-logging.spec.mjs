@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// AI ChatAgent commented out — see AI_COMMENTED_OUT.md. Skipped until reactivated.
+test.skip(true, 'AI ChatAgent commented out — see AI_COMMENTED_OUT.md');
+
 // Verifies that chat messages POST to /api/chat-log and firstMessage=true is
 // set only on the first message of a session.
 

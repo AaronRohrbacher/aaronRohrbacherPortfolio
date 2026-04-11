@@ -20,9 +20,11 @@ async function countAiFab(page) {
 }
 
 async function waitForAcReady(page) {
+  // Wait for AC widget container to be attached and the global queue
+  // function to exist. The old AmazonConnect.jsx wrapper that registered
+  // window.__connectLaunch via customLaunchBehavior is gone — buttons now
+  // call the AC widget DOM element directly, so we no longer assert on it.
   await expect(page.locator(AC_CONTAINER)).toBeAttached({ timeout: 15000 });
-  // AC SDK finished processing the customLaunchBehavior queue call.
-  await page.waitForFunction(() => typeof window.__connectLaunch === 'function', null, { timeout: 15000 });
   await page.waitForFunction(() => typeof window.amazon_connect === 'function', null, { timeout: 15000 });
 }
 
@@ -43,16 +45,14 @@ test.describe('AI commented out, Amazon Connect restored', () => {
     expect(errors.filter((e) => !e.includes('ResizeObserver'))).toEqual([]);
   });
 
-  test('resume: AC script loaded, __connectLaunch registered, AI fab absent, Open AI Chat clicks clean', async ({ page }) => {
+  test('resume: AC script loaded, AI fab absent, page loads without errors', async ({ page }) => {
+    // The AskAI panel + "Open AI Chat" button are commented out along with
+    // the rest of the AI feature; resume now only has the standard tabs.
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
     await page.goto('/resume');
     await waitForAcReady(page);
     expect(await countAiFab(page)).toBe(0);
-    const openAiChat = page.getByRole('button', { name: /Open AI Chat/i });
-    if (!(await openAiChat.isVisible().catch(() => false))) {
-      const tab = page.getByRole('button', { name: /^Ask AI|^AI$/i }).first();
-      if (await tab.isVisible().catch(() => false)) await tab.click();
-    }
-    const errors = await clickSafely(openAiChat, page);
     expect(errors).toEqual([]);
   });
 

@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+// AI ChatAgent (Transformers.js floating chat) is commented out at
+// src/app/layout.jsx — see AI_COMMENTED_OUT.md at repo root. The FAB this
+// suite drives no longer exists, so all these tests are skipped until the
+// agent is reactivated.
+test.skip(true, 'AI ChatAgent commented out — see AI_COMMENTED_OUT.md');
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 async function openChat(page) {

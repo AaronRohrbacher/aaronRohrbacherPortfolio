@@ -388,14 +388,20 @@ export async function saveDump(dump) {
   await putItem(dumpToItem(dump));
 }
 
-// Delete a dump and clean up all sibling rows assigning tracks to it.
+// Delete a dump and clean up all (track, dump) assignments pointing at it.
+// Walks both layouts:
+//   - new TRACK_DUMP# sibling rows on this partition → delete + strip dumpId
+//     from the matching main TRACK# row in the TRACKS partition
+//   - legacy main TRACK# rows still living on this partition → rewrite them
+//     to the new shape with this dumpId stripped
 export async function deleteDump(dumpId) {
-  // Find every sibling row for this dump and remove it. Also strip the
-  // dumpId off any legacy main-track rows that still live in this partition.
   const items = await query({ indexName: 'GSI1', gsi1pk: `DUMP#${dumpId}` });
+  const affectedTrackIds = new Set();
+
   for (const item of items) {
     if (item.PK?.startsWith('TRACK_DUMP#')) {
       await deleteItem(item.PK, item.SK);
+      if (item.trackId) affectedTrackIds.add(item.trackId);
     } else if (item.PK?.startsWith('TRACK#')) {
       // Legacy main-track row with GSI1PK=DUMP#<dumpId>: rewrite it to drop
       // the dump assignment so it doesn't get orphaned on the dead partition.
@@ -404,6 +410,19 @@ export async function deleteDump(dumpId) {
       await putItem(trackToItem({ ...track, dumpIds: remainingDumps }));
     }
   }
+
+  // For every track that had a sibling-row assignment to this dump, the main
+  // row still lives on the TRACKS partition with `dumpIds` listing this dump.
+  // Strip it so future reads see a clean array.
+  for (const trackId of affectedTrackIds) {
+    const track = await getTrack(trackId);
+    if (!track) continue;
+    if (track.dumpIds.includes(dumpId)) {
+      const remaining = track.dumpIds.filter((d) => d !== dumpId);
+      await putItem(trackToItem({ ...track, dumpIds: remaining }));
+    }
+  }
+
   await deleteItem(`DUMP#${dumpId}`, `DUMP#${dumpId}`);
 }
 

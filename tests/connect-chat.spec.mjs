@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+// End-to-end Connect chat flow requires a live Connect backend that
+// CORS-blocks localhost (the chat iframe loads from a CloudFront origin
+// that won't talk to localhost:3000). Skipped on local + CI; runs only as
+// a manual smoke test against prod via PROD_CONNECT_TEST=1.
+test.skip(!process.env.PROD_CONNECT_TEST, 'Connect chat backend CORS-blocked locally — set PROD_CONNECT_TEST=1 to run against prod');
+
 async function sendMessage(chatFrame, page, text) {
   await page.waitForTimeout(2000);
   const input = chatFrame.locator('div[contenteditable="true"][role="textbox"]').first();

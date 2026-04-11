@@ -127,7 +127,7 @@ export default function TrackPage() {
                 </button>
                 <div className={Style.downloadGroup}>
                   {formats.map((fmt) => (
-                    <a key={fmt} href={getDownloadUrl(fmt)} className={Style.downloadBtn}>
+                    <a key={fmt} href={getDownloadUrl(fmt)} className={Style.downloadLink}>
                       <i className="fa-solid fa-download" /> Download {fmt.toUpperCase()}
                     </a>
                   ))}

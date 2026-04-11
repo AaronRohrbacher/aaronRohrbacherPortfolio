@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// AI ChatAgent commented out — see AI_COMMENTED_OUT.md. Skipped until reactivated.
+test.skip(true, 'AI ChatAgent commented out — see AI_COMMENTED_OUT.md');
+
 // Targeted tests for streaming behavior:
 // - Fact-matched questions → thinking dots (no stream bubble, final content appears in one shot)
 // - On-topic all-facts questions → stream bubble visible, content grows over time

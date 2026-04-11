@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// AI ChatAgent commented out — see AI_COMMENTED_OUT.md. Skipped until reactivated.
+test.skip(true, 'AI ChatAgent commented out — see AI_COMMENTED_OUT.md');
+
 // Regression test: off-topic questions mentioning "aaron" should NOT go to the
 // model and should NOT produce garbage responses. They should instant-redirect.
 
