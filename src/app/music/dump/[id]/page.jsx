@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Style from '@/components/music/MusicPlaylist.module.scss';
 import { useAuth } from '@/components/music/AuthContext';
@@ -14,7 +14,15 @@ export default function DumpPage() {
   const searchParams = useSearchParams();
   const shareToken = searchParams.get('share');
   const { getAuthHeaders } = useAuth();
-  const { currentTrack, isPlaying, playTrack, setQueue: setPlayerQueue } = useMusicPlayer();
+  const {
+    currentTrack,
+    isPlaying,
+    pending,
+    playTrack,
+    setQueue: setPlayerQueue,
+    setMinimized,
+    analyserHolderRef,
+  } = useMusicPlayer();
   const musicHref = useMusicHref();
 
   const [dump, setDump] = useState(null);
@@ -125,7 +133,10 @@ export default function DumpPage() {
               index={index}
               currentTrack={currentTrack}
               isPlaying={isPlaying}
+              pending={pending}
               onPlay={handlePlay}
+              onExpand={() => setMinimized(false)}
+              analyserHolderRef={analyserHolderRef}
               getDownloadUrl={getDownloadUrl}
             />
           ))}
@@ -145,19 +156,103 @@ export default function DumpPage() {
   );
 }
 
-function TrackCard({ track, index, currentTrack, isPlaying, onPlay, getDownloadUrl }) {
+// Tiny live FFT rendered into the list-item play button. Reads from the
+// same AnalyserNode the big player's waveform uses, via the context-level
+// holder. Rendering stops automatically when the holder clears (track
+// changed, player closed).
+function MiniFFT({ analyserHolderRef }) {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const cnv = canvasRef.current;
+    if (!cnv) return;
+    let raf;
+    const smoothed = new Float32Array(12);
+    const freq = new Uint8Array(256);
+    const ATTACK = 0.6;
+    const DECAY = 0.18;
+    function frame() {
+      const analyser = analyserHolderRef?.current?.current;
+      const c = canvasRef.current;
+      if (!c) return;
+      const dpr = window.devicePixelRatio || 1;
+      const cssW = c.clientWidth;
+      const cssH = c.clientHeight;
+      if (c.width !== Math.floor(cssW * dpr) || c.height !== Math.floor(cssH * dpr)) {
+        c.width = Math.floor(cssW * dpr);
+        c.height = Math.floor(cssH * dpr);
+      }
+      const ctx = c.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cssW, cssH);
+
+      if (analyser) {
+        const bins = Math.min(freq.length, analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(freq);
+        const perBar = Math.max(1, Math.floor(bins / smoothed.length));
+        for (let i = 0; i < smoothed.length; i++) {
+          let sum = 0;
+          for (let j = 0; j < perBar; j++) sum += freq[i * perBar + j] || 0;
+          const target = (sum / perBar) / 255;
+          const prev = smoothed[i];
+          smoothed[i] = target > prev ? prev + (target - prev) * ATTACK : prev + (target - prev) * DECAY;
+        }
+      } else {
+        for (let i = 0; i < smoothed.length; i++) smoothed[i] *= 0.9;
+      }
+
+      const gap = 1;
+      const totalGap = gap * (smoothed.length - 1);
+      const barW = Math.max(1, (cssW - totalGap) / smoothed.length);
+      const floorH = 1.5;
+      for (let i = 0; i < smoothed.length; i++) {
+        const h = Math.max(floorH, smoothed[i] * (cssH - 2));
+        const x = i * (barW + gap);
+        const y = cssH - h;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.fillRect(x, y, barW, h);
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+    return () => { if (raf) cancelAnimationFrame(raf); };
+  }, [analyserHolderRef]);
+  return <canvas ref={canvasRef} className={Style.miniFFT} aria-hidden="true" />;
+}
+
+function TrackCard({ track, index, currentTrack, isPlaying, pending, onPlay, onExpand, analyserHolderRef, getDownloadUrl }) {
   const isActive = currentTrack?.id === track.id;
+  const showWaveform = isActive && isPlaying && !pending;
   const formats = Array.isArray(track.formats) ? track.formats : Object.keys(track.formats);
+
+  const handleClick = () => {
+    if (pending) return;
+    if (isActive) {
+      // Active track: never pause from the list. Take the user to the big
+      // player instead so they use the dedicated pause control there.
+      if (onExpand) onExpand();
+      return;
+    }
+    onPlay(track, index);
+  };
 
   return (
     <div className={[Style.trackCard, isActive ? Style.active : ''].join(' ')}>
       <button
         className={Style.playBtn}
-        onClick={() => onPlay(track, index)}
-        aria-label={isActive && isPlaying ? `Pause ${track.name}` : `Play ${track.name}`}
+        onClick={handleClick}
+        disabled={pending}
+        aria-label={
+          pending
+            ? 'Loading'
+            : isActive
+              ? `Open player for ${track.name}`
+              : `Play ${track.name}`
+        }
       >
-        {isActive && isPlaying ? (
-          <i className="fa-solid fa-pause" />
+        {pending ? (
+          <span className={Style.btnSpinner} aria-hidden="true" />
+        ) : showWaveform ? (
+          <MiniFFT analyserHolderRef={analyserHolderRef} />
         ) : (
           <i className="fa-solid fa-play" />
         )}
@@ -170,7 +265,11 @@ function TrackCard({ track, index, currentTrack, isPlaying, onPlay, getDownloadU
           <div className={Style.downloadGroup}>
             {formats.map((fmt) => (
               <a key={fmt} href={getDownloadUrl(track, fmt)} className={Style.downloadBtn}>
-                <i className="fa-solid fa-download" /> Download {fmt.toUpperCase()}
+                <i className="fa-solid fa-download" aria-hidden="true" />
+                <span className={Style.dlLabel}>
+                  <span className={Style.dlKicker}>Download</span>
+                  <span className={Style.dlFormat}>{fmt.toUpperCase()}</span>
+                </span>
               </a>
             ))}
           </div>

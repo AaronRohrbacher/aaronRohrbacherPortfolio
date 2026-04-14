@@ -53,10 +53,6 @@
 
   @media (max-width: 640px) {
     gap: 0.35rem;
-
-    // Hide the software/music section toggle on mobile — not enough room.
-    // Sibling of the logo link.
-    > *:not(.logo) { display: none; }
   }
 }
 

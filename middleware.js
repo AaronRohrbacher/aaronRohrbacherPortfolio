@@ -61,9 +61,22 @@ function isStaticOrInternal(pathname) {
   );
 }
 
-/** True when the host is localhost / 127.0.0.1 (dev mode). */
+/**
+ * True when the host should be treated as a dev / LAN host. Matches:
+ *   - localhost, 127.0.0.1, 0.0.0.0
+ *   - any IPv4 literal (LAN testing from a phone over 10.x/192.168.x/etc)
+ *   - *.local mDNS names
+ *
+ * On these hosts there is no DNS for `music.<host>`, so the main→music
+ * subdomain redirect below would bounce the browser to a dead address —
+ * the page renders as /music/* directly instead.
+ */
 function isLocalhost(host) {
-  return /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host);
+  const hostname = host.replace(/:\d+$/, '');
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') return true;
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) return true;
+  if (hostname.endsWith('.local')) return true;
+  return false;
 }
 
 // ---------------------------------------------------------------------------

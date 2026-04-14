@@ -7,14 +7,11 @@ import { AuthProvider } from './AuthContext';
 import { MusicPlayerProvider } from './MusicPlayerContext';
 import { MusicHrefProvider } from '@/lib/musicLinks';
 import PlayerBar from './PlayerBar';
-import PageTransition from '@/components/PageTransition';
 import { Box, Grid } from '@mui/material';
 import { setCookie } from 'cookies-next';
-import { usePathname } from 'next/navigation';
 
 export default function MusicLayout({ children, initialDark, isMusicSubdomain = false }) {
   const [darkMode, setDarkMode] = useState(initialDark === true);
-  const pathname = usePathname();
 
   function handleToggleDarkMode() {
     const next = !darkMode;
@@ -39,15 +36,13 @@ export default function MusicLayout({ children, initialDark, isMusicSubdomain = 
     <MusicHrefProvider isMusicSubdomain={isMusicSubdomain}>
     <AuthProvider>
       <MusicPlayerProvider>
-        <Box suppressHydrationWarning className={themeClass} data-theme={darkMode ? 'dark' : 'light'} sx={{ width: '100%', overflowX: 'hidden', maxWidth: '100vw' }}>
-          <Grid container display="flex" flexDirection="column" minHeight="100vh" justifyContent="space-between" sx={{ maxWidth: '100%', margin: 0, padding: 0 }}>
+        <Box suppressHydrationWarning className={themeClass} data-theme={darkMode ? 'dark' : 'light'} sx={{ width: '100%', overflowX: 'hidden' }}>
+          <Grid container display="flex" flexDirection="column" justifyContent="space-between" sx={{ maxWidth: '100%', margin: 0, padding: 0, minHeight: '100vh', '@supports (min-height: 100dvh)': { minHeight: '100dvh' } }}>
             <Grid>
               <MusicNav darkMode={darkMode} handleToggle={handleToggleDarkMode} />
             </Grid>
             <Grid flexGrow={1}>
-              <PageTransition key={pathname}>
-                {children}
-              </PageTransition>
+              {children}
             </Grid>
             <Grid>
               <Box component="footer" display="flex" flexDirection="column" alignItems="center"

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 
 const MusicPlayerContext = createContext(null);
 
@@ -10,6 +10,24 @@ export function MusicPlayerProvider({ children }) {
   const [queue, setQueue] = useState([]);
   const [queueIndex, setQueueIndex] = useState(-1);
   const [minimized, setMinimized] = useState(false);
+  // `pending` is true from the moment a play action is triggered until
+  // WaveformPlayer reports it as resolved — either `markPlaybackStarted`
+  // (WaveSurfer's first non-zero `timeupdate`) or `markPlaybackFailed`
+  // (tryLoad exhausted or resume/play rejected). No time-based watchdog;
+  // the event sources of truth decide when pending ends.
+  const [pending, setPending] = useState(false);
+  // Shared holder for the current WaveformPlayer's AnalyserNode. List-item
+  // play buttons read this on their own rAF loop to render a tiny live
+  // waveform inside the button when their track is the active one.
+  const analyserHolderRef = useRef({ current: null });
+
+  const markPlaybackStarted = useCallback(() => {
+    setPending(false);
+  }, []);
+
+  const markPlaybackFailed = useCallback(() => {
+    setPending(false);
+  }, []);
 
   const playTrack = useCallback((track, index, newQueue) => {
     if (newQueue) {
@@ -18,13 +36,21 @@ export function MusicPlayerProvider({ children }) {
       const idx = newQueue.findIndex((t) => t.id === track.id);
       if (idx !== -1) index = idx;
     }
+    // Hitting a play button always expands the player — the user's
+    // attention is on what they just started, so the waveform + controls
+    // should be in front of them regardless of prior minimized state.
+    setMinimized(false);
     if (currentTrack?.id === track.id) {
+      // Same-track toggle: audio is already decoded, no loading gate. Just
+      // flip the play/pause state.
       setIsPlaying((p) => !p);
     } else {
+      // New track: WaveformPlayer will remount, fetch, decode. Gate clicks
+      // until playback confirms (first non-zero timeupdate) or fails.
       setCurrentTrack(track);
       setQueueIndex(index);
       setIsPlaying(true);
-      setMinimized(false);
+      setPending(true);
     }
   }, [currentTrack]);
 
@@ -34,6 +60,7 @@ export function MusicPlayerProvider({ children }) {
       setCurrentTrack(queue[nextIdx]);
       setQueueIndex(nextIdx);
       setIsPlaying(true);
+      setPending(true);
     } else {
       setIsPlaying(false);
     }
@@ -45,6 +72,7 @@ export function MusicPlayerProvider({ children }) {
       setCurrentTrack(queue[prevIdx]);
       setQueueIndex(prevIdx);
       setIsPlaying(true);
+      setPending(true);
     }
   }, [queueIndex, queue]);
 
@@ -54,14 +82,18 @@ export function MusicPlayerProvider({ children }) {
       setCurrentTrack(queue[nextIdx]);
       setQueueIndex(nextIdx);
       setIsPlaying(true);
+      setPending(true);
     }
   }, [queueIndex, queue]);
 
   const togglePlayPause = useCallback(() => {
+    // Toggle on an already-mounted track: WaveSurfer's play/pause is
+    // synchronous, no loading gate needed.
     setIsPlaying((p) => !p);
   }, []);
 
   const closePlayer = useCallback(() => {
+    setPending(false);
     setIsPlaying(false);
     setCurrentTrack(null);
     setQueueIndex(-1);
@@ -76,6 +108,10 @@ export function MusicPlayerProvider({ children }) {
         queueIndex,
         minimized,
         setMinimized,
+        pending,
+        analyserHolderRef,
+        markPlaybackStarted,
+        markPlaybackFailed,
         playTrack,
         togglePlayPause,
         handleTrackEnd,

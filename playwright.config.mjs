@@ -8,6 +8,11 @@ const extraPath = existsSync(sdkmanJava) ? `${sdkmanJava}:` : '';
 
 export default defineConfig({
   testDir: './tests',
+  // Node-only unit tests live under tests/unit and are run via
+  // `node --test` from the test:unit npm script. Exclude them from
+  // Playwright discovery so it doesn't try to load ESM source files
+  // via its own loader.
+  testIgnore: ['**/unit/**'],
   timeout: 60000,
   retries: 0,
   // All tests share the local DynamoDB Local instance via the dev server,

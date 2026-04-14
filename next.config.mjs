@@ -6,7 +6,10 @@ const nextConfig = {
   // Allow LAN-IP access to the dev server (phones, other devices on the network).
   // Without this, Next 16 blocks cross-origin requests for _next/* chunks,
   // which breaks client hydration (PageTransition stays at opacity:0).
-  allowedDevOrigins: ['10.1.1.142', '10.1.1.143', '10.1.1.0/24', '192.168.0.0/16'],
+  // Note: Next.js allowedDevOrigins takes glob patterns, NOT CIDR — `10.1.1.0/24`
+  // is interpreted as a literal string and never matches.
+  allowedDevOrigins: ['10.1.1.*', '10.1.*.*', '192.168.*.*', '*.local'],
+
 
 
   // AI agent disabled — see AI_COMMENTED_OUT.md at repo root.

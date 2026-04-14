@@ -1,19 +1,21 @@
 import { NextResponse } from 'next/server';
-import { getObject, getDownloadUrl } from '@/lib/s3';
-import { getTrack, getTrackPermissions, getDump, redeemDumpShareLink, redeemTrackShareLink } from '@/lib/trackStore';
+import { getDownloadUrl, getStreamUrl } from '@/lib/s3';
+import {
+  getTrack,
+  canViewTrackDirect,
+  canViewTrackInDumps,
+  getDumpsContainingTrack,
+  getPermittedTrackIds,
+  redeemDumpShareLink,
+  redeemTrackShareLink,
+} from '@/lib/trackStore';
 import { authenticateRequest } from '@/lib/verifyToken';
 import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
 
-const CONTENT_TYPES = {
-  mp3: 'audio/mpeg',
-  wav: 'audio/wav',
-  aiff: 'audio/aiff',
-};
-
 /**
  * GET /api/music/stream?id=trackId&format=mp3&download=1
- * Streaming: redirects to public S3 URL.
- * Download: proxies the file with Content-Disposition: attachment.
+ * Streaming: redirects to a CDN URL (prod) or a presigned S3 URL (dev).
+ * Download: redirects to a presigned S3 URL with Content-Disposition baked in.
  */
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -35,17 +37,19 @@ export async function GET(request) {
     // Permission check
     const user = await authenticateRequest(request);
 
-    // A valid share link grants access regardless of publish state /
-    // visibility / sign-in. Two kinds of share token are accepted:
-    //   - dump-share: token bound to any of this track's parent dumps
-    //   - track-share: token bound to this specific track
+    // Resolve dump membership from the DUMP-side index, NOT from
+    // track.dumpIds. The track-side field can drift; the sibling-row
+    // index is authoritative — same source the dump endpoint and the
+    // /music listing already use.
     const reqMeta = requestMeta(request);
+    const containingDumps = await getDumpsContainingTrack(id);
+    const containingDumpIds = containingDumps.map((d) => d.id);
+
     let shareGrant = false;
-    const trackDumpIds = Array.isArray(track.dumpIds) ? track.dumpIds : [];
     if (shareToken) {
-      if (trackDumpIds.length > 0) {
+      if (containingDumpIds.length > 0) {
         const redeemed = await redeemDumpShareLink(shareToken, reqMeta);
-        if (redeemed && trackDumpIds.includes(redeemed.dumpId)) shareGrant = true;
+        if (redeemed && containingDumpIds.includes(redeemed.dumpId)) shareGrant = true;
       }
       if (!shareGrant) {
         const redeemed = await redeemTrackShareLink(shareToken, reqMeta);
@@ -53,39 +57,31 @@ export async function GET(request) {
       }
     }
 
-    // Check if track is effectively published: itself OR any of its dumps
-    let effectivelyPublished = track.published;
-    if (!effectivelyPublished && trackDumpIds.length > 0) {
-      for (const dumpId of trackDumpIds) {
-        const dump = await getDump(dumpId);
-        if (dump?.published) {
-          effectivelyPublished = true;
-          break;
+    if (!user?.isAdmin && !shareGrant) {
+      const permittedTrackIds = user
+        ? await getPermittedTrackIds(user.sub, user.groups, user.email)
+        : new Set();
+
+      // DUMP TRUMPS: if the track lives in any dump, only the dump's
+      // visibility decides — track-side state is irrelevant. Truly loose
+      // tracks fall back to canViewTrackDirect.
+      const admitted = containingDumps.length > 0
+        ? canViewTrackInDumps(containingDumps, { trackId: id, user, permittedTrackIds })
+        : canViewTrackDirect(track, { user, permittedTrackIds });
+
+      if (!admitted) {
+        // Probe with a hypothetical permitted signed-in user to decide
+        // 401 ("sign in and you'd be allowed") vs 403 ("nobody else gets
+        // in").
+        const probeUser = { sub: '__probe__', groups: [], email: null };
+        const probePerms = new Set([id]);
+        const signedInProbe = containingDumps.length > 0
+          ? canViewTrackInDumps(containingDumps, { trackId: id, user: probeUser, permittedTrackIds: probePerms })
+          : canViewTrackDirect(track, { user: probeUser, permittedTrackIds: probePerms });
+        if (!user && signedInProbe) {
+          return NextResponse.json({ error: 'Sign in required' }, { status: 401 });
         }
-      }
-    }
-
-    // Admins / share-link holders can stream any track regardless of state
-    if (!effectivelyPublished && !user?.isAdmin && !shareGrant) {
-      return NextResponse.json({ error: 'Track not available' }, { status: 403 });
-    }
-
-    if (track.visibility === 'authenticated' && !user && !shareGrant) {
-      return NextResponse.json({ error: 'Sign in required' }, { status: 401 });
-    }
-
-    if (track.visibility === 'restricted' && !shareGrant) {
-      if (!user) {
-        return NextResponse.json({ error: 'Sign in required' }, { status: 401 });
-      }
-      if (!user.isAdmin) {
-        const perms = await getTrackPermissions(id);
-        const hasUserPerm = perms.users.some((p) => p.userId === user.sub || p.userId === user.email);
-        const userGroupsLower = user.groups.map((g) => g.toLowerCase());
-        const hasGroupPerm = perms.groups.some((p) => userGroupsLower.includes(p.groupName.toLowerCase()));
-        if (!hasUserPerm && !hasGroupPerm) {
-          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-        }
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
     }
 
@@ -128,15 +124,12 @@ export async function GET(request) {
       return NextResponse.redirect(cdnUrl, 302);
     }
 
-    // Fallback: proxy through server (CDN not configured, dev only)
-    const s3Response = await getObject(key);
-    return new Response(s3Response.Body, {
-      headers: {
-        'Content-Type': CONTENT_TYPES[format] || 'application/octet-stream',
-        'Content-Disposition': `inline; filename="${filename}"`,
-        ...(s3Response.ContentLength && { 'Content-Length': String(s3Response.ContentLength) }),
-      },
-    });
+    // No CDN: redirect straight to a presigned S3 URL instead of proxying
+    // the body through the Next.js server. Auth has already run above, so
+    // handing out a time-limited signed URL is fine. Skips the server-side
+    // body buffering that was throttling dev streaming throughput.
+    const streamUrl = await getStreamUrl(key, format);
+    return NextResponse.redirect(streamUrl, 302);
   } catch (err) {
     console.error('Stream error:', err);
     return NextResponse.json({ error: 'Failed to stream track.' }, { status: 500 });

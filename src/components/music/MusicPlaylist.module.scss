@@ -17,17 +17,17 @@
 }
 
 // ─── Page ───────────────────────────────────────────────────────────────────
-// Bottom padding clears the fixed PlayerBar (expanded ~180px) so the last
-// track is scrollable above it. Safe even when no track is playing (bar hidden).
+// Bottom padding clears the fixed PlayerBar so the last track stays
+// scrollable above it. Safe even when no track is playing (bar hidden).
 .page {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1.5rem;
-  padding-bottom: calc(5rem + 200px);
+  padding-bottom: calc(5rem + 220px);
 
   @media (max-width: 640px) {
     padding: 0 1rem;
-    padding-bottom: calc(4rem + 200px);
+    padding-bottom: calc(2rem + 120px);
   }
 }
 
@@ -58,9 +58,13 @@
     opacity: 0.15;
   }
 
+  // On phones the hero has to stay small enough that at least one dump
+  // card shows above the fold — otherwise Mom sees only the navbar+title
+  // and thinks the page is broken. Padding shrinks but the subtitle wraps
+  // in full — no truncation.
   @media (max-width: 640px) {
     margin: 0 -1rem;
-    padding: 2rem 1.25rem 2rem;
+    padding: 0.75rem 1.25rem 0.85rem;
   }
 }
 
@@ -82,6 +86,10 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   line-height: 1.05;
+
+  @media (max-width: 640px) {
+    font-size: 1.75rem;
+  }
 }
 
 .subtitle {
@@ -91,6 +99,12 @@
   font-weight: 400;
   line-height: 1.7;
   max-width: 600px;
+
+  @media (max-width: 640px) {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    margin: 0.5rem 0 0;
+  }
 }
 
 .statsRow {
@@ -120,6 +134,10 @@
 .searchWrap {
   position: relative;
   margin: 1.5rem 0 1.75rem;
+
+  @media (max-width: 640px) {
+    margin: 0.75rem 0 0.85rem;
+  }
 }
 
 .searchIcon {
@@ -230,6 +248,79 @@
   }
 }
 
+// Disabled state — applied while a play action is pending so the user
+// gets explicit visual feedback that the card is not clickable (no more
+// silent no-ops).
+.trackCardDisabled {
+  cursor: wait;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+// ─── Dump Page Per-Track Play Button ────────────────────────────────────────
+.playBtn {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  background: var(--gradient);
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  box-shadow: 0 3px 14px -3px rgba(0, 168, 120, 0.4);
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms, opacity 200ms;
+
+  &:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 22px -3px rgba(0, 168, 120, 0.5);
+  }
+
+  &:active { transform: scale(0.95); }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.7;
+    transform: none;
+    &:hover { transform: none; }
+  }
+
+  i {
+    color: white;
+    margin-left: 2px;
+  }
+
+  @media (max-width: 640px) {
+    width: 42px;
+    height: 42px;
+    font-size: 0.9rem;
+  }
+}
+
+.btnSpinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  animation: spin 0.7s linear infinite;
+}
+
+// Live FFT rendered inside the per-track list button when that track is
+// the one currently playing. Pulled from the shared AnalyserNode so it
+// stays frame-accurate with the big player's waveform.
+.miniFFT {
+  width: 24px;
+  height: 16px;
+  display: block;
+  pointer-events: none;
+}
+
 // ─── Track Art Swatch ───────────────────────────────────────────────────────
 .trackArt {
   position: relative;
@@ -310,9 +401,7 @@
   font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
   letter-spacing: -0.01em;
   transition: color 200ms;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .trackArtists {
@@ -418,6 +507,130 @@
 
   &:hover {
     background: rgba(128, 128, 128, 0.1);
+  }
+}
+
+// ─── Dump Page Track Download Buttons ───────────────────────────────────────
+// Used on the dump detail page under each track card. Solid gradient pills
+// with a distinct icon-well on the left and a stacked DOWNLOAD / FORMAT
+// label on the right. Flex-grow evenly on all widths so the row always
+// fills the available space without awkward orphans.
+.trackActionsRow {
+  margin-top: 1.15rem;
+}
+
+.downloadGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.downloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 1.1rem 0.55rem 0.6rem;
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  background-size: 180% 180%;
+  background-position: 0% 0%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 6px 18px -8px rgba(0, 168, 120, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition:
+    transform 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 220ms,
+    background-position 600ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.22);
+    color: #fff;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    backdrop-filter: blur(4px);
+  }
+
+  .dlLabel {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+    min-width: 0;
+  }
+
+  .dlKicker {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.75;
+  }
+
+  .dlFormat {
+    font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    background-position: 100% 100%;
+    box-shadow:
+      0 12px 28px -10px rgba(0, 168, 120, 0.65),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow:
+      0 4px 12px -6px rgba(0, 168, 120, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+
+  // Phones (341–500px): the trackInfo column only has ~260px to work
+  // with — not enough for two natural-width buttons side by side. Let
+  // them share the row evenly with tightened padding + kicker so the
+  // full "DOWNLOAD / FORMAT" label stays visible.
+  @media (min-width: 340px) and (max-width: 500px) {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.5rem 0.65rem 0.5rem 0.5rem;
+    gap: 0.5rem;
+
+    i {
+      width: 26px;
+      height: 26px;
+      font-size: 0.8rem;
+    }
+
+    .dlKicker {
+      font-size: 0.5rem;
+      letter-spacing: 0.06em;
+    }
+
+    .dlFormat {
+      font-size: 0.85rem;
+    }
+  }
+
+  // Genuinely tiny screens (iPhone SE 1st gen 320, Z Fold folded ~280):
+  // no side-by-side option works without dropping content. Let the
+  // buttons wrap to one per row at their natural content width — each
+  // gets the full row, and the full DOWNLOAD + format label fits easily.
+  @media (max-width: 339px) {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 

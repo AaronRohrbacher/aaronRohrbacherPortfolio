@@ -4,6 +4,11 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
+
+  @media (max-width: 400px) {
+    gap: 0.3rem;
+  }
 }
 
 .current {
@@ -16,6 +21,10 @@
   background-clip: text;
   letter-spacing: 0.04em;
   text-transform: lowercase;
+
+  @media (max-width: 400px) {
+    display: none;
+  }
 }
 
 .switchLink {

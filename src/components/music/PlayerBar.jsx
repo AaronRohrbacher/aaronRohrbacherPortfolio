@@ -16,6 +16,7 @@ export default function PlayerBar() {
     queue,
     minimized,
     setMinimized,
+    pending,
     togglePlayPause,
     handleTrackEnd,
     handlePrev,
@@ -41,8 +42,17 @@ export default function PlayerBar() {
       {/* Minimized view */}
       {minimized && (
         <div className={Style.miniBar}>
-          <button className={Style.miniPlayBtn} onClick={togglePlayPause} aria-label={isPlaying ? 'Pause' : 'Play'}>
-            <i className={isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play'} />
+          <button
+            className={Style.miniPlayBtn}
+            onClick={pending ? undefined : togglePlayPause}
+            disabled={pending}
+            aria-label={pending ? 'Loading' : isPlaying ? 'Pause' : 'Play'}
+          >
+            {pending ? (
+              <span className={Style.miniSpinner} aria-hidden="true" />
+            ) : (
+              <i className={isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play'} />
+            )}
           </button>
           <div className={Style.miniInfo} onClick={() => setMinimized(false)}>
             <span className={Style.miniTitle}>{currentTrack.name}</span>

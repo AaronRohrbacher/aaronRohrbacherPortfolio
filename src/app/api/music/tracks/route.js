@@ -4,9 +4,11 @@ import {
   saveTrack,
   saveTracks,
   mergeTracks,
-  getTracksForUser,
   loadAllTracks,
   loadDumps,
+  getDumpTracks,
+  canViewTrackDirect,
+  getPermittedTrackIds,
 } from '@/lib/trackStore';
 import { authenticateRequest } from '@/lib/verifyToken';
 
@@ -34,44 +36,27 @@ export async function GET(request) {
       return NextResponse.json({ tracks: merged, dumps });
     }
 
-    // Load dumps early so we can cascade publish state.
-    // Visibility gates which dumps are "visible" to this viewer — a dump
-    // that's published but e.g. authenticated-only must not surface to anon
-    // viewers, and its tracks must not be grouped under it in the response.
     const dumps = await loadDumps();
-    const publishedDumpIds = new Set(
-      dumps
-        .filter((d) => {
-          if (!d.published) return false;
-          if (user?.isAdmin) return true;
-          const vis = d.visibility || 'public';
-          if (vis === 'public') return true;
-          // authenticated + restricted require a signed-in user. For
-          // restricted, per-track permissions gate the actual track list,
-          // and a dump with zero visible tracks drops out below.
-          return vis === 'authenticated' || vis === 'restricted' ? !!user : false;
-        })
-        .map((d) => d.id)
-    );
+    const permittedTrackIds = user && !user.isAdmin
+      ? await getPermittedTrackIds(user.sub, user.groups, user.email)
+      : new Set();
 
-    // A track is effectively published if it's published itself OR belongs
-    // to ANY published dump.
-    function isEffectivelyPublished(t) {
-      return t.published || (t.dumpIds || []).some((id) => publishedDumpIds.has(id));
-    }
+    // Two independent passes — track-side and dump-side. They don't talk.
+    //
+    //   LOOSE   — track's OWN published+visibility admits the viewer.
+    //             Computed from track-side state alone; no dump knowledge.
+    //
+    //   DUMPS   — for each viewable dump, ask THE DUMP what tracks it has
+    //             (getDumpTracks → DUMP#<id> partition is the source of
+    //             truth). Track-side `dumpIds` is irrelevant. Inside a
+    //             dump card, the dump's visibility wins, so even a
+    //             restricted/unpublished track shows up.
+    const looseAdmits = (t) => {
+      if (user?.isAdmin) return !!t.published;
+      return canViewTrackDirect(t, { user, permittedTrackIds });
+    };
 
-    let tracks;
-    if (user?.isAdmin) {
-      tracks = merged.filter(isEffectivelyPublished);
-    } else if (user) {
-      tracks = await getTracksForUser(user.sub, user.groups, publishedDumpIds, user.email);
-    } else {
-      tracks = merged.filter((t) => isEffectivelyPublished(t) && (t.visibility || 'public') === 'public');
-    }
-    // Respect the admin-assigned manual order. `track.order` is a number
-    // that's mutated by the admin Tracks tab's up/down buttons.
-    tracks = tracks.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    const withUrls = tracks.map((track) => {
+    const project = (track) => {
       const streamUrls = {};
       for (const format of Object.keys(track.formats)) {
         streamUrls[format] = `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${format}`;
@@ -86,31 +71,62 @@ export async function GET(request) {
         formats: Object.keys(track.formats),
         streamUrls,
       };
+    };
+
+    const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0);
+
+    const loose = merged
+      .filter(looseAdmits)
+      .slice()
+      .sort(byOrder)
+      .map(project);
+
+    // First narrow the dumps the viewer can see, ignoring restricted-tier
+    // for now — we resolve those after we know each dump's track list.
+    const baselineViewableDumps = dumps.filter((d) => {
+      if (!d.published) return false;
+      if (user?.isAdmin) return true;
+      const vis = d.visibility || 'public';
+      if (vis === 'public') return true;
+      if (vis === 'authenticated') return !!user;
+      if (vis === 'restricted') return !!user;
+      return false;
     });
 
-    // Group by dump — a track can appear in multiple published dumps. If a
-    // track belongs to ANY published dump, it's grouped under those dumps
-    // (and NOT included in the loose list to avoid duplication).
-    const dumpMap = {};
-    const loose = [];
-    for (const t of withUrls) {
-      const publishedDumpsForTrack = (t.dumpIds || []).filter((id) => publishedDumpIds.has(id));
-      if (publishedDumpsForTrack.length > 0) {
-        for (const dumpId of publishedDumpsForTrack) {
-          if (!dumpMap[dumpId]) dumpMap[dumpId] = [];
-          dumpMap[dumpId].push(t);
-        }
-      } else {
-        loose.push(t);
-      }
+    // Walk the dump-side index. The dump owns its tracks; we re-hydrate
+    // each through `merged` to pick up current S3 formats and drop any
+    // whose audio file is gone.
+    const mergedById = new Map(merged.map((t) => [t.id, t]));
+    const dumpTracksByDumpId = {};
+    for (const dump of baselineViewableDumps) {
+      const dumpTracks = await getDumpTracks(dump.id);
+      dumpTracksByDumpId[dump.id] = dumpTracks
+        .map((t) => mergedById.get(t.id))
+        .filter(Boolean);
     }
 
-    // Respect the admin-assigned manual dump order on the public listing.
-    const publishedDumps = dumps
-      .filter((d) => d.published && dumpMap[d.id]?.length > 0)
+    // Restricted dumps require the viewer to have perms on at least one
+    // track inside the dump. permittedTrackIds is already loaded — just
+    // intersect against the dump's tracks.
+    const allowedDumps = [];
+    for (const dump of baselineViewableDumps) {
+      const tracksInDump = dumpTracksByDumpId[dump.id];
+      if (tracksInDump.length === 0) continue;
+      const vis = dump.visibility || 'public';
+      if (!user?.isAdmin && vis === 'restricted') {
+        const hasAny = tracksInDump.some((t) => permittedTrackIds.has(t.id));
+        if (!hasAny) continue;
+      }
+      allowedDumps.push(dump);
+    }
+
+    const publishedDumps = allowedDumps
       .slice()
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-      .map((d) => ({ ...d, tracks: dumpMap[d.id] }));
+      .sort(byOrder)
+      .map((d) => ({
+        ...d,
+        tracks: dumpTracksByDumpId[d.id].map(project),
+      }));
 
     return NextResponse.json({ tracks: loose, dumps: publishedDumps });
   } catch (err) {

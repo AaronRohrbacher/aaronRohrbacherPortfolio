@@ -1,5 +1,21 @@
 import { randomBytes } from 'crypto';
 import { putItem, getItem, query, deleteItem, batchWrite, scanByPkPrefixes, updateItem } from './dynamo';
+import { canViewTrackDirect, canViewTrackInDumps, visibilityAdmits } from './trackAccess';
+export { canViewTrackDirect, canViewTrackInDumps, visibilityAdmits };
+
+// Dump-authoritative answer to "which dumps contain this track?". Walks
+// every dump's track list via the DUMP# sibling-row index — does NOT
+// trust track.dumpIds, which can drift from the index. Use this in any
+// access path that needs to honor the dump-cascade rule.
+export async function getDumpsContainingTrack(trackId) {
+  const allDumps = await loadDumps();
+  const containing = [];
+  for (const dump of allDumps) {
+    const tracks = await getDumpTracks(dump.id);
+    if (tracks.some((t) => t.id === trackId)) containing.push(dump);
+  }
+  return containing;
+}
 
 // --- Track CRUD ---
 
@@ -245,6 +261,10 @@ export function mergeTracks(savedTracks, bucketTracks) {
   return merged;
 }
 
+// canViewTrackDirect / canViewTrackInDumps / visibilityAdmits live in
+// ./trackAccess so they can be unit-tested without the DB layer. They're
+// re-exported at the top of this file.
+
 // --- Track Permissions ---
 
 export async function getTrackPermissions(trackId) {
@@ -279,43 +299,31 @@ export async function revokeTrackAccess(trackId, targetType, targetId) {
   await deleteItem(`TRACK#${trackId}`, sk);
 }
 
-export async function getTracksForUser(userId, userGroups = [], publishedDumpIds = new Set(), userEmail = null) {
-  const allTracks = await loadAllTracks();
+// Gather every TRACK# id that `userId` / `userEmail` / `userGroups` has a
+// permission row for. Passed into canViewTrackDirect / canViewTrackInDumps
+// so the helpers can resolve restricted-tier admission for this viewer.
+export async function getPermittedTrackIds(userId, userGroups = [], userEmail = null) {
+  const permittedTrackIds = new Set();
 
-  // Get user-specific track permissions (check both sub and email since admin may grant by either)
   const userPerms = await query({ indexName: 'GSI1', gsi1pk: `USER#${userId}` });
-  const permittedTrackIds = new Set(userPerms.map((p) => p.GSI1SK.replace('TRACK#', '')));
+  for (const p of userPerms) permittedTrackIds.add(p.GSI1SK.replace('TRACK#', ''));
 
   if (userEmail && userEmail !== userId) {
     const emailPerms = await query({ indexName: 'GSI1', gsi1pk: `USER#${userEmail}` });
-    for (const p of emailPerms) {
-      permittedTrackIds.add(p.GSI1SK.replace('TRACK#', ''));
-    }
+    for (const p of emailPerms) permittedTrackIds.add(p.GSI1SK.replace('TRACK#', ''));
   }
 
-  // Get group-based track permissions (check both original and lowercase for case-insensitive matching)
   const checkedGroups = new Set();
   for (const groupName of userGroups) {
     for (const variant of [groupName, groupName.toLowerCase()]) {
       if (checkedGroups.has(variant)) continue;
       checkedGroups.add(variant);
       const groupPerms = await query({ indexName: 'GSI1', gsi1pk: `GROUP#${variant}` });
-      for (const p of groupPerms) {
-        permittedTrackIds.add(p.GSI1SK.replace('TRACK#', ''));
-      }
+      for (const p of groupPerms) permittedTrackIds.add(p.GSI1SK.replace('TRACK#', ''));
     }
   }
 
-  return allTracks.filter((track) => {
-    const effectivelyPublished =
-      track.published || track.dumpIds.some((id) => publishedDumpIds.has(id));
-    if (!effectivelyPublished) return false;
-    const vis = track.visibility || 'public';
-    if (vis === 'public') return true;
-    if (vis === 'authenticated') return true;
-    if (vis === 'restricted') return permittedTrackIds.has(track.id);
-    return false;
-  });
+  return permittedTrackIds;
 }
 
 // --- User Group Membership (in DynamoDB) ---

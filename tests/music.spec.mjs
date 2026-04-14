@@ -923,23 +923,21 @@ test.describe('Music UI', () => {
     expect(href).toContain('download=1');
   });
 
-  test('dump section visible on music page (anonymous)', async ({ page }) => {
+  test('dump card visible on music page (anonymous)', async ({ page }) => {
     await page.goto('/music');
     await expect(page.locator('[class*="trackCard"]').first()).toBeVisible({ timeout: 10000 });
-    // Dump section with title should be visible
-    const dumpSection = page.locator('[class*="dumpSection"]').filter({ hasText: 'UI Test Dump' });
-    await expect(dumpSection).toBeVisible();
-    await expect(dumpSection.locator('[class*="trackCard"]')).toHaveCount(1);
+    // Dumps render as click-through cards on the grid — not inline track lists.
+    const dumpCard = page.locator('[class*="dumpCardLink"]').filter({ hasText: 'UI Test Dump' });
+    await expect(dumpCard).toBeVisible();
   });
 
-  test('dump title is a clickable link that opens dump detail page', async ({ page }) => {
+  test('dump card is a clickable link that opens dump detail page', async ({ page }) => {
     await page.goto('/music');
     await expect(page.locator('[class*="trackCard"]').first()).toBeVisible({ timeout: 10000 });
 
-    // Find the dump title link and click it
-    const dumpLink = page.locator('[class*="dumpTitleLink"]').filter({ hasText: 'UI Test Dump' }).first();
-    await expect(dumpLink).toBeVisible();
-    await dumpLink.click();
+    const dumpCard = page.locator('[class*="dumpCardLink"]').filter({ hasText: 'UI Test Dump' }).first();
+    await expect(dumpCard).toBeVisible();
+    await dumpCard.click();
 
     // Should navigate to dump detail page
     await page.waitForURL('**/music/dump/**', { timeout: 5000 });
@@ -959,16 +957,13 @@ test.describe('Music UI', () => {
     await page.click('button[type="submit"]');
     await page.waitForURL('**/music', { timeout: 5000 });
 
-    // Dump should be visible with tracks
+    // Dump card should be visible on the grid
     await expect(page.locator('[class*="trackCard"]').first()).toBeVisible({ timeout: 10000 });
-    const dumpSection = page.locator('[class*="dumpSection"]').filter({ hasText: 'UI Test Dump' });
-    await expect(dumpSection.first()).toBeVisible();
-    await expect(dumpSection.first().locator('[class*="trackCard"]')).toHaveCount(1);
+    const dumpCard = page.locator('[class*="dumpCardLink"]').filter({ hasText: 'UI Test Dump' }).first();
+    await expect(dumpCard).toBeVisible();
 
     // Click into the dump
-    const dumpLink = dumpSection.first().locator('[class*="dumpTitleLink"]');
-    await expect(dumpLink).toBeVisible();
-    await dumpLink.click();
+    await dumpCard.click();
     await page.waitForURL('**/music/dump/**', { timeout: 5000 });
     await expect(page.locator('h1', { hasText: 'UI Test Dump' })).toBeVisible({ timeout: 10000 });
     await expect(page.locator('[class*="trackCard"]').first()).toBeVisible();

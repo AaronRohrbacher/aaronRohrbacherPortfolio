@@ -55,7 +55,9 @@
     "start": "next start",
     "lint": "next lint",
     "submit-sitemaps": "node scripts/submit-sitemaps.mjs",
-    "test": "playwright test",
+    "test": "npm run test:unit && playwright test",
+    "test:unit": "node --test 'tests/unit/**/*.test.mjs'",
+    "test:e2e": "playwright test",
     "test:coverage": "node scripts/test-coverage.mjs"
   },
   "devDependencies": {
@@ -66,6 +68,7 @@
     "c8": "^11.0.0",
     "dotenv": "^17.3.1",
     "dynamodb-local": "^0.0.38",
+    "fast-check": "^4.6.0",
     "sass": "^1.98.0",
     "sst": "^4.2.7"
   }

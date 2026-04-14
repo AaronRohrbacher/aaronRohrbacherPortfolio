@@ -108,6 +108,24 @@ export async function getDownloadUrl(key, filename, expiresIn = 3600) {
 }
 
 /**
+ * Get a presigned URL for inline streaming (no Content-Disposition so the
+ * browser plays it instead of saving, canonical audio/* content-type). Used
+ * by the /api/music/stream route as the no-CDN fallback — redirect the
+ * client straight to S3 rather than proxying the body through Lambda /
+ * Next dev server.
+ */
+export async function getStreamUrl(key, format, expiresIn = 3600) {
+  const client = getClient();
+  const contentType = DOWNLOAD_CONTENT_TYPES[format] || 'application/octet-stream';
+  const command = new GetObjectCommand({
+    Bucket: BUCKET,
+    Key: key,
+    ResponseContentType: contentType,
+  });
+  return getSignedUrl(client, command, { expiresIn });
+}
+
+/**
  * Get a presigned URL for uploading a file to S3.
  */
 export async function getUploadUrl(key, contentType, expiresIn = 3600) {

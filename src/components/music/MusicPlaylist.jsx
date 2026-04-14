@@ -21,30 +21,24 @@ function trackGradient(name) {
 
 export default function MusicPlaylist({ initialTracks = [], initialDumps = [] }) {
   const { getAuthHeaders } = useAuth();
-  const { currentTrack, isPlaying, playTrack, setQueue: setPlayerQueue } = useMusicPlayer();
+  const { currentTrack, isPlaying, pending, playTrack, setQueue: setPlayerQueue } = useMusicPlayer();
   const musicHref = useMusicHref();
 
   const hasInitial = initialTracks.length > 0 || initialDumps.length > 0;
+  // `tracks` is the loose-track list — the source of truth for both the
+  // rendered loose cards and the global player queue. It must NEVER contain
+  // tracks that are grouped under a dump card, otherwise the first paint
+  // flashes those tracks as loose cards before fetchTracks trims them.
   const [tracks, setTracks] = useState(initialTracks);
   const [dumps, setDumps] = useState(initialDumps);
   const [loading, setLoading] = useState(!hasInitial);
   const [error, setError] = useState(null);
-  const [queue, setQueue] = useState(() => {
-    // Dedupe by id — a track may appear in multiple dumps
-    const seen = new Set();
-    const combined = [...initialDumps.flatMap((d) => d.tracks || []), ...initialTracks];
-    return combined.filter((t) => {
-      if (seen.has(t.id)) return false;
-      seen.add(t.id);
-      return true;
-    });
-  });
   const [page, setPage] = useState(0);
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (queue.length > 0) setPlayerQueue(queue);
+    if (tracks.length > 0) setPlayerQueue(tracks);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -73,7 +67,6 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
       // Main-page queue is loose tracks only. Tracks that live inside a dump
       // are reachable by clicking into the dump page — they don't get
       // queued/played from the main list.
-      setQueue(looseTracks);
       setPlayerQueue(looseTracks);
     } catch (err) {
       if (!hasInitial) setError(err.message);
@@ -83,7 +76,7 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
   }
 
   function handlePlay(track, globalIndex) {
-    playTrack(track, globalIndex, queue);
+    playTrack(track, globalIndex, tracks);
   }
 
   function getDownloadUrl(track, format) {
@@ -96,17 +89,17 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
   // search engines.
   const noContent = !loading && !error && tracks.length === 0 && dumps.length === 0;
 
-  // Main-page search runs over BOTH the loose track queue and the dump list
+  // Main-page search runs over BOTH the loose track list and the dump list
   // — each kind has its own filter. Clicking a dump card navigates to the
   // dump page for its tracks; the main page never inlines dump contents.
   const q = search.trim().toLowerCase();
   const filteredLoose = q
-    ? queue.filter((t) => (
+    ? tracks.filter((t) => (
         t.name?.toLowerCase().includes(q) ||
         t.artists?.toLowerCase().includes(q) ||
         t.description?.toLowerCase().includes(q)
       ))
-    : queue;
+    : tracks;
 
   const visibleDumps = q
     ? dumps.filter((d) => (
@@ -134,7 +127,7 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
         </div>
       </div>
 
-      {queue.length > 0 && (
+      {tracks.length > 0 && (
         <div className={Style.searchWrap}>
           <i className={`fa-solid fa-magnifying-glass ${Style.searchIcon}`} />
           <input
@@ -213,6 +206,7 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
                   index={filteredIndexMap.get(track.id) ?? 0}
                   currentTrack={currentTrack}
                   isPlaying={isPlaying}
+                  pending={pending}
                   onPlay={handlePlay}
                   getDownloadUrl={getDownloadUrl}
                 />
@@ -238,18 +232,19 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
   );
 }
 
-function TrackCard({ track, trackNum, index, currentTrack, isPlaying, onPlay, getDownloadUrl }) {
+function TrackCard({ track, trackNum, index, currentTrack, isPlaying, pending, onPlay, getDownloadUrl }) {
   const isActive = currentTrack?.id === track.id;
   const formats = Array.isArray(track.formats) ? track.formats : Object.keys(track.formats);
   const [showDownloads, setShowDownloads] = useState(false);
 
   return (
     <div
-      className={[Style.trackCard, isActive ? Style.active : ''].join(' ')}
-      onClick={() => onPlay(track, index)}
+      className={[Style.trackCard, isActive ? Style.active : '', pending ? Style.trackCardDisabled : ''].join(' ')}
+      onClick={pending ? undefined : () => onPlay(track, index)}
       role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPlay(track, index); } }}
+      aria-disabled={pending || undefined}
+      tabIndex={pending ? -1 : 0}
+      onKeyDown={(e) => { if (pending) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPlay(track, index); } }}
     >
       {/* Art / Number */}
       <div className={Style.trackArt} style={{ background: trackGradient(track.name) }}>

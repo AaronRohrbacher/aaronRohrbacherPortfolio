@@ -1,5 +1,11 @@
 import { listBucketTracks } from '@/lib/s3';
-import { loadAllTracks, mergeTracks, loadDumps } from '@/lib/trackStore';
+import {
+  loadAllTracks,
+  mergeTracks,
+  loadDumps,
+  getDumpTracks,
+  canViewTrackDirect,
+} from '@/lib/trackStore';
 import MusicPlaylist from '@/components/music/MusicPlaylist';
 
 export const metadata = {
@@ -38,30 +44,18 @@ export default async function MusicPage() {
     const merged = mergeTracks(saved, bucketTracks);
 
     const dumps = await loadDumps();
-    // SSR is always anonymous: only publicly-visible published dumps cascade
-    // publish state onto their tracks. Non-public dumps (authenticated /
-    // restricted) must not surface here regardless of their publish flag.
-    const publishedDumpIds = new Set(
-      dumps
-        .filter((d) => d.published && (d.visibility || 'public') === 'public')
-        .map((d) => d.id)
-    );
 
-    // Track is visible if published directly OR belongs to ANY published dump.
-    // Sort by the admin-assigned manual order so the public front page
-    // reflects the explicit ordering set in the admin Tracks tab.
-    const allTracks = merged
-      .filter((t) => {
-        const dumpIds = Array.isArray(t.dumpIds) ? t.dumpIds : [];
-        const effectivelyPublished = t.published || dumpIds.some((id) => publishedDumpIds.has(id));
-        return effectivelyPublished && (t.visibility || 'public') === 'public';
-      })
-      .slice()
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    const dumpMap = {};
-    const loose = [];
-
-    const withMeta = allTracks.map((track) => ({
+    // Two independent passes — track-side and dump-side. They don't talk.
+    //
+    //   LOOSE   — track's OWN published+visibility admits anon. No dump
+    //             knowledge involved.
+    //
+    //   DUMPS   — for each viewable dump, ask THE DUMP what tracks it has
+    //             (getDumpTracks → DUMP#<id> partition is the source of
+    //             truth). Track-side `dumpIds` is irrelevant here. Inside
+    //             a dump card, the dump's visibility wins, so even a
+    //             restricted/unpublished track shows up.
+    const project = (track) => ({
       id: track.id,
       name: track.name,
       description: track.description,
@@ -72,33 +66,44 @@ export default async function MusicPage() {
       streamUrls: Object.fromEntries(
         Object.keys(track.formats).map((f) => [f, `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${f}`])
       ),
-    }));
+    });
 
-    for (const t of withMeta) {
-      const publishedForTrack = (t.dumpIds || []).filter((id) => publishedDumpIds.has(id));
-      if (publishedForTrack.length > 0) {
-        for (const dumpId of publishedForTrack) {
-          if (!dumpMap[dumpId]) dumpMap[dumpId] = [];
-          dumpMap[dumpId].push(t);
-        }
-      } else {
-        loose.push(t);
-      }
+    const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0);
+
+    initialTracks = merged
+      .filter((t) => canViewTrackDirect(t, { user: null }))
+      .slice()
+      .sort(byOrder)
+      .map(project);
+
+    const viewableDumps = dumps.filter(
+      (d) => d.published && (d.visibility || 'public') === 'public'
+    );
+
+    // The dump owns its tracks. Walk the dump-side index, then re-hydrate
+    // each track from `merged` to pick up current S3 formats — and to drop
+    // any whose audio file is gone from the bucket.
+    const mergedById = new Map(merged.map((t) => [t.id, t]));
+    const dumpTracksByDumpId = {};
+    for (const dump of viewableDumps) {
+      const dumpTracks = await getDumpTracks(dump.id);
+      dumpTracksByDumpId[dump.id] = dumpTracks
+        .map((t) => mergedById.get(t.id))
+        .filter(Boolean);
     }
 
-    initialDumps = dumps
-      .filter((d) => d.published && dumpMap[d.id]?.length > 0)
+    initialDumps = viewableDumps
+      .filter((d) => dumpTracksByDumpId[d.id].length > 0)
       .slice()
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .sort(byOrder)
       .map((d) => ({
         id: d.id,
         slug: d.slug || null,
         name: d.name,
         artists: d.artists,
         description: d.description,
-        tracks: dumpMap[d.id],
+        tracks: dumpTracksByDumpId[d.id].map(project),
       }));
-    initialTracks = loose;
   } catch (err) {
     console.error('SSR music fetch error:', err);
   }
@@ -106,7 +111,14 @@ export default async function MusicPage() {
   // JSON-LD structured data for SEO. Always include the Person/MusicGroup
   // identity even when the playlist is empty so Google has something
   // substantive to index instead of treating the page as a soft 404.
-  const allItems = [...initialDumps.flatMap((d) => d.tracks || []), ...initialTracks];
+  // Dedupe by id — under the new listing model a track can appear in both
+  // the loose section AND inside one or more dump cards, but we don't
+  // want it counted twice in `numTracks`.
+  const allItemsById = new Map();
+  for (const t of [...initialDumps.flatMap((d) => d.tracks || []), ...initialTracks]) {
+    if (!allItemsById.has(t.id)) allItemsById.set(t.id, t);
+  }
+  const allItems = [...allItemsById.values()];
   const aaron = {
     '@type': 'Person',
     name: 'Aaron Rohrbacher',

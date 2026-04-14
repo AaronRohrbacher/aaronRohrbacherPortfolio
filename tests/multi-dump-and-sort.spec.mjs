@@ -863,3 +863,111 @@ test.describe('Restricted dumps do not leak to anon /api/music/tracks', () => {
     await deleteDump(request, adminToken, restrictedDumpId);
   });
 });
+
+// ── Per-track endpoints must also cascade dump visibility ─────────────────────
+//
+// Previously /api/music/tracks anon was gated by dump visibility, but the
+// per-track endpoints (/api/music/stream and /api/music/track) and the
+// authenticated-user listing path were not. A track with visibility:'public'
+// that lived ONLY in a non-public dump was streamable by anyone who knew its
+// id, viewable by its metadata endpoint, and listed for any signed-in user
+// even when they had no permission on it.
+//
+// These tests exercise ALL four paths for both `authenticated` and
+// `restricted` dump tiers.
+
+async function getTrackMeta(request, trackId, token) {
+  const headers = token ? authHeaders(token) : {};
+  return request.get(`${BASE}/api/music/track?id=${encodeURIComponent(trackId)}`, { headers });
+}
+
+async function streamTrack(request, trackId, token) {
+  const headers = token ? authHeaders(token) : {};
+  return request.get(
+    `${BASE}/api/music/stream?id=${encodeURIComponent(trackId)}&format=mp3`,
+    { headers, maxRedirects: 0 }
+  );
+}
+
+for (const tier of ['authenticated', 'restricted']) {
+  test.describe(`Per-track endpoints honor ${tier} dump visibility`, () => {
+    test.describe.configure({ mode: 'serial' });
+    let adminToken;
+    let dumpId;
+    let trackId;
+
+    test('setup: create a non-public dump and put a public-visibility track in it', async ({ request }) => {
+      adminToken = await signIn(request);
+      const dump = await createDump(request, adminToken, {
+        name: `visgate-${tier}-${Date.now()}`,
+        published: true,
+        visibility: tier,
+      });
+      dumpId = dump.id;
+      const raw = await getRawTracks(request, adminToken);
+      expect(raw.tracks.length).toBeGreaterThan(0);
+      const track = raw.tracks[0];
+      trackId = track.id;
+      const next = { ...track, dumpIds: [dumpId], published: false, visibility: 'public' };
+      delete next.dumpId;
+      await putSingleTrack(request, adminToken, next);
+    });
+
+    test('anon GET /api/music/track must NOT return the track', async ({ request }) => {
+      const res = await getTrackMeta(request, trackId);
+      expect(res.status()).not.toBe(200);
+      expect([401, 403, 404]).toContain(res.status());
+    });
+
+    test('anon GET /api/music/stream must NOT redirect to the audio', async ({ request }) => {
+      const res = await streamTrack(request, trackId);
+      // A 2xx or a 3xx redirect both mean "granted." Both are wrong.
+      expect(res.status()).toBeGreaterThanOrEqual(400);
+      expect([401, 403, 404]).toContain(res.status());
+    });
+
+    test('authenticated non-permitted user GET /api/music/tracks does NOT list the track', async ({ request }) => {
+      const email = `visgate-${tier}-${Date.now()}@local.dev`;
+      const { idToken } = await signUp(request, email, 'password123');
+      expect(idToken).toBeTruthy();
+      const data = await getPublicTracks(request, idToken);
+      const looseIds = (data.tracks || []).map((t) => t.id);
+      const dumpTrackIds = (data.dumps || []).flatMap((d) => (d.tracks || []).map((t) => t.id));
+      if (tier === 'authenticated') {
+        // `authenticated` tier DOES grant access to any signed-in user, so
+        // the track SHOULD appear (grouped under the dump) for this user.
+        expect([...looseIds, ...dumpTrackIds]).toContain(trackId);
+      } else {
+        // `restricted` tier requires per-track perms. A fresh signup has
+        // none, so the track must not surface in any form.
+        expect(looseIds).not.toContain(trackId);
+        expect(dumpTrackIds).not.toContain(trackId);
+      }
+    });
+
+    test('authenticated non-permitted user GET /api/music/stream', async ({ request }) => {
+      const email = `visgatestream-${tier}-${Date.now()}@local.dev`;
+      const { idToken } = await signUp(request, email, 'password123');
+      const res = await streamTrack(request, trackId, idToken);
+      if (tier === 'authenticated') {
+        // Signed-in user CAN stream an authenticated-tier track.
+        expect(res.status()).toBeLessThan(400);
+      } else {
+        // Restricted: must be denied without permissions.
+        expect(res.status()).toBeGreaterThanOrEqual(400);
+        expect([401, 403, 404]).toContain(res.status());
+      }
+    });
+
+    test('teardown: unlink + delete', async ({ request }) => {
+      const raw = await getRawTracks(request, adminToken);
+      const t = raw.tracks.find((x) => x.id === trackId);
+      if (t) {
+        const cleaned = { ...t, dumpIds: [], published: false };
+        delete cleaned.dumpId;
+        await putSingleTrack(request, adminToken, cleaned);
+      }
+      await deleteDump(request, adminToken, dumpId);
+    });
+  });
+}

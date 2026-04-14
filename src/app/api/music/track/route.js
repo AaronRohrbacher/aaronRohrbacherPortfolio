@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import {
   getTrack,
-  getTrackPermissions,
-  getDump,
+  canViewTrackDirect,
+  canViewTrackInDumps,
+  getDumpsContainingTrack,
+  getPermittedTrackIds,
   redeemTrackShareLink,
   redeemDumpShareLink,
 } from '@/lib/trackStore';
@@ -15,8 +17,8 @@ import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
  * (with permission checks).
  *
  * A valid track-share token bound to this track id bypasses publish/visibility
- * checks. A dump-share token bound to this track's parent dump also works,
- * matching the existing dump-share behavior on the stream endpoint.
+ * checks. A dump-share token bound to ANY of this track's parent dumps also
+ * works, matching the existing dump-share behavior on the stream endpoint.
  */
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -33,8 +35,14 @@ export async function GET(request) {
     }
 
     const user = await authenticateRequest(request);
-
     const meta = requestMeta(request);
+
+    // Dump-side authority — same approach as the stream endpoint and the
+    // /music listing. Don't trust track.dumpIds for the visibility gate;
+    // walk the DUMP-side index instead.
+    const containingDumps = await getDumpsContainingTrack(id);
+    const containingDumpIds = containingDumps.map((d) => d.id);
+
     let shareGrant = false;
     if (shareToken) {
       const trackRedeemed = await redeemTrackShareLink(shareToken, meta);
@@ -45,53 +53,45 @@ export async function GET(request) {
           targetType: 'track',
           targetId: id,
           detail: `token:${shareToken.slice(0, 8)}`,
-          ...requestMeta(request),
+          ...meta,
         });
       }
-      if (!shareGrant && track.dumpId) {
+      if (!shareGrant && containingDumpIds.length > 0) {
         const dumpRedeemed = await redeemDumpShareLink(shareToken, meta);
-        if (dumpRedeemed && dumpRedeemed.dumpId === track.dumpId) {
+        if (dumpRedeemed && containingDumpIds.includes(dumpRedeemed.dumpId)) {
           shareGrant = true;
           await logEvent({
             type: EVENT_TYPES.SHARE_REDEEM,
             targetType: 'dump',
-            targetId: track.dumpId,
+            targetId: dumpRedeemed.dumpId,
             detail: `token:${shareToken.slice(0, 8)}`,
-            ...requestMeta(request),
+            ...meta,
           });
         }
       }
     }
 
-    // Effectively published = directly published OR parent dump is published
-    let effectivelyPublished = track.published;
-    if (!effectivelyPublished && track.dumpId) {
-      const dump = await getDump(track.dumpId);
-      if (dump?.published) effectivelyPublished = true;
-    }
-
     if (!user?.isAdmin && !shareGrant) {
-      if (!effectivelyPublished) {
-        return NextResponse.json({ error: 'Not found' }, { status: 404 });
-      }
+      const permittedTrackIds = user
+        ? await getPermittedTrackIds(user.sub, user.groups, user.email)
+        : new Set();
 
-      const vis = track.visibility || 'public';
+      // DUMP TRUMPS: if the track lives in any dump, only the dump's
+      // visibility decides. Truly loose tracks fall back to canViewTrackDirect.
+      const admitted = containingDumps.length > 0
+        ? canViewTrackInDumps(containingDumps, { trackId: id, user, permittedTrackIds })
+        : canViewTrackDirect(track, { user, permittedTrackIds });
 
-      if (vis === 'authenticated' && !user) {
-        return NextResponse.json({ error: 'Sign in required' }, { status: 401 });
-      }
-
-      if (vis === 'restricted') {
-        if (!user) {
+      if (!admitted) {
+        const probeUser = { sub: '__probe__', groups: [], email: null };
+        const probePerms = new Set([id]);
+        const signedInProbe = containingDumps.length > 0
+          ? canViewTrackInDumps(containingDumps, { trackId: id, user: probeUser, permittedTrackIds: probePerms })
+          : canViewTrackDirect(track, { user: probeUser, permittedTrackIds: probePerms });
+        if (!user && signedInProbe) {
           return NextResponse.json({ error: 'Sign in required' }, { status: 401 });
         }
-        const perms = await getTrackPermissions(id);
-        const hasUserPerm = perms.users.some((p) => p.userId === user.sub || p.userId === user.email);
-        const userGroupsLower = user.groups.map((g) => g.toLowerCase());
-        const hasGroupPerm = perms.groups.some((p) => userGroupsLower.includes(p.groupName.toLowerCase()));
-        if (!hasUserPerm && !hasGroupPerm) {
-          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-        }
+        return NextResponse.json({ error: 'Not found' }, { status: 404 });
       }
     }
 
@@ -111,7 +111,7 @@ export async function GET(request) {
         name: track.name,
         description: track.description,
         artists: track.artists,
-        dumpId: track.dumpId,
+        dumpIds: containingDumpIds,
         addedAt: track.addedAt,
         formats: Object.keys(track.formats || {}),
         streamUrls,
