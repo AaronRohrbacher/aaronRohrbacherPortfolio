@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-// AI ChatAgent commented out — see AI_COMMENTED_OUT.md. Skipped until reactivated.
-test.skip(true, 'AI ChatAgent commented out — see AI_COMMENTED_OUT.md');
+// Obsolete: this spec targeted the old "fact retrieval vs all-facts" streaming
+// branches that no longer exist. A-A-Bot now always streams all facts through
+// the model. Leaving the file in place for history; suite is skipped.
+test.skip(true, 'Obsolete after A-A-Bot fine-tune — single streaming path now.');
 
 // Targeted tests for streaming behavior:
 // - Fact-matched questions → thinking dots (no stream bubble, final content appears in one shot)
@@ -61,7 +63,7 @@ test.describe('ChatAgent streaming', () => {
   });
 
   test('on-topic all-facts question: stream bubble appears and grows', async () => {
-    // On-topic (DOMAIN_RE: "hire") but no FACT_INDEX keyword matches → all-facts mode
+    // On-topic (DOMAIN_RE: "hire") — goes to the model with full facts injected.
     await send('Can someone hire him?');
 
     const streamBubble = page.locator('[class*="bubbleStream"]');

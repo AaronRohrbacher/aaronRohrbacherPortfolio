@@ -1,4 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { resetMusicDb } from './helpers/reset-music-db.mjs';
+
+// Reset DB state before this file — specs preceding it in the playwright
+// run mutate tracks/dumps and don't restore. See viewport-matrix for
+// details.
+test.beforeAll(async () => {
+  await resetMusicDb();
+});
 
 test.use({ viewport: { width: 375, height: 667 } }); // iPhone SE
 

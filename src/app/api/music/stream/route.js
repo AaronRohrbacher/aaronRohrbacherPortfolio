@@ -124,12 +124,47 @@ export async function GET(request) {
       return NextResponse.redirect(cdnUrl, 302);
     }
 
-    // No CDN: redirect straight to a presigned S3 URL instead of proxying
-    // the body through the Next.js server. Auth has already run above, so
-    // handing out a time-limited signed URL is fine. Skips the server-side
-    // body buffering that was throttling dev streaming throughput.
+    // No CDN (dev + any non-CDN stage): proxy the bytes through Next by
+    // fetching the presigned S3 URL server-side and streaming its body back
+    // to the client.
+    //
+    // Why proxy instead of redirecting the client to the presigned URL:
+    // test clients (and some real clients behind auth middleware) end up
+    // forwarding the incoming `Authorization: Bearer <...>` header across
+    // the redirect, and S3 rejects any request that carries both a signed
+    // query string and an Authorization header
+    // ("Only one auth mechanism allowed"). The proxy keeps the signed URL
+    // entirely server-side, so the client only ever sees our origin's
+    // response — cleanly decoupled from S3's auth model. Performance is
+    // fine because fetch streams the body and Next's response passes it
+    // through without buffering.
     const streamUrl = await getStreamUrl(key, format);
-    return NextResponse.redirect(streamUrl, 302);
+    const upstream = await fetch(streamUrl);
+    if (!upstream.ok || !upstream.body) {
+      return NextResponse.json(
+        { error: 'Upstream stream failed.' },
+        { status: 502 },
+      );
+    }
+    const contentType =
+      upstream.headers.get('content-type') ||
+      (format === 'mp3' ? 'audio/mpeg'
+        : format === 'aiff' || format === 'aif' ? 'audio/aiff'
+          : format === 'wav' ? 'audio/wav'
+            : 'application/octet-stream');
+    const responseHeaders = {
+      'Content-Type': contentType,
+      'Content-Disposition': 'inline',
+      'Cache-Control': 'private, max-age=3600',
+    };
+    const contentLength = upstream.headers.get('content-length');
+    if (contentLength) responseHeaders['Content-Length'] = contentLength;
+    const acceptRanges = upstream.headers.get('accept-ranges');
+    if (acceptRanges) responseHeaders['Accept-Ranges'] = acceptRanges;
+    return new NextResponse(upstream.body, {
+      status: 200,
+      headers: responseHeaders,
+    });
   } catch (err) {
     console.error('Stream error:', err);
     return NextResponse.json({ error: 'Failed to stream track.' }, { status: 500 });

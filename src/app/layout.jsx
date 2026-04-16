@@ -3,8 +3,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import Script from 'next/script';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
-// AI agent disabled — see AI_COMMENTED_OUT.md at repo root.
-// import ChatAgentLoader from '@/components/ChatAgentLoader';
+import ChatAgentLoader from '@/components/ChatAgentLoader';
 
 export const metadata = {
   title: {
@@ -43,8 +42,7 @@ export default function RootLayout({ children }) {
         <GoogleAnalytics />
         <AppRouterCacheProvider>
           <Script src="/amazonConnect.js" strategy="lazyOnload" />
-          {/* AI agent disabled — see AI_COMMENTED_OUT.md at repo root. */}
-          {/* <ChatAgentLoader /> */}
+          <ChatAgentLoader />
           {children}
         </AppRouterCacheProvider>
       </body>

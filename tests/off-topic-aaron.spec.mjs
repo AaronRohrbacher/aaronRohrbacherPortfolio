@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
 
-// AI ChatAgent commented out — see AI_COMMENTED_OUT.md. Skipped until reactivated.
-test.skip(true, 'AI ChatAgent commented out — see AI_COMMENTED_OUT.md');
+// Obsolete: this spec was written for the JS-side off-topic redirect + rhyme
+// engine that existed before the fine-tuned model was strong enough to handle
+// off-topic on its own. That engine has been stripped (see AI_COMMENTED_OUT.md).
+// Keeping the file so git history stays coherent, but skipping the whole suite.
+test.skip(true, 'Obsolete after A-A-Bot fine-tune — model handles off-topic itself.');
 
 // Regression test: off-topic questions mentioning "aaron" should NOT go to the
 // model and should NOT produce garbage responses. They should instant-redirect.

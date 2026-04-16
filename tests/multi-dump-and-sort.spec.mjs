@@ -394,7 +394,14 @@ test.describe('Multi-dump publish cascade in public response', () => {
     await deleteDump(request, adminToken, dUnp);
   });
 
-  test('anonymous response still respects track-level restricted visibility', async ({ request }) => {
+  test('anonymous response: dump cascade overrides track-level restricted visibility', async ({ request }) => {
+    // Codified rule (see src/lib/trackAccess.mjs and the
+    // "Cross-path · public dump overrides direct-restricted track visibility"
+    // describe in music-auth-matrix.spec.mjs): a track that lives in one or
+    // more dumps is governed by the DUMPS' visibility, not the track's own.
+    // A directly-restricted track in a public dump IS reachable via the
+    // public dump cascade — it renders inside the dump card on /api/music/tracks,
+    // but must still be absent from the loose list (which is track-side).
     const stamp = Date.now();
     const dPub = (await createDump(request, adminToken, { name: `restr-pub-${stamp}`, published: true })).id;
 
@@ -408,11 +415,11 @@ test.describe('Multi-dump publish cascade in public response', () => {
     });
 
     const pub = await getPublicTracks(request);
-    // Track should NOT appear anywhere in the anonymous response.
     const inDump = pub.dumps.find((d) => d.id === dPub);
-    if (inDump) {
-      expect(inDump.tracks.map((t) => t.id)).not.toContain(trackId);
-    }
+    // Dump cascade admits: the restricted track IS inside the public dump.
+    expect(inDump).toBeTruthy();
+    expect(inDump.tracks.map((t) => t.id)).toContain(trackId);
+    // Loose list is still track-side and does NOT include the restricted track.
     expect(pub.tracks.map((t) => t.id)).not.toContain(trackId);
 
     // Reset to public for subsequent tests + cleanup

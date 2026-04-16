@@ -1,106 +1,96 @@
 /**
- * Grounding data for the in-browser chat worker.
- * Keep aligned with `src/info/Info.jsx` when facts change.
+ * Grounding data for the in-browser chat worker (LFM2-24B via Transformers.js).
  *
- * FACT_CHUNKS — small atomic sentences for the generation model.
- * FACT_INDEX — keyword-scored retrieval index for selecting relevant facts.
- * findRelevantFacts() — deterministic keyword matching to find the best facts.
- * DOMAIN_RE — regex for on-topic detection (career/tech domain words).
+ * The worker injects EVERY chunk below into the system prompt on every turn.
+ * LFM2-24B has a 128k context and hybrid conv/attention architecture, so the
+ * ~2k tokens of full resume content costs almost nothing to prefill.
+ *
+ * Source of truth mirrors `src/components/resume/Resume.jsx`. When the resume
+ * changes, update both.
  */
 
 export const FACT_CHUNKS = [
-  'Aaron Rohrbacher is a senior DevOps engineer and AI platform builder based in Portland, Oregon. He wrapped up his role as Lead Software Development Engineer at Forbes AAC (Dec 2024 – Mar 2026) and is actively seeking his next role, available to start immediately.',
-  'At Forbes AAC, Aaron led stabilization of a legacy Ruby and Ember stack and an enterprise rebuild using Next.js. He rebuilt native apps: iOS in Swift, Android in Java and Kotlin, macOS in Swift, Windows and Linux in Qt and Rust.',
-  'At SPARQ, Aaron was technical lead on enterprise AI projects, AWS cloud migrations, and conversational AI. He worked on payroll and logistics systems at scale serving over 500,000 employees.',
-  'Aaron\'s earlier employers include Nuel Cloud (AWS LAMP provisioning), Nordic, Fiduciary Benchmarks, and Planet Argon.',
-  'Aaron\'s programming languages include JavaScript, TypeScript, Python, Ruby, Java, Kotlin, Swift, Rust, PHP, SQL, and Bash.',
-  'Aaron works across AWS, GCP, and Azure. He holds AWS Cloud Practitioner and Developer Associate certifications and is pursuing AWS DevOps Professional.',
-  'Aaron\'s AI and ML stack includes PyTorch, LLM fine-tuning, NLP, and Amazon AI services: Lex, Polly, Transcribe, and Q.',
-  'Aaron\'s infrastructure and DevOps tools include Docker, Kubernetes, Terraform, AWS CDK, and SST.',
-  'Aaron built this portfolio site using Next.js, SST, and AWS. Other projects: Klear (a KWin window manager plugin), Thinger (Python video processing), a PyTorch GPT-2 trained on George Carlin transcripts, and the Nuel API.',
-  'Aaron plays saxophone and is a musician outside of his engineering career.',
+  // ── Identity + current status ────────────────────────────────────────────
+  'Aaron Rohrbacher is a Senior Software & DevOps Engineer based in Portland, Oregon. He takes a language-agnostic approach — he chooses the language and framework for the problem, not the other way around, and is comfortable in just about any stack these days. His GitHub is github.com/aaronrohrbacher and his LinkedIn is linkedin.com/in/aaronrohrbacher. As of March 2026 he is actively seeking his next senior or lead engineering role and is available to start immediately.',
+
+  // ── About (from resume About tab) ────────────────────────────────────────
+  'About Aaron (in his own words): "I\'m a senior software and DevOps engineer with language-agnostic proficiency in programming and DevOps, and deep expertise in fiduciary finance, HR, payroll, and logistics. I deliver creative, effective, and timely solutions across AWS, GCP, and Azure. Most recently at Forbes AAC, I led emergency stabilization and a ground-up enterprise rebuild of an assistive technology platform, including full rewrites of all native apps (iOS, Android, macOS, Windows, Linux). At SPARQ, I drove AI-powered conversational experiences and infrastructure for enterprise clients including a payroll overhaul serving 500k+ employees. AWS Certified Cloud Practitioner and Certified Developer – Associate. AWS DevOps Engineer – Professional in progress. Outside of engineering, I play saxophone and am learning instrument repair."',
+
+  // ── Job 1: Forbes AAC (most recent) ──────────────────────────────────────
+  'Forbes AAC — Lead Software Development Engineer (December 2024 – March 2026, Mansfield OH, remote). This was Aaron\'s most recent role. Responsibilities and accomplishments: (1) Stabilized a critically failing Ruby 2.6 / Ember 3.0 platform (both past end-of-life), mitigating imminent data and platform loss. Built tooling to convert deprecated Ember code into editable JavaScript — preserving years of Speech Language Pathologist refinements. (2) Negotiated with Heroku and upgraded infrastructure to prevent complete loss of the application, leaving everything operational with satisfied stakeholders. (3) Rescued Android and iOS apps from deprecation-driven crashes, bringing both to current standards and ensuring uninterrupted service for users who depend on them for daily communication. (4) Architected a complete infrastructure rebuild on Next.js — injecting compiled legacy Ember JS for continuity — while medical professionals continued refining decade-old features without interruption. (5) Fully rebuilt cross-platform apps in native code: iOS (Swift), Android (Java/Kotlin), macOS (Swift with native navigation), Windows & Linux (Qt on Rust), replacing deprecated Cordova. (6) Redesigned content sync from one-asset-at-a-time to compressed, licensed package delivery — saving thousands monthly in data transfer costs and enabling better offline use for AAC users.',
+
+  // ── Job 2: SPARQ ─────────────────────────────────────────────────────────
+  'SPARQ — Technical Lead & Senior Software Engineer (August 2022 – February 2025, Atlanta GA, remote). Aaron was consulted to Forbes AAC via SPARQ and then hired directly by Forbes AAC. Responsibilities and accomplishments: (1) Served as lead system architect building microservices and APIs on AWS Lambda + Node.js with third-party services — achieving significant cloud infrastructure cost savings. (2) Completed phase-one production deployment of a payroll system overhaul serving 500k+ employees for a global logistics leader. (3) Modernized internal API processes for a new payroll vendor using GCP Cloud Run functions (Python, Java, Node.js), resulting in substantial cost savings. (4) Guided offshore development teams on ADO CI/CD best practices with GCP deployment and local environment virtualization. (5) Mentored junior programmers and introduced modern cloud computing concepts to offshore development teams and stakeholder leadership. (6) Led in-house team to create AI-based conversational experiences for internal client websites. (7) Served on security and risk management teams — penetration testing and risk assessment.',
+
+  // ── Job 3: Nuel Cloud Computing LLC ─────────────────────────────────────
+  'Nuel Cloud Computing LLC — Proprietor, Systems Architect & Engineering Director (August 2020 – February 2024, Portland OR). This was Aaron\'s own company. Responsibilities and accomplishments: (1) Architected and developed a proprietary AWS solution to provision containerized LAMP stacks (PHP) via ECS and EKS for WordPress designers and PHP developers. Built in Node.js, Express, Python, Serverless Framework, AWS Lambda, API Gateway, ECS/EKS, and Cognito. (2) Architected and designed customer dashboard for automated signup, migration from legacy systems, customized stack preferences, user profiles, and PHP/WordPress plugin management. Frontend in React; backend in Node.js, PHP, and Bash. (3) Delivered the fastest WordPress/PHP installation on the market — integrated backend caching and CloudFront CDN optimized for WordPress/PHP. (4) Provided security and vulnerability assessments, automating security best practices throughout the system with nearly zero downtime.',
+
+  // ── Job 4: Nordic Semiconductor ─────────────────────────────────────────
+  'Nordic Semiconductor — Software Engineer II (February 2022 – March 2022, Portland OR). Responsibilities and accomplishments: (1) Developed test automation tools and scripts for AWS in Node.js using React, Jest, Cypress, Linux, and Istanbul. (2) Built Nordic\'s first "thingy lab" — enabling IoT device experiments on a proprietary dashboard in novel hardware combinations.',
+
+  // ── Job 5: Fiduciary Benchmarks ─────────────────────────────────────────
+  'Fiduciary Benchmarks — Junior Software Development Engineer (July 2018 – August 2021, Lake Oswego OR). Responsibilities and accomplishments: (1) Designed and maintained automated E2E test suite using JavaScript and Cypress. (2) Designed and maintained sophisticated manual regression test suite using Cucumber and BDD best practices. (3) Analyzed, debugged, and communicated issues reported by data operations and service teams. (4) Reliably communicated test results to Development Manager and agile development team. (5) Implemented WalkMe digital adoption platform — step-by-step in-app guidance ensuring client success. Note: Fiduciary Benchmarks is a benchmarking company, not a bank.',
+
+  // ── Job 6: Planet Argon (career start) ──────────────────────────────────
+  'Planet Argon — Web Development Intern (January 2018 – February 2018, Portland OR). This was where Aaron\'s professional career began. Client projects for NIKE, Aloha Foods, and PAC Global — test suite enhancements, sitemaps, integration, and advanced Spree eCommerce integration including custom roles.',
+
+  // ── Skill group: AI & Machine Learning ───────────────────────────────────
+  'AI & Machine Learning skills: PyTorch, LLM Implementation & Fine-tuning, NLP, Conversational AI, Amazon Lex, Amazon Polly, Amazon Transcribe, Amazon Q. Aaron\'s AI/ML work is applied and hands-on — shipping real systems — not academic research. He is not a PhD-level ML researcher.',
+
+  // ── Skill group: Languages ──────────────────────────────────────────────
+  'Programming languages — Aaron is language-agnostic: he chooses the language and framework that fit the problem, not the other way around, and is comfortable in just about any stack these days. For reference, the languages he has shipped production work in include JavaScript, TypeScript, Node.js, Python, Ruby, Java, Kotlin, Swift, Rust, Bash, PowerShell, PHP, and SQL. Do not pitch him as a "Python guy" or a specialist in any one language — the list is representative, not exhaustive, and the point is that he picks the tool for the job.',
+
+  // ── Skill group: Frameworks & Libraries ─────────────────────────────────
+  'Frameworks & libraries: Next.js, React, Ruby on Rails, Express, Vue.js, Angular, Ember.js, SST (Serverless Stack), Serverless Framework, Tailwind CSS, SCSS/SASS.',
+
+  // ── Skill group: Cloud — AWS ────────────────────────────────────────────
+  'AWS services Aaron has used hands-on: Lambda, ECS/EKS, EC2, API Gateway, CloudFormation, VPC, Route53, IAM, Cognito, S3, CloudFront, RDS, DynamoDB, SES/SNS/SQS, CloudWatch, Cost Management, Systems Manager. AWS is his primary cloud.',
+
+  // ── Skill group: Cloud — GCP & Azure ────────────────────────────────────
+  'GCP & Azure services: Cloud Run, Cloud Functions, Compute Engine, Cloud SQL, Pub/Sub, Azure DevOps, plus Azure equivalents of core AWS services. He has shipped production code on all three major clouds.',
+
+  // ── Skill group: Infrastructure & DevOps ────────────────────────────────
+  'Infrastructure & DevOps: Docker, Kubernetes, Terraform, AWS CDK, CloudFormation, GitHub Actions, GitLab CI, Azure DevOps, Jenkins, Microservices, Serverless Architecture. He has designed and operated serverless microservices architectures end-to-end.',
+
+  // ── Skill group: Mobile & Desktop ───────────────────────────────────────
+  'Mobile & desktop development: iOS (Swift/SwiftUI), Android (Java/Kotlin), macOS (Swift/AppKit), Windows & Linux (Qt/Rust), React Native, Cordova. Most of this experience came from the Forbes AAC native rewrite.',
+
+  // ── Skill group: Databases ──────────────────────────────────────────────
+  'Databases: PostgreSQL, MySQL/MariaDB, MongoDB, DynamoDB, Redis, ElastiCache.',
+
+  // ── Skill group: Testing & QA ───────────────────────────────────────────
+  'Testing & QA: Cypress, Jest, Jasmine, Mocha, Selenium, Puppeteer, TestNG, Rest-assured, BDD/Cucumber.',
+
+  // ── Skill group: Security & Compliance ──────────────────────────────────
+  'Security & compliance: Penetration Testing, Burp Suite, OWASP Top 10, SOC 2 Preparation, IAM & Access Control, Encryption & Data Protection. Aaron served on SPARQ\'s security and risk management team doing pentesting and risk assessment. He is not a dedicated security engineer.',
+
+  // ── Skill group: Frontend & Design ──────────────────────────────────────
+  'Frontend & design: HTML5, CSS3, Bootstrap, Responsive Design, Accessibility (WCAG), UI/UX Optimization, Adobe Creative Suite, GIMP.',
+
+  // ── Skill group: Additional Technologies ────────────────────────────────
+  'Additional technologies: WordPress/PHP, VoIP/SIP Trunking, WebRTC, Real-time Communication, CDN & Caching (Varnish, Redis), Linux administration (Ubuntu, CentOS, Debian, Arch), Agile/Scrum.',
+
+  // ── Certifications ──────────────────────────────────────────────────────
+  'Certifications: AWS Certified Cloud Practitioner (held), AWS Certified Developer – Associate (held), AWS Certified DevOps Engineer – Professional (in progress).',
+
+  // ── Personal / hobbies ──────────────────────────────────────────────────
+  'Outside of engineering, Aaron plays saxophone and is learning instrument repair. He also plays clarinet and records music as an amateur audio engineer. He has one brother.',
+
+  // ── Negative facts (explicit anti-hallucination anchor) ─────────────────
+  'What Aaron is NOT: He has never worked for a government agency, a hospital or healthcare organization, or a bank. Fiduciary Benchmarks (2018–2021) is a benchmarking company, not a bank. Forbes AAC was his MOST RECENT employer, not his first — his career began in January 2018 at Planet Argon. He is not a PhD-level or academic ML researcher; his AI/ML work is applied. Do not invent employers, degrees, certifications, or personal details that are not stated above.',
 ];
 
-export const AARON_CHAT_SYSTEM_PROMPT = `You are a helpful assistant on Aaron Rohrbacher's portfolio site. Answer the question using ONLY the provided facts. One to two sentences. Do not add information not in the facts. If the facts don't cover the question, say: "I don't have that info — just say 'connect me' and I'll open a live chat with Aaron!"`;
+export const AARON_CHAT_SYSTEM_PROMPT = `You are A-A-Bot, an assistant embedded in Aaron Rohrbacher's portfolio site. Your job is to answer visitor questions about Aaron using ONLY the facts provided in the Facts block below.
 
-// ── Fact retrieval index ─────────────────────────────────────────────────────
-// Each entry maps question keywords to a specific fact chunk.
-// `validate` is a regex the model output MUST match to be considered grounded.
-
-export const FACT_INDEX = [
-  {
-    keywords: ['current', 'now', 'today', 'job', 'title', 'role', 'position', 'company', 'employer', 'doing', 'seeking', 'available', 'hire', 'hiring', 'portland', 'oregon', 'where', 'live', 'based', 'location', 'about', 'background', 'who', 'overview', 'tell', 'bio', 'lead', 'architect'],
-    validate: /portland|architect|seeking|forbes/i,
-    factIndex: 0,
-  },
-  {
-    keywords: ['forbes', 'ruby', 'ember', 'legacy', 'native', 'ios', 'android', 'macos', 'windows', 'linux', 'qt', 'rebuild', 'stabilization'],
-    validate: /forbes/i,
-    factIndex: 1,
-  },
-  {
-    keywords: ['sparq', 'enterprise', 'payroll', 'logistics', 'conversational', 'migration', 'migrations', 'employees', 'scale'],
-    validate: /sparq/i,
-    factIndex: 2,
-  },
-  {
-    keywords: ['nuel', 'nordic', 'fiduciary', 'argon', 'planet', 'earlier', 'previous', 'past', 'before', 'other', 'history', 'employers'],
-    validate: /nuel|nordic|fiduciary|planet.?argon/i,
-    factIndex: 3,
-  },
-  {
-    keywords: ['language', 'languages', 'programming', 'coding', 'code', 'program', 'javascript', 'typescript', 'python', 'ruby', 'java', 'kotlin', 'swift', 'rust', 'php', 'sql', 'bash', 'know', 'knows'],
-    validate: /javascript|python|typescript|ruby|kotlin|swift|rust|php|sql|bash/i,
-    factIndex: 4,
-  },
-  {
-    keywords: ['cloud', 'aws', 'gcp', 'azure', 'certification', 'certifications', 'certified', 'cert', 'certs', 'practitioner', 'associate', 'professional'],
-    validate: /cloud practitioner|developer associate/i,
-    factIndex: 5,
-  },
-  {
-    keywords: ['ai', 'ml', 'machine', 'learning', 'pytorch', 'llm', 'nlp', 'tuning', 'lex', 'polly', 'transcribe', 'artificial', 'intelligence', 'deep'],
-    validate: /pytorch|llm|nlp|lex|polly/i,
-    factIndex: 6,
-  },
-  {
-    keywords: ['infrastructure', 'devops', 'docker', 'kubernetes', 'k8s', 'terraform', 'cdk', 'sst', 'container', 'deploy', 'deployment', 'ci', 'cd', 'pipeline', 'infra', 'tools', 'ops'],
-    validate: /docker|kubernetes|terraform/i,
-    factIndex: 7,
-  },
-  {
-    keywords: ['project', 'projects', 'portfolio', 'built', 'build', 'building', 'created', 'klear', 'thinger', 'gpt', 'carlin', 'site', 'website', 'made'],
-    validate: /klear|thinger|portfolio|next\.?js|sst|gpt/i,
-    factIndex: 8,
-  },
-  {
-    keywords: ['music', 'musician', 'saxophone', 'sax', 'instrument', 'play', 'plays', 'hobby', 'hobbies', 'outside', 'besides', 'fun', 'personal', 'interest'],
-    validate: /saxophone|musician|music/i,
-    factIndex: 9,
-  },
-];
+Hard rules:
+- Ground every claim in the Facts block. Do not invent employers, dates, titles, languages, certifications, projects, family, or personal details — if a detail is not stated in the Facts block, you do not know it.
+- If the Facts block does not contain the answer, say so plainly and suggest the visitor say "connect me" to open a live chat with Aaron.
+- Answer in one or two short, natural sentences. No markdown, no bullet lists, no headers, no emoji.
+- Stay on-topic: Aaron's work, skills, background, projects, availability, and how to reach him. For anything else, steer back politely or offer a handoff.
+- Never speculate. Never paraphrase facts into stronger or weaker claims than they make. Never smooth over gaps by guessing.
+- Do not add disclaimers, meta-commentary, or refer to yourself as an AI. Just answer.`;
 
 // Domain-specific words — if a question contains one of these, it's on-topic.
 // Generic question words (what, who, he, does) are NOT sufficient on their own.
-// "aaron" alone is NOT enough — questions like "Is aaron taking medications?"
-// should hit the off-topic redirect, not go to the model.
-export const DOMAIN_RE = /\b(work|worked|job|role|know|knows|skill|skills|language|languages|code|coding|built|build|project|projects|cert|certs|certification|cloud|aws|gcp|azure|docker|k8s|devops|python|rust|swift|kotlin|java|typescript|javascript|ruby|sql|bash|php|startup|cto|engineer|experience|background|career|portfolio|company|employer|sparq|forbes|artisan|nuel|ai|ml|llm|pytorch|nlp|saxophone|music|portland|oregon|infrastructure|terraform|kubernetes|deploy|programming|tools|hire)\b/i;
-
-/**
- * Find the most relevant fact chunks for a question using keyword scoring.
- * Returns array of { fact, validate, score } sorted by relevance.
- */
-export function findRelevantFacts(question, topN = 2) {
-  const words = question.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(w => w.length > 1);
-  const scored = FACT_INDEX.map(entry => {
-    let score = 0;
-    for (const word of words) {
-      if (entry.keywords.includes(word)) score++;
-    }
-    return { fact: FACT_CHUNKS[entry.factIndex], validate: entry.validate, score };
-  })
-    .filter(e => e.score > 0)
-    .sort((a, b) => b.score - a.score);
-
-  return scored.slice(0, topN);
-}
+// Used by src/lib/chatAgent.mjs for off-topic filtering before the model runs.
+export const DOMAIN_RE = /\b(work|worked|job|role|know|knows|skill|skills|language|languages|code|coding|built|build|project|projects|cert|certs|certification|cloud|aws|gcp|azure|docker|k8s|devops|python|rust|swift|kotlin|java|typescript|javascript|ruby|sql|bash|php|startup|cto|engineer|experience|background|career|portfolio|company|employer|sparq|forbes|nuel|nordic|fiduciary|argon|ai|ml|llm|pytorch|nlp|saxophone|clarinet|music|portland|oregon|infrastructure|terraform|kubernetes|deploy|programming|tools|hire|available|seeking|role)\b/i;

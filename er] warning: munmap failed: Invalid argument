@@ -1,0 +1,1723 @@
+[33mcommit 1d2aa4887558db9967f8c0babed85d830c6bfddb[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfix-ai[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Tue Apr 14 05:31:55 2026 -0700
+
+    mom-proofed
+
+[33mcommit a9d50de11875b0e34f7e9b8a06d32ba3ef7c8c00[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 10:19:37 2026 -0700
+
+    vibe coding feature dump
+
+[33mcommit 1078486503c16cb7c89f197f65d2bf0890121489[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 05:26:47 2026 -0700
+
+    fixes non-cononical meta tags
+
+[33mcommit f8d85db816366221b38b713ac1e41f60ea35324d[m[33m ([m[1;31morigin/add-magic-links-to-tracks[m[33m)[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 05:13:59 2026 -0700
+
+    removes resume download, fixes sitemaps
+
+[33mcommit 7653a81b07981fa7eda3d199c880d28b8bd75946[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 03:49:06 2026 -0700
+
+    ui: stop truncating artists/description, drop dup Play in Browser button
+    
+    - MusicAdmin track-row .artistsPreview / .descPreview and MusicPlaylist
+      .trackArtists / .trackDesc all had nowrap+overflow:hidden+ellipsis,
+      so anything longer than the row width was lopped off with no way to
+      see it. Switch to white-space: pre-wrap + overflow-wrap: anywhere
+      with a tight line-height. Track *name* still ellipsises (long titles
+      in a one-line slot) — only artists and description wrap now.
+    
+    - Removed the duplicate "Play in Browser" inline button on the dump
+      page TrackCard (src/app/music/dump/[id]/page.jsx) and the public
+      track page (src/app/music/track/[id]/page.jsx). Each card already
+      has the icon-only playBtn on the left; the inline one was redundant.
+      All other play buttons untouched.
+    
+    - share-links test: target the icon-only play button by aria-label
+      instead of the removed "Play in Browser" text.
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit 88cd289ded1e201218137e452681a3b26d6d9293[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 00:55:00 2026 -0700
+
+    test: full feature coverage suite + coverage runner
+    
+    - New tests/music-api-extras.spec.mjs covers the music API endpoints
+      not exercised by music.spec.mjs: /api/music/dump (incl. share-token
+      bypass), /api/music/admin/settings (GET + admin PUT round-trip),
+      /api/music/admin/events (auth + ?type filter), and
+      /api/music/admin/permissions (auth + grant/revoke round-trip).
+      21 tests, all green.
+    
+    - New scripts/test-coverage.mjs wraps the suite with V8 coverage. It
+      starts the dev server with NODE_V8_COVERAGE set, runs Playwright,
+      cleanly stops the server so V8 flushes, then generates a c8 line
+      report (HTML + lcov + text) and the feature coverage report.
+    
+    - New scripts/feature-coverage.mjs walks src/ and tests/ and emits
+      coverage/feature-coverage.md showing which source files are
+      exercised by which test files. This is feature-level coverage,
+      complementary to c8 line coverage which is unreliable on Next.js
+      dev mode (Turbopack chunks + indexed source maps that c8 doesn't
+      follow back to src/).
+    
+    - playwright.config.mjs forwards NODE_V8_COVERAGE to the dev server
+      webServer.env so child processes inherit it.
+    
+    - package.json: `npm test` runs the suite, `npm run test:coverage`
+      runs with both reports.
+    
+    - c8 added as a devDependency.
+    
+    - coverage/ added to .gitignore.
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit 3ed1626e683a52cd4503a5eca13fd955768f654b[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 00:35:28 2026 -0700
+
+    fix: deleteDump now strips dumpId from new-shape track main rows
+    
+    deleteDump previously only walked the dump's GSI partition, which
+    catches sibling TRACK_DUMP rows and legacy main-track rows but misses
+    new-shape tracks whose main row lives on GSI1PK=TRACKS with the dumpId
+    in their `dumpIds` array. Result: after deleting a dump, raw GET on
+    those tracks still listed the deleted dump.
+    
+    Now collect every trackId touched by a sibling-row deletion and rewrite
+    each affected main row to drop the deleted dumpId.
+    
+    Also:
+    - Skip pre-existing chat-agent/streaming/chat-logging/off-topic-aaron
+      test files at file level since the AI ChatAgent is commented out at
+      src/app/layout.jsx (see AI_COMMENTED_OUT.md).
+    - Skip connect-chat unless PROD_CONNECT_TEST=1 — local AC backend is
+      CORS-blocked.
+    - Update ai-commented-out tests to drop the now-impossible
+      __connectLaunch assertion (the AmazonConnect.jsx wrapper that
+      registered it was deleted in d32f5206) and stop expecting the
+      Resume page's "Open AI Chat" button (commented out at Resume.jsx:416).
+    - track/[id]/page.jsx download links now use Style.downloadLink (the
+      class that actually exists in MusicPlaylist.module.scss).
+    - playwright.config: workers=1, fullyParallel=false so the shared
+      DynamoDB Local doesn't race across files.
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit 90ffd4e93f1cb80f5eb3440f2273e1c3fbe738f2[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 00:33:50 2026 -0700
+
+    test(music/admin): add Playwright UI tests for magic links + drop zone
+    
+    Cover the new admin "Magic links" tab (list, type filter, show-inactive,
+    edit modal, copy/deactivate/reactivate/delete), the per-track-row "Magic
+    Link" button, and the FileDropZone used in the dumps create form and
+    DumpEditor modal.
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit ce294ae6314dbc8b1b992d2660d0ba680616596a[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 00:31:11 2026 -0700
+
+    test: add Playwright suite for multi-dump, sort, Members rename, s3UploadedAt
+    
+    Covers the multi-dump track store (PUT/GET via API), public-response
+    cascade across multiple parent dumps, dump-share token scoping, admin
+    tracks tab sort dropdown, the Auth Required to Members rename across
+    MusicAdmin + TrackEditor + DumpManager, and the s3UploadedAt field.
+    
+    One test ("re-add then delete B") is currently failing due to a source
+    bug where deleteDump() cleans up sibling rows but does not rewrite the
+    main track row's dumpIds array, leaving a reference to the deleted
+    dump. Placed last in its describe block so it does not skip the rest
+    of the suite.
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit 24fbebf69764802d76037c75e643f22ba8e7fea5[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 00:23:34 2026 -0700
+
+    test: add share-links Playwright suite for track shares + unified admin API
+    
+    Covers the new track-share admin endpoints, stream/track redemption paths,
+    the unified share-links admin GET/PATCH/DELETE across login+dump+track kinds,
+    and the public /music/track/[id] page with and without a share token.
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit ee2c92bcc9fbaa5fe6886be02bace1c9b799c555[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 00:18:07 2026 -0700
+
+    fix: post-merge regressions in download + multi-dump + magic-link tests
+    
+    - s3.getDownloadUrl now sets ResponseContentType in the presigned URL so
+      the browser receives a canonical mime type (audio/mpeg etc.) instead
+      of whatever the S3 object happened to be uploaded with.
+    
+    - trackStore now centralizes legacy dumpId vs dumpIds normalization in
+      one helper. Presence of `dumpId` (even null) is treated as the legacy
+      caller's authoritative single-assignment intent so spreading a raw
+      track and overriding `dumpId` no longer gets shadowed by the empty
+      dumpIds array that came along.
+    
+    - music.spec test for default magic-link expiry split into two cases:
+      default = no expiry (was 30d) and explicit expiresInDays = 7 still
+      produces a future expiry. Track-card UI test rewritten for the new
+      whole-card-clickable layout with download dropdown.
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit 24844a8766668f57e778d8baa85564d34eb3a496[m
+Merge: b40aa9d4 9a2c3aed
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 00:03:06 2026 -0700
+
+    merge: dumps create/edit UI cleanup + drag-and-drop file picker
+    
+    # Conflicts:
+    #       src/components/music/DumpManager.jsx
+
+[33mcommit b40aa9d43c75520e321fc5d9cb15fcd91bf6ee11[m
+Merge: 3e7d34ab 7e34caca
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 00:00:32 2026 -0700
+
+    merge: track sort dropdown + rename Auth Required to Members
+
+[33mcommit 3e7d34abda342e6980f62f0e9346606bb984f5ce[m
+Merge: 23b3a1ce 6bde769c
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 11 00:00:28 2026 -0700
+
+    merge: tracks can belong to multiple dumps
+    
+    # Conflicts:
+    #       src/app/api/music/stream/route.js
+
+[33mcommit 23b3a1ce5430c2a02dcf842aec4b5895ed1d5ad5[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Fri Apr 10 23:59:40 2026 -0700
+
+    magic links: unified share-link system + per-track shares
+    
+    Consolidate the three sibling share-token features (login magic links,
+    dump shares, track shares) onto one storage helper in trackStore.js.
+    Existing public APIs (createMagicLink, createDumpShareLink, redeem*,
+    get*ForUser/ForDump, delete*) keep their shapes so UserManager and
+    DumpManager still work unchanged. Behavior change: default expiry is
+    now null (was 30d) and rows have an active flag (missing = true so
+    legacy rows still redeem).
+    
+    New track-share feature mirrors dump-share end-to-end:
+    - createTrackShareLink / redeem / get / delete
+    - /api/music/admin/track-share-links route (POST/GET/DELETE)
+    - stream endpoint /api/music/stream redeems track-share tokens via
+      the existing ?share= query param, granting access only when the
+      redeemed trackId matches the requested track
+    - /api/music/track public endpoint (mirror of /api/music/dump)
+    - /music/track/[id] public page that plays in-browser via PlayerBar
+    
+    New unified admin UI:
+    - /api/music/admin/share-links GET/PATCH/DELETE for cross-cutting ops
+    - MagicLinksManager component: type filter, show-inactive toggle,
+      copy URL, edit (label / active / never-or-date expiry), reactivate,
+      delete. One list shows all three kinds.
+    - New 'magic links' tab in MusicAdmin
+    - Per-track 'Magic Link' button on each track row that one-click
+      creates a track-share link and copies the URL
+    
+    Bottom-padding fix on .wrap and .page so the last list item scrolls
+    above the fixed PlayerBar in both the admin Tracks tab and the public
+    playlist.
+    
+    Untouched: existing /api/music/auth/magic redemption flow,
+    /music/login/magic page, UserManager 'Generate Magic Link' button,
+    DumpManager dump-share button, dump-share semantics on the stream
+    endpoint, all visibility/permission logic.
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit 6bde769ca78303c5acc3ae9983386825904563b0[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Fri Apr 10 23:49:10 2026 -0700
+
+    multi-dump: tracks can belong to N dumps
+    
+    Allow a track to be assigned to multiple dumps instead of just one. This
+    changes the DynamoDB layout to use TRACK_DUMP#<trackId>#<dumpId> sibling
+    rows pointing at DUMP# GSI1 partitions, with per-dump ordering on the
+    sibling row. The main TRACK# row now always lives on GSI1PK=TRACKS and
+    carries a dumpIds: string[] field instead of a single dumpId.
+    
+    Reads are backwards compatible: itemToTrack normalizes legacy dumpId into
+    dumpIds. Writes are backwards compatible on the way out: saveTrack diffs
+    old vs new dumpIds and creates/removes sibling rows, and saveTracks (used
+    by the GET merge pass) idempotently upserts sibling rows so legacy data
+    migrates the first time the admin panel loads.
+    
+    Cascading publish state now ORs across every dump the track belongs to.
+    Dump deletion cleans up all sibling rows and rewrites any legacy main rows
+    that still live on its GSI1 partition.
+    
+    UI:
+    - Tracks tab row: the single-dump dropdown is replaced by a compact
+      multi-select disclosure with checkboxes.
+    - Track edit modal: a "Dumps" section with a checkbox list of all dumps.
+    - Dump edit modal: a new "Add existing tracks to this dump" section that
+      mirrors the perm-checkbox lists, letting admins toggle tracks in and
+      out of the dump.
+    
+    Public playlist: queue is deduped by track id so a multi-dump track only
+    plays once and the index map stays consistent.
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit 7e34caca845f29d457537eb733e11230f31ecf7d[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Fri Apr 10 23:47:23 2026 -0700
+
+    admin: sort tracks + rename visibility tier to 'Members'
+    
+    Add a sort dropdown above the Tracks tab list with three options: date
+    created (default, by addedAt), date uploaded to S3 (by a new
+    s3UploadedAt field, falling back to addedAt), and name (A->Z). Sorting
+    happens client-side only; the API contract is unchanged.
+    
+    Thread a new s3UploadedAt field through trackStore so it always
+    reflects the S3 LastModified and backfills lazily on existing rows in
+    mergeTracks. Data values for visibility are unchanged ('authenticated'
+    etc.); only the user-facing label is now 'Members' in the track/dump
+    visibility selects, the track visibility badge, and the dump summary
+    line.
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit 9a2c3aed8456b9e1cc1af20fde04284250b54a75[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Fri Apr 10 23:44:05 2026 -0700
+
+    Clean up dump create/edit UI with drop zone and proper upload buttons
+    
+    Replaces the raw file inputs in DumpManager's create form and edit modal
+    with a reusable FileDropZone component featuring drag-and-drop, a styled
+    Select files button, a removable file list, and inline type validation
+    for .mp3/.wav/.aiff/.aif. Tidies field grouping and labels in both the
+    create form and edit modal. Upload flow itself (presign, PUT, sync)
+    is unchanged.
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit dbaf40d0fc190bc55c6844d524df5f7aa36fe32e[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Fri Apr 10 23:04:03 2026 -0700
+
+    fixes downloads, moronic upload mistake by claude
+
+[33mcommit d32f5206dd3440919c51c0cc19e7b15dd46acc2c[m[33m ([m[1;31morigin/fix-ac[m[33m)[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Fri Apr 10 16:41:42 2026 -0700
+
+    working well
+
+[33mcommit f1180a1560002b9c7ce2274a6cf9a7b91db66c68[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sun Apr 5 17:46:56 2026 -0700
+
+    pre-deploy
+
+[33mcommit dc9645b80649d74a3fb15c62a00d191780bddc03[m[33m ([m[1;31morigin/comment-out-ai[m[33m)[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sun Apr 5 01:25:39 2026 -0700
+
+    working AC only version, deploy pending AC flow fixes, possible AI reentry.
+
+[33mcommit 0d586de32bb1809e37797146a53154dc8654b145[m[33m ([m[1;31morigin/update-front[m[33m, [m[1;32mupdate-front[m[33m)[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Apr 4 17:40:03 2026 -0700
+
+    Holy AI, music player, etc. pre-reversion to AWS connect check-point
+
+[33mcommit 59a0f5bd459d717415da3a00f5fe1e363c0b8086[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sat Mar 14 00:30:32 2026 -0700
+
+    upgrade dependencies
+
+[33mcommit 33a1d6d18ce9ab0d0677c23b9f2a7f14dea28af0[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Wed May 21 04:07:40 2025 -0700
+
+    updates script
+
+[33mcommit f9cc1fc303404656390391b071869ec410639bb9[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Wed May 21 03:45:35 2025 -0700
+
+    updates sitemap.xml
+
+[33mcommit 6a8ad02a8a742984dff31ef3e35f48292f72d894[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Fri Mar 28 23:13:11 2025 -0700
+
+    fixes titles and redirects I hope
+
+[33mcommit c85ebb27ebd8ea63f5b6f309144864969bdca48c[m
+Author: Aaron Rohrbacher <aaron.rohrbacher@teamsparq.com>
+Date:   Wed Mar 12 02:55:36 2025 -0700
+
+    removes erroneous double export
+
+[33mcommit 620a43af7e5935169eecf82297bbf3dea89ad2f9[m
+Merge: 03d4187c 68f2b576
+Author: Aaron Rohrbacher <aaron.rohrbacher@teamsparq.com>
+Date:   Sun Mar 9 01:21:23 2025 -0800
+
+    fix merge conflicts
+
+[33mcommit 03d4187cf0035e3088407b73e981fbdfdd095b72[m
+Author: Aaron Rohrbacher <aaron.rohrbacher@teamsparq.com>
+Date:   Sun Mar 9 01:14:22 2025 -0800
+
+    fixes titles, adds scripts
+
+[33mcommit c203fb5137779a5f97bfa48f6711375e8cb07eff[m
+Author: Aaron Rohrbacher <aaron.rohrbacher@teamsparq.com>
+Date:   Sat Mar 8 23:34:22 2025 -0800
+
+    adds helmet
+
+[33mcommit 68f2b5763eb7ceb41bc99cd9c5b1ae9ec3ee6658[m
+Merge: 8b9dadbc 7b6ca5e2
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Fri Feb 28 07:01:03 2025 -0800
+
+    Merge pull request #1 from AaronRohrbacher/convert
+    
+    adds resume, new images of my stupid face
+
+[33mcommit 7b6ca5e26e720668f04999d2a7ab4e2268c6583f[m[33m ([m[1;31morigin/convert[m[33m)[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Fri Feb 28 06:47:20 2025 -0800
+
+    adds resume, new images of my stupid face
+
+[33mcommit 8b9dadbc5aeb7b7c3e19b0a62648fdb286774738[m
+Author: Aaron Rohrbacher <aaron.rohrbacher@teamsparq.com>
+Date:   Tue Feb 11 00:17:29 2025 -0800
+
+    fixes mobile issues by adjust widths and gaps
+
+[33mcommit 5bff1d48df57066ac7dfa8b987a0cf92d7acf0aa[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sun Feb 9 19:56:18 2025 -0800
+
+    fixes images, breaks mobile nearly altogether
+
+[33mcommit 01f0d899ba8d98bed15d8a3b1893012394db421c[m
+Author: Aaron Rohrbacher <arjazz@icloud.com>
+Date:   Sun Feb 9 14:29:15 2025 -0800
+
+    adds portfolio descriptions, attempts to space them, and adds a new mockup image for my tired old brain to use with GIMP
+
+[33mcommit 409e9651a30f88e0c5d3866734ab4e70688f3709[m
+Author: Aaron Rohrbacher <aaron.rohrbacher@teamsparq.com>
+Date:   Sun Feb 9 08:40:36 2025 -0800
+
+    adds initial me-ness
+
+[33mcommit c9a285a57619048cd75753b651c67e87108f88b9[m
+Merge: 9791c100 4c66c6d5
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Tue Apr 23 22:44:05 2024 -0500
+
+    Merge pull request #17 from kevban/single-page
+    
+    Single page option in info.js
+
+[33mcommit 9791c100dbf991369e43dea2ebd2624690d8f196[m
+Merge: 03984c9a 38d48305
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Tue Apr 23 22:43:29 2024 -0500
+
+    Merge pull request #29 from zdnearchou/master
+    
+    Update BaseLayout.js
+
+[33mcommit 38d48305d176adf45286eb830ab514533eb14240[m
+Author: zdnearchou <65947309+zdnearchou@users.noreply.github.com>
+Date:   Sun Jan 21 11:19:55 2024 +0200
+
+    Create _redirects
+
+[33mcommit c310aff378e5cbf597c5245a2311843c74ad5238[m
+Author: zdnearchou <65947309+zdnearchou@users.noreply.github.com>
+Date:   Sun Jan 21 11:00:57 2024 +0200
+
+    Update BaseLayout.js
+    
+    Using eval() could be a security risk.
+
+[33mcommit 4c66c6d5df573423ba21244dc0a5a72c53f45463[m
+Author: kevban <kban0208@gmail.com>
+Date:   Fri Feb 10 10:48:09 2023 -0500
+
+    adding comments for custom hook
+
+[33mcommit 55a4373f1aede4e985aedd39b61f671416db64c0[m
+Author: kevban <kban0208@gmail.com>
+Date:   Fri Feb 10 10:44:10 2023 -0500
+
+    adding support for single page mode
+
+[33mcommit 03984c9a44c63442864ac205756998530c48392b[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Sat Jan 21 18:54:09 2023 -0600
+
+    Updated to include Canva mockup tutorial
+
+[33mcommit 40eb56b96a06ebbcdb284b724ab0a6e9c049a904[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Thu Jan 19 18:21:03 2023 -0600
+
+    Update README.md
+
+[33mcommit 46713067f34c38fdfdcb29d01cf6fa9283be1d88[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Thu Jan 12 10:33:19 2023 -0600
+
+    Update README.md
+
+[33mcommit 9cb0da84cb4ccbe0ad4e23c685b28b24fe1a763c[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Thu Jan 5 13:26:06 2023 -0600
+
+    Delete .idea directory
+
+[33mcommit b924a0ec9145bf83dafecd5b2f080fc15630ed56[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Thu Jan 5 13:22:41 2023 -0600
+
+    added darkmode to localstorage so refreshing will not undo changes. added more links of examples to readme
+
+[33mcommit b3b0ed220243099c390a1a86c7107bd7150e0902[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Thu Nov 10 10:11:33 2022 -0600
+
+    Update README.md
+
+[33mcommit 6ea473b6d5bcf2b1354e5e699932a3ea7aae44e4[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Tue Sep 27 08:54:25 2022 -0500
+
+    Update README.md
+
+[33mcommit 962d97e242465f07d292f21856c92e331e8bc5c2[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Tue Sep 13 09:25:00 2022 -0500
+
+    Update README.md
+
+[33mcommit da6d8adf627f577befc6dbee643e178e72b861b9[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Mon Sep 12 09:23:05 2022 -0500
+
+    Update README.md
+
+[33mcommit 81805b466ccdc6e5a7308a74af4c52cc66ffd4b7[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Wed Sep 7 09:06:06 2022 -0500
+
+    Update README.md
+
+[33mcommit 5c6f473965f9715c2d9f6e70a1a66165d2977a68[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Aug 25 08:08:17 2022 -0500
+
+    switched use of node-sass to just sass, updated vulnerable dependencies
+
+[33mcommit 53d004a9b1d7e34823c68924437818004d5695fc[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Thu Aug 25 07:50:58 2022 -0500
+
+    Update README.md
+
+[33mcommit a94575599873496feadb99f507797c588e0694be[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Sun Aug 7 19:43:58 2022 -0500
+
+    Update README.md
+
+[33mcommit fcba04d15dd4f8f60e69041c0c2cd20a3af8e1df[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Sun Aug 7 19:42:23 2022 -0500
+
+    Update README.md
+
+[33mcommit 4d9a9652c205dba84b93349e2937f9898d6952fa[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Tue Jul 26 14:40:44 2022 -0500
+
+    Update README.md
+
+[33mcommit 8c239e076c81db5b4e13361465bc2c2ee88c997d[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Tue Jul 26 14:40:14 2022 -0500
+
+    Update README.md
+
+[33mcommit 18f1ab11e773c5be430845f165a8897d535d6114[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Tue Jul 26 14:32:12 2022 -0500
+
+    Update README.md
+
+[33mcommit f05ccf2bc26ad437d55ebfa72cdce75caf7a0c8b[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Wed Jul 20 08:41:52 2022 -0500
+
+    Update README.md
+
+[33mcommit 2b152a8fea79c05e3231d27a9b45efecee0f41b9[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Mon Jul 18 15:17:20 2022 -0500
+
+    Update README.md
+
+[33mcommit 0fdff3ceb94dde38d03e4812478b7d9a51a7705e[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Jul 18 15:05:13 2022 -0500
+
+    improved lighthouse score
+
+[33mcommit f4f144f0bcc3dfdabd2c5a9a2772c46282e44e83[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Tue Jul 12 16:28:27 2022 -0500
+
+    Update README.md
+
+[33mcommit d474301386ec66d267a07917281874b7baf5e6d8[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 21:17:49 2022 -0500
+
+    Update README.md
+
+[33mcommit 3f2db408c00207d5b91038ea98ade6d6ca87facd[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 14:34:16 2022 -0500
+
+    fix deploy issue
+
+[33mcommit 497a758484a87609937cd27361616715ab6fbd5a[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 14:22:16 2022 -0500
+
+    fixed name in package json
+
+[33mcommit 4de825ffcfde24767f0bf7733942f1f9c4e056b5[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 14:21:57 2022 -0500
+
+    initial commit of 2.0.0
+
+[33mcommit 32c0db75a6586d662887761b93d8258e2b0a9a7d[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 11:50:54 2022 -0500
+
+    .
+
+[33mcommit dd4a8c85b726de7980762e29ad37e3bbf4c6ec73[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 11:45:57 2022 -0500
+
+    .
+
+[33mcommit c5db097241ff1ff2f2824ef4864e8ca3da0f3f19[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 11:42:07 2022 -0500
+
+    trying to fix build issues
+
+[33mcommit d42b709233f91bd9d6ed18fb25dae9466e7555b7[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 11:32:13 2022 -0500
+
+    attempting to fix build errors
+
+[33mcommit 131a6ce23a883be8d1ae955458ecd4fe7583c4c6[m
+Merge: 6cb402fc 725c8de0
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 11:18:35 2022 -0500
+
+    Merge branch 'main' of https://github.com/paytonjewell/paytonpierce.dev
+
+[33mcommit 6cb402fc1e8ef71d0f33d0ddc96071e28e3f4231[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 11:18:16 2022 -0500
+
+    .
+
+[33mcommit 8bfa2877fe41d4a9a40ed3ca252619fbbc9b4c5d[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 11:17:28 2022 -0500
+
+    updated version number
+
+[33mcommit 725c8de0bf301d97eef5fe83d80b60a0e4da0168[m
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 11:08:02 2022 -0500
+
+    Update README.md
+
+[33mcommit 8ee52fc8b2678ef23a86d199f6d62f5769123cd7[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 1 10:52:19 2022 -0500
+
+    dependency upgrades
+
+[33mcommit 3d28b240cde50839b3b2377e07ff25f8eeac484b[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Jun 30 19:43:14 2022 -0500
+
+    improvements
+
+[33mcommit d62afee87a0a8e65dadc42bb4a727c55b3fdc027[m
+Merge: 93e69af3 dcfb86ca
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Jun 28 13:26:47 2022 -0500
+
+    Merge branch 'main' of https://github.com/paytonjewell/paytonpierce.dev
+
+[33mcommit 93e69af398343c8eb8b581ba5845306fc927f20d[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Jun 28 13:26:35 2022 -0500
+
+    new logo
+
+[33mcommit dcfb86ca7a54d1ec9cc2ddc8af19243c21b72a2a[m
+Merge: 6a16705e bbf697b6
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Tue Jun 21 14:07:07 2022 -0500
+
+    Merge pull request #34 from paytonjewell/dependabot/npm_and_yarn/node-forge-1.3.0
+    
+    Bump node-forge from 1.2.0 to 1.3.0
+
+[33mcommit 6a16705e6c493cbf941b563628b34b3213778d5e[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Jun 16 15:16:53 2022 -0500
+
+    .
+
+[33mcommit 8449f3368c65335785bd22e6a73968fabf9d94dd[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Jun 16 15:00:42 2022 -0500
+
+    removed gh pages from project
+
+[33mcommit e90f67821647c77ab78d82d98e3079eb0ff64b35[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Jun 16 14:58:25 2022 -0500
+
+    switched from hashrouter to browserrouter
+
+[33mcommit bbf697b69ab2dc6971540f94e0e0885c9cbcffa4[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Thu Jun 2 18:23:56 2022 +0000
+
+    Bump node-forge from 1.2.0 to 1.3.0
+    
+    Bumps [node-forge](https://github.com/digitalbazaar/forge) from 1.2.0 to 1.3.0.
+    - [Release notes](https://github.com/digitalbazaar/forge/releases)
+    - [Changelog](https://github.com/digitalbazaar/forge/blob/main/CHANGELOG.md)
+    - [Commits](https://github.com/digitalbazaar/forge/compare/v1.2.0...v1.3.0)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: node-forge
+      dependency-type: direct:production
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit 82f0be29b9ef40e589d3bb8874bafea16d9f99a0[m
+Merge: 041f0f02 74a8e580
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Thu Jun 2 13:22:56 2022 -0500
+
+    Merge pull request #32 from paytonjewell/dependabot/npm_and_yarn/async-2.6.4
+    
+    Bump async from 2.6.3 to 2.6.4
+
+[33mcommit 041f0f02965468e09dba1c6a1161bcc523fb1b44[m
+Merge: af07413c 9d559dcd
+Author: Payton Pierce <paytontaylor96@gmail.com>
+Date:   Thu Jun 2 13:22:47 2022 -0500
+
+    Merge pull request #33 from paytonjewell/dependabot/npm_and_yarn/eventsource-1.1.1
+    
+    Bump eventsource from 1.1.0 to 1.1.1
+
+[33mcommit af07413c05c538b358d9e7a0eb5b6f7f34d03a0e[m
+Merge: 724f77ca caacbcda
+Author: Payton Jewell <payton@mathisonprojects.com>
+Date:   Thu Jun 2 12:26:55 2022 -0500
+
+    Merge branch 'main' of https://github.com/paytonjewell/paytonpierce.dev
+
+[33mcommit 724f77ca4805cbed9c8c49f49691921d4d69aa55[m
+Author: Payton Jewell <payton@mathisonprojects.com>
+Date:   Thu Jun 2 12:26:36 2022 -0500
+
+    updated last name
+
+[33mcommit 9d559dcd15d180ad7f296611cba6367c01bbb788[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Wed Jun 1 22:09:14 2022 +0000
+
+    Bump eventsource from 1.1.0 to 1.1.1
+    
+    Bumps [eventsource](https://github.com/EventSource/eventsource) from 1.1.0 to 1.1.1.
+    - [Release notes](https://github.com/EventSource/eventsource/releases)
+    - [Changelog](https://github.com/EventSource/eventsource/blob/master/HISTORY.md)
+    - [Commits](https://github.com/EventSource/eventsource/compare/v1.1.0...v1.1.1)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: eventsource
+      dependency-type: indirect
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit 9111fa08640e50e5a21b10a07dd879adbddef4f8[m
+Author: Payton Jewell <payton@mathisonprojects.com>
+Date:   Thu Apr 28 14:34:22 2022 -0500
+
+    starting work on desktop version
+
+[33mcommit 74a8e580f321aba194ac73805db86f9a36fb420f[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Wed Apr 27 19:31:40 2022 +0000
+
+    Bump async from 2.6.3 to 2.6.4
+    
+    Bumps [async](https://github.com/caolan/async) from 2.6.3 to 2.6.4.
+    - [Release notes](https://github.com/caolan/async/releases)
+    - [Changelog](https://github.com/caolan/async/blob/v2.6.4/CHANGELOG.md)
+    - [Commits](https://github.com/caolan/async/compare/v2.6.3...v2.6.4)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: async
+      dependency-type: indirect
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit caacbcda781fe5cd29a7de62c6c6c67a8fe3148a[m
+Merge: 1727bd3f dd25f17c
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Apr 27 14:26:39 2022 -0500
+
+    Merge pull request #31 from paytonjewell/dependabot/npm_and_yarn/minimist-1.2.6
+    
+    Bump minimist from 1.2.5 to 1.2.6
+
+[33mcommit 1727bd3f85206f389ee55e43928f187d023f0fa4[m
+Author: Payton Jewell <payton@mathisonprojects.com>
+Date:   Wed Apr 27 14:20:28 2022 -0500
+
+    under construction
+
+[33mcommit dd25f17c93cf70a2d6546fb76c4cc4638c0fe10c[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Thu Mar 31 17:16:20 2022 +0000
+
+    Bump minimist from 1.2.5 to 1.2.6
+    
+    Bumps [minimist](https://github.com/substack/minimist) from 1.2.5 to 1.2.6.
+    - [Release notes](https://github.com/substack/minimist/releases)
+    - [Commits](https://github.com/substack/minimist/compare/1.2.5...1.2.6)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: minimist
+      dependency-type: indirect
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit e529d89e02f7bc0f9e7efcc769f707fefe9362ec[m
+Author: Payton Jewell <payton@mathisonprojects.com>
+Date:   Mon Feb 28 11:35:54 2022 -0600
+
+    updated package
+
+[33mcommit f0a866ef01813c8f26302225a2b19f432c3e37c0[m
+Merge: d22c27fc 56469a67
+Author: Payton Jewell <payton@mathisonprojects.com>
+Date:   Mon Feb 28 11:28:21 2022 -0600
+
+    Merge branch 'main' of https://github.com/paytonjewell/paytonjewell.dev
+
+[33mcommit d22c27fc3bd653966e4a3466ac708113602b8fef[m
+Author: Payton Jewell <payton@mathisonprojects.com>
+Date:   Mon Feb 28 11:28:02 2022 -0600
+
+    updated browser caniuse
+
+[33mcommit 56469a67e3bbee9c049d3240e0f1123b8648adc9[m
+Merge: 159ba50e 0e20af82
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Feb 28 11:27:03 2022 -0600
+
+    Merge pull request #30 from paytonjewell/dependabot/npm_and_yarn/nanoid-3.3.1
+    
+    Bump nanoid from 3.1.23 to 3.3.1
+
+[33mcommit 159ba50e6e5a27c62f6a5b35a08b27546a163be8[m
+Author: Payton Jewell <payton@mathisonprojects.com>
+Date:   Mon Feb 28 11:25:50 2022 -0600
+
+    updating dependencies
+
+[33mcommit 0e20af820a47e50970cd1a0ec8a788a0e27750b2[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Mon Feb 28 17:22:59 2022 +0000
+
+    Bump nanoid from 3.1.23 to 3.3.1
+    
+    Bumps [nanoid](https://github.com/ai/nanoid) from 3.1.23 to 3.3.1.
+    - [Release notes](https://github.com/ai/nanoid/releases)
+    - [Changelog](https://github.com/ai/nanoid/blob/main/CHANGELOG.md)
+    - [Commits](https://github.com/ai/nanoid/compare/3.1.23...3.3.1)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: nanoid
+      dependency-type: indirect
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit a207fdbbe9578e908bce1440e4b88168e96664a2[m
+Merge: 75892926 9792cf25
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Feb 28 11:22:08 2022 -0600
+
+    Merge pull request #20 from paytonjewell/dependabot/npm_and_yarn/path-parse-1.0.7
+    
+    Bump path-parse from 1.0.6 to 1.0.7
+
+[33mcommit 75892926ccb1779719eb8254495d9662c0230aed[m
+Merge: b72c850f eca99c1b
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Feb 28 11:21:59 2022 -0600
+
+    Merge pull request #22 from paytonjewell/dependabot/npm_and_yarn/ws-6.2.2
+    
+    Bump ws from 6.2.1 to 6.2.2
+
+[33mcommit b72c850f7a3d750f196f2f1cd3d2b50e90d1b477[m
+Merge: 51effd0c fb2e4a5c
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Feb 28 11:21:38 2022 -0600
+
+    Merge pull request #26 from paytonjewell/dependabot/npm_and_yarn/node-sass-7.0.0
+    
+    Bump node-sass from 6.0.1 to 7.0.0
+
+[33mcommit 51effd0c925571ca67aa5f9d2db64e7a4011bc60[m
+Merge: 3c019a09 3b82d743
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Feb 28 11:21:25 2022 -0600
+
+    Merge pull request #27 from paytonjewell/dependabot/npm_and_yarn/follow-redirects-1.14.8
+    
+    Bump follow-redirects from 1.14.1 to 1.14.8
+
+[33mcommit 3c019a093e00618a81d4f00fcd8e93248a9a8387[m
+Merge: 8b19993b 15bf168f
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Feb 28 11:21:13 2022 -0600
+
+    Merge pull request #29 from paytonjewell/dependabot/npm_and_yarn/url-parse-1.5.10
+    
+    Bump url-parse from 1.5.1 to 1.5.10
+
+[33mcommit 15bf168fc8cca68a688db62ae41e0f214322ed09[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Sun Feb 27 23:34:26 2022 +0000
+
+    Bump url-parse from 1.5.1 to 1.5.10
+    
+    Bumps [url-parse](https://github.com/unshiftio/url-parse) from 1.5.1 to 1.5.10.
+    - [Release notes](https://github.com/unshiftio/url-parse/releases)
+    - [Commits](https://github.com/unshiftio/url-parse/compare/1.5.1...1.5.10)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: url-parse
+      dependency-type: indirect
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit 3b82d743fcc920c83f3edd6ab23f10fa101a643f[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Tue Feb 15 01:21:31 2022 +0000
+
+    Bump follow-redirects from 1.14.1 to 1.14.8
+    
+    Bumps [follow-redirects](https://github.com/follow-redirects/follow-redirects) from 1.14.1 to 1.14.8.
+    - [Release notes](https://github.com/follow-redirects/follow-redirects/releases)
+    - [Commits](https://github.com/follow-redirects/follow-redirects/compare/v1.14.1...v1.14.8)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: follow-redirects
+      dependency-type: indirect
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit fb2e4a5c746ef7df9ff987b654beedb6eb92a99b[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Fri Feb 11 04:03:19 2022 +0000
+
+    Bump node-sass from 6.0.1 to 7.0.0
+    
+    Bumps [node-sass](https://github.com/sass/node-sass) from 6.0.1 to 7.0.0.
+    - [Release notes](https://github.com/sass/node-sass/releases)
+    - [Changelog](https://github.com/sass/node-sass/blob/master/CHANGELOG.md)
+    - [Commits](https://github.com/sass/node-sass/compare/v6.0.1...v7.0.0)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: node-sass
+      dependency-type: direct:production
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit 8b19993b13bb986ffecb0ca4ed88b0a271870270[m
+Author: Payton Jewell <payton@mathisonprojects.com>
+Date:   Fri Jan 14 10:29:13 2022 -0600
+
+    fixed issue where terminal margin caused overlap with navbar
+
+[33mcommit a05df9147904e6485af21b404f76f64f9756f983[m
+Author: Payton Jewell <payton@mathisonprojects.com>
+Date:   Wed Jan 12 17:08:53 2022 -0600
+
+    updated about page, reduced margins of terminals a bit so that it's obvious there is more content to the about page
+
+[33mcommit a12f3ed2396516ab07213479a965fa123e7e9117[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Jan 10 09:17:02 2022 -0600
+
+    fixing dependency issues
+
+[33mcommit 6f5f42b911d2d64d2e5b5f8c129c328101a84254[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Jan 10 09:10:00 2022 -0600
+
+    removed unused/deleted social profiles, fixed spacing of remaining social icons
+
+[33mcommit eca99c1b151e32262ca904d52f53ff05a8734623[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Wed Dec 8 18:28:51 2021 +0000
+
+    Bump ws from 6.2.1 to 6.2.2
+    
+    Bumps [ws](https://github.com/websockets/ws) from 6.2.1 to 6.2.2.
+    - [Release notes](https://github.com/websockets/ws/releases)
+    - [Commits](https://github.com/websockets/ws/compare/6.2.1...6.2.2)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: ws
+      dependency-type: indirect
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit 9792cf253b7298c2d2d409b26f11b008d37dfc42[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Wed Dec 8 18:27:33 2021 +0000
+
+    Bump path-parse from 1.0.6 to 1.0.7
+    
+    Bumps [path-parse](https://github.com/jbgutierrez/path-parse) from 1.0.6 to 1.0.7.
+    - [Release notes](https://github.com/jbgutierrez/path-parse/releases)
+    - [Commits](https://github.com/jbgutierrez/path-parse/commits/v1.0.7)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: path-parse
+      dependency-type: indirect
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit 84dc000f91fb49404bdfec4d302bbcd1400e5e2e[m
+Merge: d54a9124 aa3bfed7
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Dec 8 12:26:57 2021 -0600
+
+    Merge pull request #18 from paytonjewell/dependabot/npm_and_yarn/tmpl-1.0.5
+    
+    Bump tmpl from 1.0.4 to 1.0.5
+
+[33mcommit d54a91249299a0005143ddcb5857cda1fa5efbcf[m
+Merge: 7263de87 a591deba
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Dec 8 12:26:47 2021 -0600
+
+    Merge pull request #19 from paytonjewell/dependabot/npm_and_yarn/tar-6.1.11
+    
+    Bump tar from 6.1.0 to 6.1.11
+
+[33mcommit a591debab2e6c03a3f0cf20375b44d14ad6b7ccb[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Wed Dec 8 18:18:52 2021 +0000
+
+    Bump tar from 6.1.0 to 6.1.11
+    
+    Bumps [tar](https://github.com/npm/node-tar) from 6.1.0 to 6.1.11.
+    - [Release notes](https://github.com/npm/node-tar/releases)
+    - [Changelog](https://github.com/npm/node-tar/blob/main/CHANGELOG.md)
+    - [Commits](https://github.com/npm/node-tar/compare/v6.1.0...v6.1.11)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: tar
+      dependency-type: indirect
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit aa3bfed7b3182c8c446698ec6fbf54c22aae1cca[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Wed Dec 8 18:18:30 2021 +0000
+
+    Bump tmpl from 1.0.4 to 1.0.5
+    
+    Bumps [tmpl](https://github.com/daaku/nodejs-tmpl) from 1.0.4 to 1.0.5.
+    - [Release notes](https://github.com/daaku/nodejs-tmpl/releases)
+    - [Commits](https://github.com/daaku/nodejs-tmpl/commits/v1.0.5)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: tmpl
+      dependency-type: indirect
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit 7263de876a7170b80914277cbf5af6da66627a53[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Dec 8 12:16:56 2021 -0600
+
+    re-added router
+
+[33mcommit 4a2589ae7bc4af41aa49f7c097326e3a72afe227[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Oct 7 08:25:27 2021 -0700
+
+    updated bio & some styling
+
+[33mcommit 3fb1aec6e73a3dd6ccfdc6c7b560380af6159181[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Oct 4 12:13:34 2021 -0700
+
+    fixed spacing of windows on about page
+
+[33mcommit fce343bc5c76ecca96151b303d73dbbba4b187e0[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Sep 15 15:20:43 2021 -0500
+
+    removed weird hover effect from main image, changed 'master' to 'main'
+
+[33mcommit e44cf592007262aa9a7996454e63d56b5c251db1[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Sep 13 12:07:54 2021 -0500
+
+    updated vulnerable package
+
+[33mcommit 323883919c94ffe8ab11c4c1ec9c1bc075b4ab4b[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Sat Aug 14 12:45:57 2021 -0500
+
+    adjusted skills section
+
+[33mcommit c7d52546a0da21b2e26cfca47ee10c4e418d8b36[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 30 12:00:18 2021 -0500
+
+    attempting to fix issue with mobile navbar active item
+
+[33mcommit 8e0893f8902dfc9746f7b4935c8e663097a208e6[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Jul 20 20:12:30 2021 -0500
+
+    minor change to active navbar item borders on mobile'
+
+[33mcommit 1bd1da285b5c8b8f9763d3f92f1f48f4bd69aabb[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 16 19:10:19 2021 -0500
+
+    fixed issue with navbar in light mode, refactored a bit
+
+[33mcommit 5602a00482b5e9f1074ee6fa884b4fd445c82a66[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 16 15:20:36 2021 -0500
+
+    fixed padding issue
+
+[33mcommit b82a5517018d8a27562ab1e00334ca5833fb04c9[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 16 15:13:50 2021 -0500
+
+    updated navbar styles, dark mode
+
+[33mcommit fd24ce1125d3a6541cc686910c2536aab962af80[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 16 11:57:26 2021 -0500
+
+    made navbar sticky, changed up some dark mode styles
+
+[33mcommit bca48bc80731ecbf9416f983919432f69b54e03e[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 16 08:36:31 2021 -0500
+
+    updated dependencies
+
+[33mcommit fa4a2cafc0a4063ddcf17cb5c9751bbec5f935dd[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 16 08:23:45 2021 -0500
+
+    updated logo to use svg rather than png
+
+[33mcommit 4183c6c9570cbd32f4d0d3e09b6576a7a5beadc1[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Jul 14 07:50:54 2021 -0500
+
+    updated README.md
+    
+    added new image to reflect changes made
+
+[33mcommit 9457e67db48031338d3f4ebf6bc14c6b7df8f350[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Jul 14 07:46:31 2021 -0500
+
+    updated home and about with new job position, updated main photo
+
+[33mcommit 92b8413ef18f5abc4b087aedf7715d9e05e80045[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Jun 30 15:56:20 2021 -0500
+
+    fixed issue with text color on about page, updated some dependencies
+
+[33mcommit adcceaa6e86300c6858afe00b2a8314d00917589[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Jun 30 15:44:49 2021 -0500
+
+    refactored folder structure, removed hover effect limit from mobile devices for portfolio page
+
+[33mcommit 361432c6d996fd7f2b910b2b7453194782246283[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Jun 30 15:37:19 2021 -0500
+
+    refactored some bigger components into smaller parts, changed up buttons on portfolio page
+
+[33mcommit da634b4bf56787ae938b74a3383670451bb287a8[m
+Merge: bd8b946d c6e3ffbd
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Jun 30 13:52:45 2021 -0500
+
+    Merge pull request #15 from paytonjewell/main
+    
+    added moviepedia project to portfolio
+
+[33mcommit c6e3ffbd1127a6dba38da29dc30b33d599895fdb[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Jun 30 13:50:29 2021 -0500
+
+    added moviepedia project to portfolio
+
+[33mcommit bd8b946db42ef43a3162d85b70d036dec05fdf85[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri May 14 14:26:43 2021 -0500
+
+    updated dependencies
+
+[33mcommit ee078608f1704c1f8a31a7f27a35d9fb1622080d[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri May 14 14:09:14 2021 -0500
+
+    updated dependencies
+
+[33mcommit bec93c83bf24739784dfcb8baac38829ac2aa821[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri May 14 13:50:39 2021 -0500
+
+    reduced shadows and avatar size bc they felt a tad overdramatic
+
+[33mcommit 75df9c87fd7587b35f3b6c9a64ebf27f831bd658[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Feb 15 18:57:26 2021 -0600
+
+    removed instagram, edited About page, updated date in footer
+
+[33mcommit 0c17984617b253f6dfcbf2127cedaf95d26489ae[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Nov 18 14:43:31 2020 -0600
+
+    updated dependencies about about file
+
+[33mcommit b676704f2937ea8924bdf8a7dbee15e204c9570e[m
+Author: Payton Jewell <paytonjewell@paytons-mbp.home>
+Date:   Wed Nov 4 16:04:38 2020 -0600
+
+    updated dependencies
+
+[33mcommit d69678f21763891138043defad131504a7b504cd[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Oct 6 10:25:00 2020 -0500
+
+    added waving hand animation
+
+[33mcommit cb0f320f084a15ca940645991e59fbf6b90031b8[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Sep 30 16:43:19 2020 -0500
+
+    improved contrast
+
+[33mcommit b08ea8d44b3cde107b534dd69d08f670a94f1dd3[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Sep 30 16:31:50 2020 -0500
+
+    reduced image size to enhance performance
+
+[33mcommit 938e6ff7bc96e31b04768bc945af6eb3a55f87a5[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Sep 30 16:19:51 2020 -0500
+
+    updated metadata
+
+[33mcommit b1dbedf114fa54812692574e8721cefb1c15a886[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Sep 30 16:12:36 2020 -0500
+
+    updated meta information
+
+[33mcommit c1a9b51c01239da3bc1796fc3fdb5afc303b08cb[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Sep 25 17:47:09 2020 -0500
+
+    stylistic changes
+
+[33mcommit 103a3cc4aea4aafb3340e30ea4c0c6bc16abf574[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Sep 25 16:46:43 2020 -0500
+
+    updated styles
+
+[33mcommit 58bee2e4d4bc236d7a20bb922fb7a4bce1570acc[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Sep 25 16:45:43 2020 -0500
+
+    updated styles
+
+[33mcommit 793d39aa39e775d092fd6429f10acebbb0da4afa[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Sep 25 16:44:04 2020 -0500
+
+    updated styles
+
+[33mcommit 46d78270c7844b824cb168482a5081db8a7ac633[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Sep 25 16:27:00 2020 -0500
+
+    added cname record
+
+[33mcommit 9f0f8d77fb47f15203da384deff2fbf19b9787a3[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Sep 25 16:20:38 2020 -0500
+
+    changed out photos for better consistency and quality
+
+[33mcommit 8e47e52deb40536e3063b5b35da1bf104fa64025[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Sep 25 16:06:04 2020 -0500
+
+    updated about page with skills list
+
+[33mcommit 83c8ac3972a773c2ddb1e15125e40066186ae682[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Sep 25 14:49:01 2020 -0500
+
+    fixed broken link
+
+[33mcommit 42c18ef4254bb28ff28b9245f7ebbe3c5f54d3d6[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Sep 25 10:25:34 2020 -0500
+
+    Update README.md
+
+[33mcommit 63cd3013937f26847cda54717b1c69a104faa22a[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Sep 25 10:21:24 2020 -0500
+
+    updated dependencies
+
+[33mcommit 2e196cc7ef2098b027bba6c834de4fc82c19903d[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Sep 25 10:11:17 2020 -0500
+
+    minor changes, updated gitignore
+
+[33mcommit 45ebe308428188f64f925c4699c48c3eb95ea487[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Sep 17 16:21:17 2020 -0500
+
+    updated mobile styles to increase responsiveness
+
+[33mcommit 99e29da375b17c511934651ce696a22837cf32f1[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Sep 17 10:08:53 2020 -0500
+
+    Delete .DS_Store
+
+[33mcommit 7dd779fd193da4f3d43aa2cfaf186797ef313662[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Sep 17 10:07:07 2020 -0500
+
+    updated main profile photo
+
+[33mcommit 243921d340c0e4ece152c5069a48dcf74fbcd171[m
+Merge: 9e7a195b ee0a4d8f
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Sep 9 11:46:49 2020 -0500
+
+    Merge pull request #7 from paytonjewell/dependabot/npm_and_yarn/websocket-extensions-0.1.4
+    
+    Bump websocket-extensions from 0.1.3 to 0.1.4
+
+[33mcommit 9e7a195bd8c08f18978c6e09abe7ffe9f2984a6c[m
+Merge: 8cd0b73a ff03b3ed
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Sep 9 11:46:39 2020 -0500
+
+    Merge pull request #8 from paytonjewell/dependabot/npm_and_yarn/elliptic-6.5.3
+    
+    Bump elliptic from 6.5.2 to 6.5.3
+
+[33mcommit 8cd0b73a6f6eef7fdfbe427271cf804ddb48660b[m
+Merge: d6751c59 6cc96bd2
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Sep 9 11:46:25 2020 -0500
+
+    Merge pull request #9 from paytonjewell/dependabot/npm_and_yarn/http-proxy-1.18.1
+    
+    Bump http-proxy from 1.18.0 to 1.18.1
+
+[33mcommit d6751c59aa22328eeeecce2e9ce393b15569fea4[m
+Author: Payton Jewell <paytonjewell@macbook-pro.home>
+Date:   Wed Sep 9 11:38:55 2020 -0500
+
+    switched to hash router
+
+[33mcommit e3e2713830966fe3bfdf47e73b0a768081c4aace[m
+Author: Payton Jewell <paytonjewell@macbook-pro.home>
+Date:   Tue Sep 8 17:48:25 2020 -0500
+
+    changed base href to see if it will resolve 404 issue on refresh
+
+[33mcommit 6cc96bd26907d8b401e4e4ae3367668ec40cda87[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Tue Sep 8 22:32:43 2020 +0000
+
+    Bump http-proxy from 1.18.0 to 1.18.1
+    
+    Bumps [http-proxy](https://github.com/http-party/node-http-proxy) from 1.18.0 to 1.18.1.
+    - [Release notes](https://github.com/http-party/node-http-proxy/releases)
+    - [Changelog](https://github.com/http-party/node-http-proxy/blob/master/CHANGELOG.md)
+    - [Commits](https://github.com/http-party/node-http-proxy/compare/1.18.0...1.18.1)
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit ff03b3ed1c8cf69bd8c2018a48e6d360452a2235[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Tue Sep 8 22:32:31 2020 +0000
+
+    Bump elliptic from 6.5.2 to 6.5.3
+    
+    Bumps [elliptic](https://github.com/indutny/elliptic) from 6.5.2 to 6.5.3.
+    - [Release notes](https://github.com/indutny/elliptic/releases)
+    - [Commits](https://github.com/indutny/elliptic/compare/v6.5.2...v6.5.3)
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit ee0a4d8f1a4de3ab1ae1db5541d022d208bebbde[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Tue Sep 8 22:32:17 2020 +0000
+
+    Bump websocket-extensions from 0.1.3 to 0.1.4
+    
+    Bumps [websocket-extensions](https://github.com/faye/websocket-extensions-node) from 0.1.3 to 0.1.4.
+    - [Release notes](https://github.com/faye/websocket-extensions-node/releases)
+    - [Changelog](https://github.com/faye/websocket-extensions-node/blob/master/CHANGELOG.md)
+    - [Commits](https://github.com/faye/websocket-extensions-node/compare/0.1.3...0.1.4)
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+[33mcommit 4e667db471e2709f31cba028c8d66931e13b3b1d[m
+Author: Payton Jewell <paytonjewell@macbook-pro.home>
+Date:   Tue Sep 8 17:31:14 2020 -0500
+
+    Changed to React
+
+[33mcommit 5d577ee7f42aaad189f06ff2df2da862ff7d664c[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Aug 20 14:18:19 2020 -0500
+
+    changed favicon
+
+[33mcommit 838bd96d5f19e267a76f2bee919411c7efb6cde4[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Aug 20 14:12:59 2020 -0500
+
+    added twitter to social links
+
+[33mcommit cab09b6348a08d34d98bbb39ece02b05a5003831[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Aug 5 20:47:54 2020 -0500
+
+    edited main bio on homepage, changed nav routes to reach '/' rather than index.html
+
+[33mcommit 9031eec42b76a51c4432d1f49f101acb43c2164b[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Aug 3 20:33:08 2020 -0500
+
+    made dark mode persistent throughout the entire website
+
+[33mcommit 303b7c43d364260a1627f5a4e332193bff69bcfd[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Jul 22 20:02:43 2020 -0500
+
+    added social links
+
+[33mcommit f561dd99b9c125d5bb32767cdf1eca8385b264a3[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Sat Jul 18 18:41:09 2020 -0500
+
+    updated link styles
+
+[33mcommit 8bf849cb851c044aa771775d2687d3811e31e38f[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Sat Jul 18 17:59:02 2020 -0500
+
+    created grid on portfolio page
+
+[33mcommit 23643603ff019e341dd0359035dd785f9a39f0c6[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Sat Jul 18 17:32:44 2020 -0500
+
+    created more pages, configured some things, changed footer design
+
+[33mcommit 9a30d5fe18c7e1ad28e7e006ab6217d7e3df0788[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Jul 17 06:14:01 2020 -0500
+
+    completely revamped homepage
+
+[33mcommit e662143ed4fbca7ddbe62dd2c2847fc556459b73[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Jul 16 13:13:22 2020 -0500
+
+    removed phone number
+
+[33mcommit 2cd8d303c85077a251e2521f28ba1e36fb0e6607[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Jun 30 10:48:55 2020 -0500
+
+    updated javascript to make file visibility on hiring page exclusive
+
+[33mcommit 083c007d5dc5ebc155bdb31f9eb824b0b22192f1[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Jun 30 10:14:02 2020 -0500
+
+    updated mobile number
+
+[33mcommit 15ee9b07547603a7067d4704572520071f21b76a[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Apr 10 23:54:02 2020 -0500
+
+    added project to portfolio
+
+[33mcommit 9c23af935896f34de1df49b112eef55d75b52d0e[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Apr 10 18:10:44 2020 -0500
+
+    added new projects to portfolio page
+
+[33mcommit 8fa522f8415ff45017bb7eaa9839f53df7410a0e[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Sat Apr 4 13:49:39 2020 -0500
+
+    changed scroll class, added medium link
+
+[33mcommit c0ce695152338689490eaa9d2224690b18d2a1ef[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Fri Mar 27 11:50:48 2020 -0500
+
+    minor text change
+
+[33mcommit 63b489d6efba230d59f75580a520eb4a44975d1a[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Mar 24 09:18:37 2020 -0500
+
+    changed background attachment to fixed
+
+[33mcommit 5665963b7614fa70bb0d9b02ddb9c9b661905695[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Mar 24 09:08:08 2020 -0500
+
+    changed background size to cover
+
+[33mcommit c32eda43ad32973db9c5b17ae095a2e335a53498[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Thu Mar 19 12:36:01 2020 -0500
+
+    changed background gradient to something a little more dynamic
+
+[33mcommit 71e12aefb722ae19807e416de2f9bfff22a7ab04[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Mar 18 14:49:56 2020 -0500
+
+    updated photo
+
+[33mcommit 3d77845f5bac8b53d6566135ff40308dc189faec[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Mar 18 14:13:02 2020 -0500
+
+    changed photo
+
+[33mcommit d14fec912c1eb08806de8f0f6bd71c4c0d3bda91[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Wed Mar 18 09:37:30 2020 -0500
+
+    corrected typo
+
+[33mcommit 1570654bdcdd83b24f2095ae5442b11e7cee662f[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Mar 17 16:47:28 2020 -0500
+
+    minor changes
+
+[33mcommit 1ef7e77ba21bda61fcea0a2cc8f25746d0004438[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Mar 17 16:35:14 2020 -0500
+
+    made more responsive
+
+[33mcommit bc929a2827e28c24af1ec2f346c85b4be86d5f3e[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Mar 17 15:55:49 2020 -0500
+
+    minor change in text
+
+[33mcommit caa9cecf75a4044aa2fb18e206d3bbc944ed670e[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Mar 17 15:45:26 2020 -0500
+
+    changed height of about page
+
+[33mcommit 6aaa6fe91ae7a2833f770f3f2d2426412cbcd1b8[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Mar 17 15:43:22 2020 -0500
+
+    changed transparency of button
+
+[33mcommit 73ff3361a76e99fb33eac893948810a3b53d935f[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Tue Mar 17 15:29:43 2020 -0500
+
+    v 2.0
+
+[33mcommit 58b5cbd183a7c73cec3af528c0d01529895ba616[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Mar 16 17:53:26 2020 -0500
+
+    added portfolio page
+
+[33mcommit fc2fb353ccf78d2865a53e4c892bfed8bfb3a816[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Mar 16 17:24:10 2020 -0500
+
+    added some css to make about terminals look more ~aesthetic~
+
+[33mcommit 1fbb8d487a01a32cae82709f68811a510eca71ef[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Mar 16 17:09:29 2020 -0500
+
+    minor update
+
+[33mcommit 66196fcf932f6d02f64927f604d4b885aa8f5981[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Mar 16 17:07:02 2020 -0500
+
+    minor edits
+
+[33mcommit 90dba18fea28f6cb62032634fd259eb4153e59a9[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Mar 16 17:03:12 2020 -0500
+
+    added hire.html, modified other pages
+
+[33mcommit a98039fdef17871208f5815af7953980db5c7014[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Mar 16 15:36:55 2020 -0500
+
+    added some stuff, added footer, we'll see if it works like it's supposed to
+
+[33mcommit c67c1433aad8624f8bdb02a6161fc4fa6c676817[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Mar 16 15:12:30 2020 -0500
+
+    minor aesthetic changes
+
+[33mcommit 2391c789643bfa8113453038d3bcdd76b417cf35[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Mar 16 14:39:03 2020 -0500
+
+    minor changes
+
+[33mcommit 6ebb85678aff68ecba9326f31946227dce6f8a07[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Mar 16 13:53:28 2020 -0500
+
+    initial upload of files
+
+[33mcommit 76682e05bd2f256af19cd17d8b390f685fbaf7e3[m
+Author: Payton Jewell <paytontaylor96@gmail.com>
+Date:   Mon Mar 16 13:52:14 2020 -0500
+
+    Initial commit

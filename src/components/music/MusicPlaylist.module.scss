@@ -323,6 +323,17 @@
 
 // ─── Track Art Swatch ───────────────────────────────────────────────────────
 .trackArt {
+  // Reset native button chrome — this element is a real <button> for a11y
+  // (keyboard focus, aria-label) but must look like the old <div>.
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+
   position: relative;
   width: 48px;
   height: 48px;
@@ -333,6 +344,15 @@
   justify-content: center;
   overflow: hidden;
   box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.2);
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-1);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: wait;
+  }
 
   @media (max-width: 640px) {
     width: 42px;

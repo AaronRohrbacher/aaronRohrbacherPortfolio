@@ -1,11 +1,14 @@
-import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
+import { notifyAaron } from '@/lib/notifyAaron.mjs';
 
-// Logs chat messages from the in-browser AI chat to CloudWatch (via console.log
-// — captured automatically when deployed as a Lambda via SST) and sends a
-// single notification email per chat session.
+// Every A-A-Bot message (user or assistant) is posted here for logging.
+// CloudWatch picks up the structured JSON line in prod. Aaron also gets a
+// notification email on the FIRST message of each session so he knows
+// someone is actively using the chat — not on every follow-up, since a
+// single conversation can be 8+ messages.
 //
-// POST body: { sessionId, role: 'user'|'assistant', content, firstMessage?: boolean }
+// POST body:
+//   { sessionId, role: 'user'|'assistant', content, firstMessage?: boolean }
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -15,7 +18,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
 
-    // Structured log line — CloudWatch Logs Insights can parse this
+    // Structured log line — CloudWatch Logs Insights can parse this.
     console.log(JSON.stringify({
       event: 'chat_message',
       sessionId,
@@ -24,23 +27,19 @@ export async function POST(request) {
       timestamp: new Date().toISOString(),
     }));
 
-    // Send notification email on the first message of each session
+    // Notify Aaron on the first message of a session. `notifyAaron` handles
+    // both the Resend email (when the key is set) and the local-dev file
+    // log, so Aaron sees the event either way.
     if (firstMessage) {
-      const apiKey = process.env.RESEND_API_KEY;
-      if (apiKey) {
-        try {
-          const resend = new Resend(apiKey);
-          await resend.emails.send({
-            from: 'Portfolio AI Agent <onboarding@resend.dev>',
-            to: 'rohrbac@gmail.com',
-            subject: 'PORTFOLIO APP CHAT USAGE',
-            text: `A new chat session started on your portfolio.\n\nSession ID: ${sessionId}\nTime: ${new Date().toISOString()}\nFirst message (${role}): ${content}\n\nFull conversation will appear in CloudWatch logs under this session ID.`,
-          });
-        } catch (err) {
-          console.error('Chat log email failed:', err);
-          // Don't fail the whole request — logging is more important than email
-        }
-      }
+      await notifyAaron({
+        request,
+        kind: 'chat_session',
+        sessionId,
+        payload: {
+          first_message_role: role,
+          first_message_content: content,
+        },
+      });
     }
 
     return NextResponse.json({ ok: true });

@@ -36,10 +36,11 @@ export function MusicPlayerProvider({ children }) {
       const idx = newQueue.findIndex((t) => t.id === track.id);
       if (idx !== -1) index = idx;
     }
-    // Hitting a play button always expands the player — the user's
-    // attention is on what they just started, so the waveform + controls
-    // should be in front of them regardless of prior minimized state.
-    setMinimized(false);
+    // Desktop: hitting play expands the player (the user's attention is on
+    // what they started). Mobile: default to minimized so the track list
+    // stays visible — Mom should see a small bar, not a full-screen takeover.
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    setMinimized(isMobile);
     if (currentTrack?.id === track.id) {
       // Same-track toggle: audio is already decoded, no loading gate. Just
       // flip the play/pause state.

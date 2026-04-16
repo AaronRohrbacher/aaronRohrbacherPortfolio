@@ -1,81 +1,56 @@
-# AI Agent — Commented Out
+# A-A-Bot (AI chat) — Re-enabled
 
-Branch: `comment-out-ai`
+Status: **LIVE**. The in-browser Transformers.js chat (A-A-Bot) is mounted
+again on every page. This file is preserved only as a historical record of
+the temporary revert and how the re-enablement was wired up.
 
-The in-browser AI chat widget (Transformers.js / Qwen ONNX) is disabled. Amazon
-Connect is now the chat. All AI code is preserved (commented, not deleted).
-API routes (`/api/ask`, `/api/resume-ai`, `/api/chat-agent`, `/api/chat-log`)
-are **untouched and still live**.
+## Current state
 
-## Changes
+- `src/app/layout.jsx` mounts `<ChatAgentLoader />` alongside the Amazon
+  Connect snippet. Both coexist: A-A-Bot is the only *visible* chat UI; the
+  AC widget button is CSS-hidden but still click-invokable programmatically
+  from A-A-Bot when the user wants live chat / voice / video.
+- `src/components/ChatAgent.jsx` — the orchestrator. Pure logic extracted
+  to `src/lib/chatAgent.mjs` and unit-tested under
+  `tests/unit/chatAgent.test.mjs`.
+- `src/workers/ai.worker.js` — loads the fine-tuned Qwen2 model from
+  `public/models/aaron-chat/onnx/model_quantized.onnx` via Transformers.js
+  (`dtype: 'q8'`, `device: 'webgpu' || 'wasm'`). All cookie-cutter
+  validation, rhyming-redirect engines, and KB regex shortcuts were
+  stripped — we trust the fine-tuned model end-to-end.
+- `public/amazonConnect.js` — **do not modify**. This is the AC widget
+  snippet from AWS; A-A-Bot only interacts with the widget via the public
+  API (clicking `#amazon-connect-open-widget-button`).
 
-### Mount point removed
-- **`src/app/layout.jsx`** — `<ChatAgentLoader />` mount + its import commented out.
+## Ways A-A-Bot hands off to the Amazon Connect widget
 
-### Amazon Connect config reverted
-- **`src/components/AmazonConnect.jsx`** — `customLaunchBehavior` call commented
-  out. It had been added only to let ChatAgent open Connect programmatically
-  via `window.__connectLaunch`. With that config active the AC widget button
-  is hidden on page load, which contradicts the original pre-AI UX. With it
-  removed, the AC button is visible immediately (old behavior).
+| Intent                   | A-A-Bot does                                                   |
+|--------------------------|----------------------------------------------------------------|
+| Live chat / Voice / Video| Clicks the hidden `#amazon-connect-open-widget-button`         |
+| Leave a message          | Collecting flow → POST `/api/chat-agent` (Resend email)        |
+| Request contact info     | Collecting flow → POST `/api/chat-agent` (Resend email)        |
+| Anything else            | Sends to the worker model with system prompt + FACT_CHUNKS     |
 
-### AI widget files neutralized (code preserved)
-- **`src/components/ChatAgentLoader.jsx`** — now `return null;`. Original code
-  preserved in trailing block comment.
-- **`src/components/ChatAgent.jsx`** — header comment added. File is no longer
-  imported, so its code never runs.
-- **`src/workers/ai.worker.js`** — header comment added. Worker is only loaded
-  by `ChatAgent.jsx`, which is no longer mounted.
+Online/offline is gated via `/api/connect-status` (queried once on A-A-Bot
+open). If AC is offline, Live chat / Voice / Video buttons are hidden;
+Leave-a-message + Request-contact-info stay available because they
+email Aaron directly and do not depend on AC.
 
-### Chat triggers re-pointed at Amazon Connect
-Each site that used to dispatch `open-chat-agent` now clicks the Amazon Connect
-widget button directly (matches the pre-AI committed pattern from Home.jsx).
-The original `window.dispatchEvent(...)` line is preserved as a commented-out
-alternative directly beneath the replacement.
+## Tests
 
-- **`src/components/home/Home.jsx`** — `openChatAgent` (the "Let's Chat!" button)
-- **`src/components/resume/Resume.jsx`** — `openChat` (the "Open AI Chat" panel)
-- **`src/components/contact/ContactPage.jsx`** — `openChat` (the "Open Chat" button)
+- Unit tests: `tests/unit/chatAgent.test.mjs` (67 tests, <100 ms)
+- Playwright wiring smoke: `tests/ai-commented-out.spec.mjs`
+- Playwright UI + collecting flows: `tests/a-a-bot.spec.mjs`
+- Playwright end-to-end model generation (opt-in, 500 MB download):
+  `A_A_BOT_GENERATE=1 npx playwright test tests/a-a-bot-generate.spec.mjs`
 
-All three now call:
-```js
-document.querySelector('#amazon-connect-open-widget-button')?.click();
-```
+## Historical: how the revert was structured
 
-## Known cosmetic mismatches (not fixed — scope was "swap the trigger")
+(Preserved for reference — this is the state the branch was in before
+A-A-Bot was re-enabled.)
 
-- **Resume page** still shows an "Open AI Chat" button and a Transformers.js
-  disclaimer. Button now opens Amazon Connect.
-- **Contact page** still has copy about "My AI assistant can answer your
-  questions...". Button now opens Amazon Connect.
-
-Fix later if desired.
-
-## Existing Playwright tests that will now fail
-
-These spec files were written against the live AI widget and will fail while
-it is commented out. Leave them or skip them — not touched here:
-
-- `tests/chat-agent.spec.mjs`
-- `tests/chat-logging.spec.mjs`
-- `tests/off-topic-aaron.spec.mjs`
-- `tests/streaming.spec.mjs`
-
-New tests verifying the commented-out state live in
-`tests/ai-commented-out.spec.mjs` (passing).
-
-## How to re-enable the AI agent
-
-1. `src/app/layout.jsx` — uncomment the `ChatAgentLoader` import and mount.
-2. `src/components/ChatAgentLoader.jsx` — delete the no-op export, uncomment
-   the block at the bottom (or just revert the file).
-3. `src/components/ChatAgent.jsx` and `src/workers/ai.worker.js` — remove the
-   header disable-note comments (optional; cosmetic).
-4. Trigger sites — swap each `openChat*` back to the dispatch line (both
-   versions are in each file, just toggle which is commented).
-
-## Grep
-
-```bash
-grep -rn "AI_COMMENTED_OUT" src/ AI_COMMENTED_OUT.md
-```
+- `src/app/layout.jsx` — `<ChatAgentLoader />` mount + its import commented out
+- `src/components/ChatAgentLoader.jsx` — returned `null`; original code in
+  a block comment at the bottom
+- Trigger sites clicked the AC widget button directly instead of dispatching
+  `open-chat-agent`

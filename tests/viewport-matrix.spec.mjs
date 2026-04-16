@@ -1,4 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { resetMusicDb } from './helpers/reset-music-db.mjs';
+
+// Reset DB state before this file runs — the preceding specs in the run
+// (music.spec.mjs, share-links, multi-dump) publish/unpublish tracks and
+// create/delete test dumps without restoring. Without this the /music
+// page is empty by the time these viewport tests hit it.
+test.beforeAll(async () => {
+  await resetMusicDb();
+});
 
 const DEVICES = [
   { name: 'iPhone-SE1-320', w: 320, h: 568 },

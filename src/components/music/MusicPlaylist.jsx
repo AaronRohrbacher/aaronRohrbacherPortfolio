@@ -236,18 +236,33 @@ function TrackCard({ track, trackNum, index, currentTrack, isPlaying, pending, o
   const isActive = currentTrack?.id === track.id;
   const formats = Array.isArray(track.formats) ? track.formats : Object.keys(track.formats);
   const [showDownloads, setShowDownloads] = useState(false);
+  const playLabel = isActive && isPlaying ? `Pause ${track.name}` : `Play ${track.name}`;
+
+  const handlePlay = (e) => {
+    if (pending) return;
+    e?.stopPropagation?.();
+    onPlay(track, index);
+  };
 
   return (
     <div
       className={[Style.trackCard, isActive ? Style.active : '', pending ? Style.trackCardDisabled : ''].join(' ')}
       onClick={pending ? undefined : () => onPlay(track, index)}
       role="button"
+      aria-label={playLabel}
       aria-disabled={pending || undefined}
-      tabIndex={pending ? -1 : 0}
-      onKeyDown={(e) => { if (pending) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPlay(track, index); } }}
     >
-      {/* Art / Number */}
-      <div className={Style.trackArt} style={{ background: trackGradient(track.name) }}>
+      {/* Art / Number — also the canonical Play/Pause button for a11y +
+          tests. The whole card stays mouse-clickable (div onClick) but
+          the button is the keyboard/screen-reader target. */}
+      <button
+        type="button"
+        className={Style.trackArt}
+        style={{ background: trackGradient(track.name) }}
+        onClick={handlePlay}
+        disabled={pending}
+        aria-label={playLabel}
+      >
         <span className={Style.trackArtInner}>
           {isActive && isPlaying ? (
             <span className={Style.eqBars}>
@@ -263,7 +278,7 @@ function TrackCard({ track, trackNum, index, currentTrack, isPlaying, pending, o
         <span className={Style.trackArtHover}>
           <i className={isActive && isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play'} />
         </span>
-      </div>
+      </button>
 
       {/* Info */}
       <div className={Style.trackInfo}>

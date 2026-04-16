@@ -8,6 +8,10 @@ const extraPath = existsSync(sdkmanJava) ? `${sdkmanJava}:` : '';
 
 export default defineConfig({
   testDir: './tests',
+  // Reset the local dev DB to a known baseline before every test run.
+  // Music tests mutate state in place and don't fully restore; this keeps
+  // runs deterministic without per-test cleanup.
+  globalSetup: './tests/global-setup.mjs',
   // Node-only unit tests live under tests/unit and are run via
   // `node --test` from the test:unit npm script. Exclude them from
   // Playwright discovery so it doesn't try to load ESM source files

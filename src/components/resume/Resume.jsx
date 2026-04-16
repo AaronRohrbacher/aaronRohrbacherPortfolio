@@ -320,7 +320,7 @@ function SkillGroups() {
 
 function AskAI() {
   const openChat = () => {
-    document.getElementById('amazon-connect-open-widget-button')?.click();
+    window.dispatchEvent(new Event('open-chat-agent'));
   };
 
   return (

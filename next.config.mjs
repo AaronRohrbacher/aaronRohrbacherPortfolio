@@ -12,21 +12,17 @@ const nextConfig = {
 
 
 
-  // AI agent disabled — see AI_COMMENTED_OUT.md at repo root.
-  // COOP/COEP headers below were required for SharedArrayBuffer (ONNX/Transformers.js).
-  // They block Amazon Connect's cross-origin subresources from loading, so they're
-  // commented out while AI is disabled. Restore if re-enabling Transformers.js.
-  // async headers() {
-  //   return [
-  //     {
-  //       source: '/(.*)',
-  //       headers: [
-  //         { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-  //         { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
-  //       ],
-  //     },
-  //   ];
-  // },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

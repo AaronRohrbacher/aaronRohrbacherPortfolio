@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
 
-// AI ChatAgent (Transformers.js floating chat) is commented out at
-// src/app/layout.jsx — see AI_COMMENTED_OUT.md at repo root. The FAB this
-// suite drives no longer exists, so all these tests are skipped until the
-// agent is reactivated.
-test.skip(true, 'AI ChatAgent commented out — see AI_COMMENTED_OUT.md');
+// Obsolete: this suite was written against the old KB + rhyme + fact-retrieval
+// implementation of ChatAgent. A-A-Bot now delegates everything to the
+// fine-tuned model; many of the assertions here (e.g. canned KB age redirect,
+// suggestion chips count) no longer match. Replaced by tests/a-a-bot.spec.mjs
+// and tests/a-a-bot-generate.spec.mjs.
+test.skip(true, 'Obsolete after A-A-Bot rewrite — see tests/a-a-bot.spec.mjs.');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

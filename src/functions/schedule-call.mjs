@@ -94,7 +94,7 @@ function labelForSlot(dt) {
   return dt.toFormat("ccc LLL d, h:mma") + ' PT';
 }
 
-async function listSlots(minDate) {
+export async function listSlots(minDate) {
   const durationMin = meetingDuration();
   const calendarId = process.env.CALENDAR_EMAIL;
   const cal = getCalendar();
@@ -136,7 +136,7 @@ async function listSlots(minDate) {
   };
 }
 
-async function bookSlot({ slotChoice, customerName, schedulerEmail, slotIsoMap }) {
+export async function bookSlot({ slotChoice, customerName, schedulerEmail, slotIsoMap }) {
   const choiceIdx = Number(slotChoice);
   if (!Number.isInteger(choiceIdx) || choiceIdx < 1 || choiceIdx > 5) {
     return { ok: false, reason: 'invalid_choice' };

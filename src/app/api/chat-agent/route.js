@@ -1,48 +1,37 @@
-import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
+import { notifyAaron } from '@/lib/notifyAaron.mjs';
 
+// A-A-Bot's "Leave a message" and "Request contact info" flows both POST
+// here. The route delegates to `notifyAaron`, which sends a Resend email if
+// RESEND_API_KEY is set AND always appends to .data/notifications.log so
+// local dev (and CloudWatch in prod) captures the event either way.
+//
+// The notification email Aaron receives includes the visitor's IP, OS,
+// browser, language, host, referer, and raw user-agent string, plus the
+// full payload.
 export async function POST(request) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const toEmail = process.env.CONTACT_EMAIL_TO;
-
-  if (!apiKey || !toEmail) {
-    return NextResponse.json({ error: 'Email service not configured.' }, { status: 503 });
-  }
-
   try {
     const body = await request.json();
-    const { type, name, contactMethod, message } = body;
+    const { type, name, contactMethod, message, sessionId } = body;
 
     if (!name || !contactMethod) {
       return NextResponse.json({ error: 'Name and contact method required.' }, { status: 400 });
     }
-
-    const resend = new Resend(apiKey);
-
-    if (type === 'contact_request') {
-      await resend.emails.send({
-        from: 'Portfolio AI Agent <onboarding@resend.dev>',
-        to: toEmail,
-        subject: `Contact info request from ${name}`,
-        text: `${name} requested your contact information via the AI chat agent.\n\nTheir contact: ${contactMethod}\n\nThey'd like you to send them your contact details.`,
-      });
-      return NextResponse.json({ ok: true });
+    if (type !== 'contact_request' && type !== 'message') {
+      return NextResponse.json({ error: 'Invalid request type.' }, { status: 400 });
+    }
+    if (type === 'message' && !message) {
+      return NextResponse.json({ error: 'Message required.' }, { status: 400 });
     }
 
-    if (type === 'message') {
-      if (!message) {
-        return NextResponse.json({ error: 'Message required.' }, { status: 400 });
-      }
-      await resend.emails.send({
-        from: 'Portfolio AI Agent <onboarding@resend.dev>',
-        to: toEmail,
-        subject: `Message from ${name} via AI chat`,
-        text: `${name} left a message via the AI chat agent.\n\nContact: ${contactMethod}\n\nMessage:\n${message}`,
-      });
-      return NextResponse.json({ ok: true });
-    }
+    const result = await notifyAaron({
+      request,
+      kind: type,
+      sessionId,
+      payload: { name, contactMethod, message },
+    });
 
-    return NextResponse.json({ error: 'Invalid request type.' }, { status: 400 });
+    return NextResponse.json({ ok: true, emailed: result.emailed, logged: result.logged });
   } catch (err) {
     console.error('Chat agent API error:', err);
     return NextResponse.json({ error: 'Failed to send. Please try again.' }, { status: 500 });

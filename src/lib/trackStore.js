@@ -105,10 +105,19 @@ export async function loadTracks() {
 export async function saveTrack(track, previousDumpIds) {
   const nextDumpIds = normalizeTrackDumpIds(track);
 
-  let prev = previousDumpIds;
-  if (prev == null) {
-    const existing = await getTrack(track.id);
-    prev = existing ? existing.dumpIds : [];
+  // Source of truth for the current sibling state is the DUMP-side index
+  // (walk every dump's sibling rows). Track-side `main.dumpIds` can drift —
+  // e.g. a prior saveTrack with a stale `prev` left orphan sibling rows.
+  // Using it would silently leak access because the stream/listing endpoints
+  // both call `getDumpsContainingTrack`, which reads the sibling index.
+  // `saveTrack` is low-volume enough (single-track admin edit) that walking
+  // dumps is fine here.
+  let prev;
+  if (Array.isArray(previousDumpIds)) {
+    prev = previousDumpIds;
+  } else {
+    const containing = await getDumpsContainingTrack(track.id);
+    prev = containing.map((d) => d.id);
   }
   const prevSet = new Set(prev);
   const nextSet = new Set(nextDumpIds);
@@ -126,24 +135,33 @@ export async function saveTrack(track, previousDumpIds) {
   }
 }
 
-// Batch version. Also ensures sibling TRACK_DUMP# rows exist for each
-// (track, dump) pair. This is idempotent — assignTrackToDump overwrites an
-// existing sibling in place, preserving its per-dump order — so running this
-// on every GET merge pass is safe and also seamlessly migrates legacy rows
-// that were still pointing their main row at a DUMP# partition.
+// Batch version. Writes every track's main row in a single BatchWrite, then
+// reconciles each track's sibling index against the DUMP-side truth —
+// assigning new dumps and unassigning orphans. The previous batch
+// implementation only added siblings, so batch updates that stripped a
+// dumpId left orphan sibling rows behind; those drifted and leaked access
+// (see saveTrack's matching comment).
 //
-// NOTE: does NOT remove sibling rows that are no longer present on the
-// track's dumpIds — batch callers today only reorder or bulk-sync metadata
-// and never intentionally strip assignments. Use `saveTrack` to get diff-
-// aware sibling cleanup.
+// The DUMP-side walk is O(dumps) per track. saveTracks is called for
+// explicit admin edits (bulk publish/reorder) and once per GET in the
+// merge-persist path — both low-volume, so the extra read cost is OK.
 export async function saveTracks(tracks) {
   const requests = tracks.map((track) => ({
     PutRequest: { Item: trackToItem(track) },
   }));
   await batchWrite(requests);
   for (const track of tracks) {
-    for (const dumpId of normalizeTrackDumpIds(track)) {
-      await assignTrackToDump(track.id, dumpId);
+    const nextDumpIds = normalizeTrackDumpIds(track);
+    const prevContaining = await getDumpsContainingTrack(track.id);
+    const prev = prevContaining.map((d) => d.id);
+    const prevSet = new Set(prev);
+    const nextSet = new Set(nextDumpIds);
+    for (const dumpId of nextDumpIds) {
+      if (!prevSet.has(dumpId)) await assignTrackToDump(track.id, dumpId);
+      else await assignTrackToDump(track.id, dumpId); // idempotent, keeps order
+    }
+    for (const dumpId of prev) {
+      if (!nextSet.has(dumpId)) await unassignTrackFromDump(track.id, dumpId);
     }
   }
 }

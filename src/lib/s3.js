@@ -108,11 +108,11 @@ export async function getDownloadUrl(key, filename, expiresIn = 3600) {
 }
 
 /**
- * Get a presigned URL for inline streaming (no Content-Disposition so the
- * browser plays it instead of saving, canonical audio/* content-type). Used
- * by the /api/music/stream route as the no-CDN fallback — redirect the
- * client straight to S3 rather than proxying the body through Lambda /
- * Next dev server.
+ * Get a presigned URL for inline streaming. Explicit `Content-Disposition:
+ * inline` so the browser plays the file instead of saving it, plus the
+ * canonical audio/* content-type. Used by /api/music/stream as the no-CDN
+ * fallback — redirect the client straight to S3 rather than proxying the
+ * body through Lambda / Next dev server.
  */
 export async function getStreamUrl(key, format, expiresIn = 3600) {
   const client = getClient();
@@ -121,6 +121,7 @@ export async function getStreamUrl(key, format, expiresIn = 3600) {
     Bucket: BUCKET,
     Key: key,
     ResponseContentType: contentType,
+    ResponseContentDisposition: 'inline',
   });
   return getSignedUrl(client, command, { expiresIn });
 }

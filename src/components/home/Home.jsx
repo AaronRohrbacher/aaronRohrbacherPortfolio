@@ -11,7 +11,7 @@ import Slider from './Slider';
 
 export default function Home({ innerRef }) {
   const openChatAgent = () => {
-    document.getElementById('amazon-connect-open-widget-button')?.click();
+    window.dispatchEvent(new Event('open-chat-agent'));
   };
 
   return (

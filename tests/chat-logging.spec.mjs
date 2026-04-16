@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
 
-// AI ChatAgent commented out — see AI_COMMENTED_OUT.md. Skipped until reactivated.
-test.skip(true, 'AI ChatAgent commented out — see AI_COMMENTED_OUT.md');
+// Obsolete: this suite triggered instant off-topic redirects (which no longer
+// exist) to avoid downloading the model. With the model handling everything,
+// a proper logging test needs the model — see tests/a-a-bot-generate.spec.mjs
+// for an opt-in version. This narrow off-topic logging check is skipped.
+test.skip(true, 'Obsolete after A-A-Bot rewrite — off-topic instant redirect is gone.');
 
 // Verifies that chat messages POST to /api/chat-log and firstMessage=true is
 // set only on the first message of a session.

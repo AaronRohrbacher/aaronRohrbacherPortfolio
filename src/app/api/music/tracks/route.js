@@ -41,17 +41,30 @@ export async function GET(request) {
       ? await getPermittedTrackIds(user.sub, user.groups, user.email)
       : new Set();
 
-    // Two independent passes — track-side and dump-side. They don't talk.
-    //
-    //   LOOSE   — track's OWN published+visibility admits the viewer.
-    //             Computed from track-side state alone; no dump knowledge.
-    //
-    //   DUMPS   — for each viewable dump, ask THE DUMP what tracks it has
-    //             (getDumpTracks → DUMP#<id> partition is the source of
-    //             truth). Track-side `dumpIds` is irrelevant. Inside a
-    //             dump card, the dump's visibility wins, so even a
-    //             restricted/unpublished track shows up.
+    // DUMP TRUMPS — a track that lives in a dump the viewer can see
+    // belongs to the dump branch, never to the loose list. But if ALL of
+    // a track's dumps are hidden from this viewer (unpublished, or a
+    // visibility tier the viewer lacks), we fall back to the track-side
+    // direct check so the track isn't unreachable.
+    const viewableDumpIds = new Set(
+      dumps
+        .filter((d) => {
+          if (!d.published) return false;
+          if (user?.isAdmin) return true;
+          const vis = d.visibility || 'public';
+          if (vis === 'public') return true;
+          if (vis === 'authenticated' || vis === 'restricted') return !!user;
+          return false;
+        })
+        .map((d) => d.id),
+    );
+
+    const isClaimedByViewableDump = (t) =>
+      Array.isArray(t.dumpIds) &&
+      t.dumpIds.some((id) => viewableDumpIds.has(id));
+
     const looseAdmits = (t) => {
+      if (isClaimedByViewableDump(t)) return false;
       if (user?.isAdmin) return !!t.published;
       return canViewTrackDirect(t, { user, permittedTrackIds });
     };
