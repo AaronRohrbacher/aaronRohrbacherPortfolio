@@ -1,308 +1,216 @@
 {
   "Version": "2019-10-30",
-  "StartAction": "queue-wait",
+  "StartAction": "bb200001-0000-0000-0000-000000000001",
   "Metadata": {
     "entryPointPosition": { "x": 64, "y": 21 },
     "ActionMetadata": {
-      "queue-wait":              { "position": { "x": 300, "y": 100 }, "isFriendlyName": true },
-      "stepped-away-menu":       { "position": { "x": 600, "y": 100 }, "isFriendlyName": true },
-      "q-store-choice-msg":      { "position": { "x": 300, "y": 400 }, "isFriendlyName": true },
-      "q-store-choice-sched":    { "position": { "x": 600, "y": 400 }, "isFriendlyName": true },
-      "q-store-choice-vm":       { "position": { "x": 900, "y": 400 }, "isFriendlyName": true },
-      "q-collect-name":          { "position": { "x": 600, "y": 600 }, "isFriendlyName": true },
-      "q-store-name":            { "position": { "x": 600, "y": 760 }, "isFriendlyName": true },
-      "q-format-name":           { "position": { "x": 600, "y": 840 }, "isFriendlyName": true },
-      "q-store-formatted-name":  { "position": { "x": 600, "y": 920 }, "isFriendlyName": true },
-      "q-greet-by-name":         { "position": { "x": 600, "y": 1000 }, "isFriendlyName": true },
-      "q-collect-contact":       { "position": { "x": 600, "y": 1120 }, "isFriendlyName": true },
-      "q-store-contact":         { "position": { "x": 600, "y": 1300 }, "isFriendlyName": true },
-      "q-route-after-contact":   { "position": { "x": 600, "y": 1480 }, "isFriendlyName": true },
-      "q-collect-message":       { "position": { "x": 200, "y": 1660 }, "isFriendlyName": true },
-      "q-store-message":         { "position": { "x": 200, "y": 1840 }, "isFriendlyName": true },
-      "q-send-notify":           { "position": { "x": 200, "y": 2020 }, "isFriendlyName": true },
-      "q-msg-confirm":           { "position": { "x": 200, "y": 2200 }, "isFriendlyName": true },
-      "q-vm-check-channel":      { "position": { "x": 1100, "y": 1380 }, "isFriendlyName": true },
-      "q-vm-voice-record-on":    { "position": { "x": 1400, "y": 1380 }, "isFriendlyName": true },
-      "q-vm-voice-greeting":     { "position": { "x": 1400, "y": 1480 }, "isFriendlyName": true },
-      "q-vm-voice-wait":         { "position": { "x": 1400, "y": 1570 }, "isFriendlyName": true },
-      "q-vm-voice-confirm":      { "position": { "x": 1400, "y": 1660 }, "isFriendlyName": true },
-      "q-vm-collect-message":    { "position": { "x": 1100, "y": 1480 }, "isFriendlyName": true },
-      "q-vm-store-message":      { "position": { "x": 1100, "y": 1570 }, "isFriendlyName": true },
-      "q-vm-msg":                { "position": { "x": 1100, "y": 1660 }, "isFriendlyName": true },
-      "q-vm-notify":             { "position": { "x": 1100, "y": 1840 }, "isFriendlyName": true },
-      "q-sched-intro":           { "position": { "x": 650, "y": 1660 }, "isFriendlyName": true },
-      "q-sched-list-slots":      { "position": { "x": 650, "y": 1840 }, "isFriendlyName": true },
-      "q-sched-check-count":     { "position": { "x": 650, "y": 2020 }, "isFriendlyName": true },
-      "q-sched-no-slots":        { "position": { "x": 950, "y": 2020 }, "isFriendlyName": true },
-      "q-sched-show-menu":       { "position": { "x": 650, "y": 2200 }, "isFriendlyName": true },
-      "q-sched-pick-slot":       { "position": { "x": 650, "y": 2380 }, "isFriendlyName": true },
-      "q-sched-store-1":         { "position": { "x": 650, "y": 2560 }, "isFriendlyName": true },
-      "q-sched-store-2":         { "position": { "x": 800, "y": 2560 }, "isFriendlyName": true },
-      "q-sched-store-3":         { "position": { "x": 950, "y": 2560 }, "isFriendlyName": true },
-      "q-sched-store-4":         { "position": { "x": 1100, "y": 2560 }, "isFriendlyName": true },
-      "q-sched-store-5":         { "position": { "x": 1250, "y": 2560 }, "isFriendlyName": true },
-      "q-sched-page-fwd":        { "position": { "x": 950, "y": 2380 }, "isFriendlyName": true },
-      "q-sched-book":            { "position": { "x": 650, "y": 2740 }, "isFriendlyName": true },
-      "q-sched-check-ok":        { "position": { "x": 650, "y": 2920 }, "isFriendlyName": true },
-      "q-sched-notify":          { "position": { "x": 650, "y": 3020 }, "isFriendlyName": true },
-      "q-sched-done":            { "position": { "x": 650, "y": 3120 }, "isFriendlyName": true },
-      "q-sched-error":           { "position": { "x": 950, "y": 3120 }, "isFriendlyName": true },
-      "q-partial-notify":        { "position": { "x": 1200, "y": 100 }, "isFriendlyName": true },
-      "q-thank-you":             { "position": { "x": 600, "y": 3300 }, "isFriendlyName": true },
-      "q-disconnect":            { "position": { "x": 600, "y": 3480 }, "isFriendlyName": true }
+      "bb200001-0000-0000-0000-000000000001": { "position": { "x": 300, "y": 100 } },
+      "bb200001-0000-0000-0000-000000000002": { "position": { "x": 600, "y": 100 } },
+      "bb200001-0000-0000-0000-000000000003": { "position": { "x": 900, "y": 100 } },
+      "bb200001-0000-0000-0000-000000000004": { "position": { "x": 900, "y": 300 } },
+      "bb200001-0000-0000-0000-000000000005": { "position": { "x": 900, "y": 480 } },
+      "bb200001-0000-0000-0000-000000000006": { "position": { "x": 900, "y": 660 } },
+      "bb200001-0000-0000-0000-000000000007": { "position": { "x": 900, "y": 840 } },
+      "bb200001-0000-0000-0000-000000000008": { "position": { "x": 900, "y": 1020 } },
+      "bb200001-0000-0000-0000-000000000009": { "position": { "x": 900, "y": 1200 } },
+      "bb200001-0000-0000-0000-000000000010": { "position": { "x": 600, "y": 300 } },
+      "bb200001-0000-0000-0000-000000000011": { "position": { "x": 600, "y": 480 } },
+      "bb200001-0000-0000-0000-000000000012": { "position": { "x": 1200, "y": 1200 } }
     },
     "Annotations": [],
-    "name": "A-A-Bot customer queue flow",
-    "description": "Waits for Aaron, then offers message/schedule/voicemail via Lex menus.",
+    "name": "Aaron portfolio — customer queue flow",
+    "description": "Waits 60s then offers message option; notifies Aaron on all exits.",
     "type": "customerQueue",
     "status": "PUBLISHED",
     "hash": {}
   },
   "Actions": [
 
-    { "Parameters": { "TimeLimitSeconds": "30" }, "Identifier": "queue-wait", "Type": "Wait",
-      "Transitions": { "NextAction": "stepped-away-menu",
-        "Conditions": [{ "NextAction": "stepped-away-menu", "Condition": { "Operator": "Equals", "Operands": ["WaitCompleted"] } }],
-        "Errors": [{ "NextAction": "stepped-away-menu", "ErrorType": "NoMatchingError" }] } },
-
     {
-      "Parameters": {
-        "Text": "I'm sorry, Aaron has stepped away. Can I:\n\n1. Take a message? I'll e-mail it to him.\n2. Schedule a 30-minute call with Aaron at a convenient time for you?",
-        "LexV2Bot": { "AliasArn": "{{LEX_MENU_BOT_ARN}}" }
-      },
-      "Identifier": "stepped-away-menu", "Type": "ConnectParticipantWithLexBot",
+      "Parameters": { "WaitTimeSeconds": "60" },
+      "Identifier": "bb200001-0000-0000-0000-000000000001",
+      "Type": "Wait",
       "Transitions": {
-        "NextAction": "q-partial-notify",
-        "Conditions": [
-          { "NextAction": "q-store-choice-msg",   "Condition": { "Operator": "Equals", "Operands": ["SelectOne"] } },
-          { "NextAction": "q-store-choice-sched", "Condition": { "Operator": "Equals", "Operands": ["SelectTwo"] } }
-        ],
+        "NextAction": "bb200001-0000-0000-0000-000000000002",
         "Errors": [
-          { "NextAction": "q-partial-notify", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "q-partial-notify", "ErrorType": "NoMatchingError" },
-          { "NextAction": "q-partial-notify", "ErrorType": "InputTimeLimitExceeded" }
+          { "NextAction": "bb200001-0000-0000-0000-000000000002", "ErrorType": "NoMatchingError" }
         ]
       }
     },
 
-    { "Parameters": { "Attributes": { "offlineChoice": "1" } }, "Identifier": "q-store-choice-msg", "Type": "UpdateContactAttributes",
-      "Transitions": { "NextAction": "q-collect-name", "Errors": [{ "NextAction": "q-collect-name", "ErrorType": "NoMatchingError" }] } },
-    { "Parameters": { "Attributes": { "offlineChoice": "2" } }, "Identifier": "q-store-choice-sched", "Type": "UpdateContactAttributes",
-      "Transitions": { "NextAction": "q-collect-name", "Errors": [{ "NextAction": "q-collect-name", "ErrorType": "NoMatchingError" }] } },
-    { "Parameters": { "Attributes": { "offlineChoice": "3" } }, "Identifier": "q-store-choice-vm", "Type": "UpdateContactAttributes",
-      "Transitions": { "NextAction": "q-collect-name", "Errors": [{ "NextAction": "q-collect-name", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "Text": "Can I start with your name please?", "LexV2Bot": { "AliasArn": "{{LEX_TEXT_BOT_ARN}}" } },
-      "Identifier": "q-collect-name", "Type": "ConnectParticipantWithLexBot",
-      "Transitions": { "NextAction": "q-store-name",
-        "Conditions": [{ "NextAction": "q-store-name", "Condition": { "Operator": "Equals", "Operands": ["CollectText"] } }],
-        "Errors": [{ "NextAction": "q-store-name", "ErrorType": "NoMatchingCondition" }, { "NextAction": "q-partial-notify", "ErrorType": "NoMatchingError" }, { "NextAction": "q-partial-notify", "ErrorType": "InputTimeLimitExceeded" }] } },
-
-    { "Parameters": { "Attributes": { "customerName": "$.Lex.Slots.userInput" } }, "Identifier": "q-store-name", "Type": "UpdateContactAttributes",
-      "Transitions": { "NextAction": "q-format-name", "Errors": [{ "NextAction": "q-format-name", "ErrorType": "NoMatchingError" }] } },
-
     {
       "Parameters": {
-        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
-        "LambdaInvocationAttributes": { "action": "format-name", "customerName": "$.Attributes.customerName" }
+        "Text": "Thanks for your patience! Aaron is taking a bit longer than expected — he may have stepped away. Reply **1** to leave him a message, or just hang tight if you'd like to keep waiting."
       },
-      "Identifier": "q-format-name", "Type": "InvokeLambdaFunction",
-      "Transitions": { "NextAction": "q-store-formatted-name", "Errors": [{ "NextAction": "q-greet-by-name", "ErrorType": "NoMatchingError" }] }
-    },
-
-    { "Parameters": { "Attributes": { "customerName": "$.External.formattedName" } }, "Identifier": "q-store-formatted-name", "Type": "UpdateContactAttributes",
-      "Transitions": { "NextAction": "q-greet-by-name", "Errors": [{ "NextAction": "q-greet-by-name", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "Text": "Nice to meet you, $.Attributes.customerName! I'm A-A-bot." },
-      "Identifier": "q-greet-by-name", "Type": "MessageParticipant",
-      "Transitions": { "NextAction": "q-collect-contact", "Errors": [{ "NextAction": "q-collect-contact", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "Text": "Please provide your 10-digit phone number, your e-mail address, or both:", "LexV2Bot": { "AliasArn": "{{LEX_TEXT_BOT_ARN}}" } },
-      "Identifier": "q-collect-contact", "Type": "ConnectParticipantWithLexBot",
-      "Transitions": { "NextAction": "q-store-contact",
-        "Conditions": [{ "NextAction": "q-store-contact", "Condition": { "Operator": "Equals", "Operands": ["CollectText"] } }],
-        "Errors": [{ "NextAction": "q-store-contact", "ErrorType": "NoMatchingCondition" }, { "NextAction": "q-partial-notify", "ErrorType": "NoMatchingError" }, { "NextAction": "q-partial-notify", "ErrorType": "InputTimeLimitExceeded" }] } },
-
-    { "Parameters": { "Attributes": { "contactInfo": "$.Lex.Slots.userInput" } }, "Identifier": "q-store-contact", "Type": "UpdateContactAttributes",
-      "Transitions": { "NextAction": "q-route-after-contact", "Errors": [{ "NextAction": "q-route-after-contact", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "ComparisonValue": "$.Attributes.offlineChoice" }, "Identifier": "q-route-after-contact", "Type": "Compare",
-      "Transitions": { "NextAction": "q-collect-message",
-        "Conditions": [
-          { "NextAction": "q-collect-message", "Condition": { "Operator": "Equals", "Operands": ["1"] } },
-          { "NextAction": "q-sched-intro",     "Condition": { "Operator": "Equals", "Operands": ["2"] } },
-          { "NextAction": "q-vm-check-channel",  "Condition": { "Operator": "Equals", "Operands": ["3"] } }
-        ],
-        "Errors": [{ "NextAction": "q-collect-message", "ErrorType": "NoMatchingCondition" }] } },
-
-    { "Parameters": { "Text": "What would you like the message to say?", "LexV2Bot": { "AliasArn": "{{LEX_TEXT_BOT_ARN}}" } },
-      "Identifier": "q-collect-message", "Type": "ConnectParticipantWithLexBot",
-      "Transitions": { "NextAction": "q-store-message",
-        "Conditions": [{ "NextAction": "q-store-message", "Condition": { "Operator": "Equals", "Operands": ["CollectText"] } }],
-        "Errors": [{ "NextAction": "q-store-message", "ErrorType": "NoMatchingCondition" }, { "NextAction": "q-partial-notify", "ErrorType": "NoMatchingError" }, { "NextAction": "q-partial-notify", "ErrorType": "InputTimeLimitExceeded" }] } },
-
-    { "Parameters": { "Attributes": { "customerMessage": "$.Lex.Slots.userInput" } }, "Identifier": "q-store-message", "Type": "UpdateContactAttributes",
-      "Transitions": { "NextAction": "q-send-notify", "Errors": [{ "NextAction": "q-send-notify", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
-        "LambdaInvocationAttributes": { "notifyType": "message_from_queue", "contactId": "$.ContactId", "channel": "$.Channel",
-          "endpoint": "$.CustomerEndpoint.Address", "customerName": "$.Attributes.customerName",
-          "contactInfo": "$.Attributes.contactInfo", "customerMessage": "$.Attributes.customerMessage",
-          "visitorIp": "$.Attributes.visitorIp" } },
-      "Identifier": "q-send-notify", "Type": "InvokeLambdaFunction",
-      "Transitions": { "NextAction": "q-msg-confirm", "Errors": [{ "NextAction": "q-msg-confirm", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "Text": "Got it — your message has been sent to Aaron. He'll be in touch soon." }, "Identifier": "q-msg-confirm", "Type": "MessageParticipant",
-      "Transitions": { "NextAction": "q-thank-you", "Errors": [{ "NextAction": "q-thank-you", "ErrorType": "NoMatchingError" }] } },
-
-    {
-      "Parameters": { "ComparisonValue": "$.Channel" },
-      "Identifier": "q-vm-check-channel",
-      "Type": "Compare",
+      "Identifier": "bb200001-0000-0000-0000-000000000002",
+      "Type": "MessageParticipant",
       "Transitions": {
-        "NextAction": "q-vm-collect-message",
-        "Conditions": [
-          { "NextAction": "q-vm-voice-record-on", "Condition": { "Operator": "Equals", "Operands": ["VOICE"] } }
-        ],
-        "Errors": [{ "NextAction": "q-vm-collect-message", "ErrorType": "NoMatchingCondition" }]
+        "NextAction": "bb200001-0000-0000-0000-000000000003",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingError" }
+        ]
       }
     },
 
-    { "Parameters": { "RecordingBehavior": { "RecordedParticipants": ["Customer"] } }, "Identifier": "q-vm-voice-record-on", "Type": "UpdateContactRecordingBehavior",
-      "Transitions": { "NextAction": "q-vm-voice-greeting", "Errors": [], "Conditions": [] } },
-
-    { "Parameters": { "Text": "Please leave your message for Aaron after the tone. Press any key when you're done, or just hang up." }, "Identifier": "q-vm-voice-greeting", "Type": "MessageParticipant",
-      "Transitions": { "NextAction": "q-vm-voice-wait", "Errors": [{ "NextAction": "q-vm-voice-wait", "ErrorType": "NoMatchingError" }] } },
+    {
+      "Parameters": {
+        "Text": "Reply 1 to leave a message, or keep waiting.",
+        "ResponseValidation": { "ResponseType": "TEXT" }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000003",
+      "Type": "GetParticipantInput",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000004",
+        "Conditions": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000004", "Condition": { "Operator": "Equals", "Operands": ["1"] } }
+        ],
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "bb200001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
 
     {
-      "Parameters": { "Text": " ", "StoreInput": "False", "InputTimeLimitSeconds": "120" },
-      "Identifier": "q-vm-voice-wait", "Type": "GetParticipantInput",
+      "Parameters": {
+        "Text": "Sure! May I please take your name?",
+        "ResponseValidation": { "ResponseType": "TEXT" }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000004",
+      "Type": "GetParticipantInput",
       "Transitions": {
-        "NextAction": "q-vm-voice-confirm",
+        "NextAction": "bb200001-0000-0000-0000-000000000005",
         "Conditions": [],
         "Errors": [
-          { "NextAction": "q-vm-voice-confirm", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "q-vm-voice-confirm", "ErrorType": "NoMatchingError" },
-          { "NextAction": "q-vm-voice-confirm", "ErrorType": "InputTimeLimitExceeded" }
+          { "NextAction": "bb200001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "bb200001-0000-0000-0000-000000000010", "ErrorType": "NoMatchingError" }
         ]
       }
     },
-
-    { "Parameters": { "Text": "Got it — Aaron will listen to your message and get back to you." }, "Identifier": "q-vm-voice-confirm", "Type": "MessageParticipant",
-      "Transitions": { "NextAction": "q-vm-notify", "Errors": [{ "NextAction": "q-vm-notify", "ErrorType": "NoMatchingError" }] } },
-
-    {
-      "Parameters": { "Text": "Go ahead — what would you like Aaron to know?", "LexV2Bot": { "AliasArn": "{{LEX_TEXT_BOT_ARN}}" } },
-      "Identifier": "q-vm-collect-message",
-      "Type": "ConnectParticipantWithLexBot",
-      "Transitions": {
-        "NextAction": "q-vm-store-message",
-        "Conditions": [{ "NextAction": "q-vm-store-message", "Condition": { "Operator": "Equals", "Operands": ["CollectText"] } }],
-        "Errors": [
-          { "NextAction": "q-vm-store-message", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "q-partial-notify", "ErrorType": "NoMatchingError" },
-          { "NextAction": "q-partial-notify", "ErrorType": "InputTimeLimitExceeded" }
-        ]
-      }
-    },
-
-    { "Parameters": { "Attributes": { "customerMessage": "$.Lex.Slots.userInput" } }, "Identifier": "q-vm-store-message", "Type": "UpdateContactAttributes",
-      "Transitions": { "NextAction": "q-vm-msg", "Errors": [{ "NextAction": "q-vm-msg", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "Text": "Got it — I've passed your message along to Aaron. He'll reach out soon." }, "Identifier": "q-vm-msg", "Type": "MessageParticipant",
-      "Transitions": { "NextAction": "q-vm-notify", "Errors": [{ "NextAction": "q-vm-notify", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
-        "LambdaInvocationAttributes": { "notifyType": "voicemail_request", "contactId": "$.ContactId", "channel": "$.Channel",
-          "endpoint": "$.CustomerEndpoint.Address", "customerName": "$.Attributes.customerName",
-          "contactInfo": "$.Attributes.contactInfo", "customerMessage": "$.Attributes.customerMessage",
-          "visitorIp": "$.Attributes.visitorIp" } },
-      "Identifier": "q-vm-notify", "Type": "InvokeLambdaFunction",
-      "Transitions": { "NextAction": "q-thank-you", "Errors": [{ "NextAction": "q-thank-you", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "Text": "Let me grab Aaron's calendar. One sec..." }, "Identifier": "q-sched-intro", "Type": "MessageParticipant",
-      "Transitions": { "NextAction": "q-sched-list-slots", "Errors": [{ "NextAction": "q-sched-list-slots", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "LambdaFunctionARN": "{{SCHEDULE_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
-        "LambdaInvocationAttributes": { "action": "list-slots", "minDate": "$.Attributes.scheduleMinDate" } },
-      "Identifier": "q-sched-list-slots", "Type": "InvokeLambdaFunction",
-      "Transitions": { "NextAction": "q-sched-check-count", "Errors": [{ "NextAction": "q-sched-error", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "ComparisonValue": "$.External.slotsCount" }, "Identifier": "q-sched-check-count", "Type": "Compare",
-      "Transitions": { "NextAction": "q-sched-show-menu", "Conditions": [{ "NextAction": "q-sched-no-slots", "Condition": { "Operator": "Equals", "Operands": ["0"] } }],
-        "Errors": [{ "NextAction": "q-sched-show-menu", "ErrorType": "NoMatchingCondition" }] } },
-
-    { "Parameters": { "Text": "Aaron's calendar is fully booked right now. Try aaronrohrbacher.com/contact." }, "Identifier": "q-sched-no-slots", "Type": "MessageParticipant",
-      "Transitions": { "NextAction": "q-thank-you", "Errors": [{ "NextAction": "q-thank-you", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "Text": "$.External.slotsMenuText" }, "Identifier": "q-sched-show-menu", "Type": "MessageParticipant",
-      "Transitions": { "NextAction": "q-sched-pick-slot", "Errors": [{ "NextAction": "q-sched-pick-slot", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "Text": "Reply 1–5 to book, or 0 to see more.", "LexV2Bot": { "AliasArn": "{{LEX_MENU_BOT_ARN}}" } },
-      "Identifier": "q-sched-pick-slot", "Type": "ConnectParticipantWithLexBot",
-      "Transitions": { "NextAction": "q-sched-error",
-        "Conditions": [
-          { "NextAction": "q-sched-page-fwd", "Condition": { "Operator": "Equals", "Operands": ["SelectZero"] } },
-          { "NextAction": "q-sched-store-1",  "Condition": { "Operator": "Equals", "Operands": ["SelectOne"] } },
-          { "NextAction": "q-sched-store-2",  "Condition": { "Operator": "Equals", "Operands": ["SelectTwo"] } },
-          { "NextAction": "q-sched-store-3",  "Condition": { "Operator": "Equals", "Operands": ["SelectThree"] } },
-          { "NextAction": "q-sched-store-4",  "Condition": { "Operator": "Equals", "Operands": ["SelectFour"] } },
-          { "NextAction": "q-sched-store-5",  "Condition": { "Operator": "Equals", "Operands": ["SelectFive"] } }
-        ],
-        "Errors": [{ "NextAction": "q-sched-error", "ErrorType": "NoMatchingCondition" }, { "NextAction": "q-sched-error", "ErrorType": "NoMatchingError" }, { "NextAction": "q-sched-error", "ErrorType": "InputTimeLimitExceeded" }] } },
-
-    { "Parameters": { "Attributes": { "slotChoice": "1" } }, "Identifier": "q-sched-store-1", "Type": "UpdateContactAttributes", "Transitions": { "NextAction": "q-sched-book", "Errors": [{ "NextAction": "q-sched-book", "ErrorType": "NoMatchingError" }] } },
-    { "Parameters": { "Attributes": { "slotChoice": "2" } }, "Identifier": "q-sched-store-2", "Type": "UpdateContactAttributes", "Transitions": { "NextAction": "q-sched-book", "Errors": [{ "NextAction": "q-sched-book", "ErrorType": "NoMatchingError" }] } },
-    { "Parameters": { "Attributes": { "slotChoice": "3" } }, "Identifier": "q-sched-store-3", "Type": "UpdateContactAttributes", "Transitions": { "NextAction": "q-sched-book", "Errors": [{ "NextAction": "q-sched-book", "ErrorType": "NoMatchingError" }] } },
-    { "Parameters": { "Attributes": { "slotChoice": "4" } }, "Identifier": "q-sched-store-4", "Type": "UpdateContactAttributes", "Transitions": { "NextAction": "q-sched-book", "Errors": [{ "NextAction": "q-sched-book", "ErrorType": "NoMatchingError" }] } },
-    { "Parameters": { "Attributes": { "slotChoice": "5" } }, "Identifier": "q-sched-store-5", "Type": "UpdateContactAttributes", "Transitions": { "NextAction": "q-sched-book", "Errors": [{ "NextAction": "q-sched-book", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "Attributes": { "scheduleMinDate": "$.External.lastSlotIso" } }, "Identifier": "q-sched-page-fwd", "Type": "UpdateContactAttributes",
-      "Transitions": { "NextAction": "q-sched-list-slots", "Errors": [{ "NextAction": "q-sched-list-slots", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "LambdaFunctionARN": "{{SCHEDULE_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
-        "LambdaInvocationAttributes": { "action": "book-slot", "slotChoice": "$.Attributes.slotChoice",
-          "customerName": "$.Attributes.customerName", "schedulerEmail": "$.Attributes.contactInfo",
-          "slot1Iso": "$.External.slot1Iso", "slot2Iso": "$.External.slot2Iso",
-          "slot3Iso": "$.External.slot3Iso", "slot4Iso": "$.External.slot4Iso", "slot5Iso": "$.External.slot5Iso" } },
-      "Identifier": "q-sched-book", "Type": "InvokeLambdaFunction",
-      "Transitions": { "NextAction": "q-sched-check-ok", "Errors": [{ "NextAction": "q-sched-error", "ErrorType": "NoMatchingError" }] } },
-
-    { "Parameters": { "ComparisonValue": "$.External.bookingOk" }, "Identifier": "q-sched-check-ok", "Type": "Compare",
-      "Transitions": { "NextAction": "q-sched-error", "Conditions": [{ "NextAction": "q-sched-notify", "Condition": { "Operator": "Equals", "Operands": ["true"] } }],
-        "Errors": [{ "NextAction": "q-sched-error", "ErrorType": "NoMatchingCondition" }] } },
 
     {
       "Parameters": {
-        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
-        "LambdaInvocationAttributes": {
-          "notifyType": "schedule", "contactId": "$.ContactId", "channel": "$.Channel",
-          "endpoint": "$.CustomerEndpoint.Address", "customerName": "$.Attributes.customerName",
-          "contactInfo": "$.Attributes.contactInfo", "visitorIp": "$.Attributes.visitorIp",
-          "bookedTime": "$.External.bookedTime"
-        }
+        "Attributes": { "customerName": "$.StoredCustomerInput" }
       },
-      "Identifier": "q-sched-notify", "Type": "InvokeLambdaFunction",
-      "Transitions": { "NextAction": "q-sched-done", "Errors": [{ "NextAction": "q-sched-done", "ErrorType": "NoMatchingError" }] }
+      "Identifier": "bb200001-0000-0000-0000-000000000005",
+      "Type": "UpdateContactAttributes",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000006",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000006", "ErrorType": "NoMatchingError" }
+        ]
+      }
     },
 
-    { "Parameters": { "Text": "Done — you're booked! Aaron will reach out to confirm." }, "Identifier": "q-sched-done", "Type": "MessageParticipant",
-      "Transitions": { "NextAction": "q-thank-you", "Errors": [{ "NextAction": "q-thank-you", "ErrorType": "NoMatchingError" }] } },
+    {
+      "Parameters": {
+        "Text": "And either your e-mail address or your phone number, please.",
+        "ResponseValidation": { "ResponseType": "TEXT" }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000006",
+      "Type": "GetParticipantInput",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000007",
+        "Conditions": [],
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000008", "ErrorType": "NoMatchingCondition" },
+          { "NextAction": "bb200001-0000-0000-0000-000000000008", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
 
-    { "Parameters": { "Text": "That didn't go through. Try aaronrohrbacher.com/contact and Aaron will sort it out." }, "Identifier": "q-sched-error", "Type": "MessageParticipant",
-      "Transitions": { "NextAction": "q-thank-you", "Errors": [{ "NextAction": "q-thank-you", "ErrorType": "NoMatchingError" }] } },
+    {
+      "Parameters": {
+        "Attributes": { "contactInfo": "$.StoredCustomerInput" }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000007",
+      "Type": "UpdateContactAttributes",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000008",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000008", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
 
-    { "Parameters": { "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}", "InvocationTimeLimitSeconds": "8",
-        "LambdaInvocationAttributes": { "notifyType": "missed", "contactId": "$.ContactId", "channel": "$.Channel",
-          "endpoint": "$.CustomerEndpoint.Address", "customerName": "$.Attributes.customerName",
-          "contactInfo": "$.Attributes.contactInfo", "visitorIp": "$.Attributes.visitorIp" } },
-      "Identifier": "q-partial-notify", "Type": "InvokeLambdaFunction",
-      "Transitions": { "NextAction": "q-thank-you", "Errors": [{ "NextAction": "q-thank-you", "ErrorType": "NoMatchingError" }] } },
+    {
+      "Parameters": {
+        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}",
+        "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "notifyType": "message_from_queue",
+          "contactId": "$.ContactId",
+          "channel": "$.Channel",
+          "endpoint": "$.CustomerEndpoint.Address",
+          "customerName": "$.Attributes.customerName",
+          "contactInfo": "$.Attributes.contactInfo"
+        }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000008",
+      "Type": "InvokeLambdaFunction",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000009",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000009", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
 
-    { "Parameters": { "Text": "Thank you very much for visiting Aaron's site. Take care!" }, "Identifier": "q-thank-you", "Type": "MessageParticipant",
-      "Transitions": { "NextAction": "q-disconnect", "Errors": [{ "NextAction": "q-disconnect", "ErrorType": "NoMatchingError" }] } },
+    {
+      "Parameters": {
+        "Text": "Thanks, $.Attributes.customerName! Aaron has been notified and will be in touch shortly. If you have questions about his work in the meantime, check out his AI-powered resume at https://aaronrohrbacher.com/resume — there's a chat there too!"
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000009",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000012",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000012", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
 
-    { "Parameters": {}, "Identifier": "q-disconnect", "Type": "DisconnectParticipant", "Transitions": {} }
+    {
+      "Parameters": {
+        "LambdaFunctionARN": "{{NOTIFY_LAMBDA_ARN}}",
+        "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "notifyType": "missed",
+          "contactId": "$.ContactId",
+          "channel": "$.Channel",
+          "endpoint": "$.CustomerEndpoint.Address"
+        }
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000010",
+      "Type": "InvokeLambdaFunction",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000011",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000011", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {
+        "Text": "Aaron was notified that you stopped by! You're welcome to try again later, or visit his resume at https://aaronrohrbacher.com/resume anytime. Have a great day!"
+      },
+      "Identifier": "bb200001-0000-0000-0000-000000000011",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "bb200001-0000-0000-0000-000000000012",
+        "Errors": [
+          { "NextAction": "bb200001-0000-0000-0000-000000000012", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+
+    {
+      "Parameters": {},
+      "Identifier": "bb200001-0000-0000-0000-000000000012",
+      "Type": "DisconnectParticipant",
+      "Transitions": {}
+    }
 
   ]
 }

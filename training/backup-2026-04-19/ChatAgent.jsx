@@ -804,7 +804,7 @@ export default function ChatAgent() {
           </div>
 
           <p className={Style.disclaimer}>
-            A-A-Bot runs entirely in your browser. Nothing leaves your device except messages to Aaron. A.I. makes mistakes and sometimes hallucinates facts — double-check anything important.
+            A-A-Bot runs entirely in your browser. Nothing leaves your device except messages to Aaron.
           </p>
         </div>
       )}

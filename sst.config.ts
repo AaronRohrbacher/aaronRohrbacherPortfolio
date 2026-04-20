@@ -331,6 +331,7 @@ export default $config({
         CONNECT_WIDGET_ID: connectWidgetId,
         CONNECT_INSTANCE_ID: connectInstanceId,
         CONNECT_AGENT_ID: connectAgentId,
+        CONNECT_QUEUE_ID: connectQueueId,
         MUSIC_CDN_DOMAIN: musicCdn.domainName,
       },
     });
