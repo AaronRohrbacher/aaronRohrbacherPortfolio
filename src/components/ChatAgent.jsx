@@ -2,15 +2,14 @@
 
 // A-A-Bot — the in-browser chat interface on this site. Text Q&A runs via
 // wllama (llama.cpp WASM) for generation + Transformers.js (all-MiniLM) for
-// RAG fact selection. When the visitor wants to contact Aaron, A-A-Bot hands
-// off to the Amazon Connect widget (loaded by public/amazonConnect.js — DO
-// NOT MODIFY that snippet).
+// RAG fact selection. Live chat with Aaron runs inside this same panel using
+// amazon-connect-chatjs (no Connect-hosted widget UI).
 //
 // This component orchestrates:
 //   • The floating FAB + panel UI
 //   • A-A-Bot's quick actions (ask / message / contact info / live chat / voice / video)
 //   • Online/offline detection via /api/connect-status (gates live chat/voice/video)
-//   • Programmatic launch of the AC widget by clicking its hidden open button
+//   • In-panel live chat session (StartChatContact → ChatSession WebSocket)
 //   • The "leave a message" and "request contact info" collecting flows
 //     (always available; fall back to email via /api/chat-agent)
 //
@@ -35,7 +34,7 @@ import {
 import { Wllama } from '@wllama/wllama/esm/index.js';
 import { pipeline as hfPipeline, env as tfEnv } from '@huggingface/transformers';
 
-const GREETING = `Hey! I'm A-A-Bot, Aaron's AI assistant — I run right in your browser, no servers involved.\n\nAsk me anything about Aaron's skills, experience, projects, or background. When you're ready to connect, I can hand you off to a live chat, voice call, video call, or take a message.`;
+const GREETING = `Hey! I'm A-A-Bot, Aaron's AI assistant — fine-tuned on his background and running entirely in your browser. No servers, no API calls to OpenAI or anyone else.\n\nAsk me anything about Aaron's skills, experience, projects, or background. When you're ready, I can hand you off to a live chat with Aaron or take a message.`;
 
 const OFFLINE_NOTICE = `Aaron's stepped away and live chat isn't available right now. I can take a message or send you his contact info — both reach him directly.`;
 
@@ -82,13 +81,22 @@ export default function ChatAgent() {
   const [suggestions, setSuggestions] = useState([]);
   const [online, setOnline] = useState(null); // null = unknown, true/false once probed
 
+  const [liveChatStatus, setLiveChatStatus] = useState('idle'); // idle | connecting | connected | ended
+  const [rtcStatus, setRtcStatus] = useState('idle'); // idle | connecting | connected | ended
+  const [rtcKind, setRtcKind] = useState(null); // 'voice' | 'video' | null
+  const [remoteVideoTileId, setRemoteVideoTileId] = useState(null);
+
   const suggestionIndex = useRef(0);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
-  const connectOpening = useRef(false);
   const acceptTokens = useRef(false);
   const sessionId = useRef(null);
   const emailSent = useRef(false);
+  const chatSessionRef = useRef(null);
+  const rtcSessionRef = useRef(null);
+  const remoteAudioRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const localVideoRef = useRef(null);
 
   // ── Session ID for chat-log ─────────────────────────────────────────────
   if (sessionId.current === null) {
@@ -115,12 +123,10 @@ export default function ChatAgent() {
   }, []);
 
   // ── Hide the Amazon Connect widget button (A-A-Bot is the single UI) ────
-  // The AC widget snippet in public/amazonConnect.js is left untouched — per
-  // Aaron's strict instruction, the snippet itself MUST NOT be modified. We
-  // just inject a tiny style block that visually hides the AC launch button
-  // while leaving the element in the DOM so we can still click it
-  // programmatically from openConnect(). This is the minimal intervention
-  // that makes A-A-Bot the single visible chat trigger.
+  // The AC widget snippet in public/amazonConnect.js still loads but we no
+  // longer use its hosted chat UI — live chat runs directly inside our panel
+  // via amazon-connect-chatjs. Hide the widget button so visitors only ever
+  // see the A-A-Bot FAB.
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const id = 'a-a-bot-hide-connect-btn';
@@ -128,7 +134,8 @@ export default function ChatAgent() {
     const style = document.createElement('style');
     style.id = id;
     style.textContent = `
-      #amazon-connect-open-widget-button { display: none !important; }
+      #amazon-connect-open-widget-button,
+      #amazon-connect-chat-widget { display: none !important; }
     `;
     document.head.appendChild(style);
     return () => {
@@ -137,11 +144,11 @@ export default function ChatAgent() {
   }, []);
 
   // ── Online/offline probe ─────────────────────────────────────────────────
-  // Only fires when the user opens the panel — keeps idle pages from making
-  // any A-A-Bot-related network requests (so `networkidle` tests on other
-  // routes still settle).
+  // Fires when the user opens the panel AND polls every 30s while open so
+  // an agent that goes Available mid-session is reflected in the UI without
+  // a page reload. Idle (closed) pages still make zero network requests.
   useEffect(() => {
-    if (!open || online !== null) return;
+    if (!open) return;
     let cancelled = false;
     async function probe() {
       try {
@@ -154,8 +161,9 @@ export default function ChatAgent() {
       }
     }
     probe();
-    return () => { cancelled = true; };
-  }, [open, online]);
+    const interval = setInterval(probe, 15000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [open]);
 
   // ── wllama model (llama.cpp WASM) ───────────────────────────────────────
   // wllama runs llama.cpp compiled to WASM with SIMD optimizations.
@@ -301,6 +309,26 @@ export default function ChatAgent() {
     if (open) inputRef.current?.focus();
   }, [open]);
 
+  // Keep the cursor in the input field at all times while the panel is open
+  // so a visitor can always start typing without clicking. The input gets
+  // briefly disabled during model load/generation, which blurs it — refocus
+  // whenever it becomes interactive again, and after any message append /
+  // collecting-flow step / live-chat status change that might have stolen
+  // focus (e.g. quick-action button clicks).
+  useEffect(() => {
+    if (!open) return;
+    const el = inputRef.current;
+    if (!el || el.disabled) return;
+    if (document.activeElement === el) return;
+    // Defer past React's commit so disabled→enabled transitions land first.
+    const id = requestAnimationFrame(() => {
+      if (inputRef.current && !inputRef.current.disabled) {
+        inputRef.current.focus();
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [open, workerStatus, messages, collectingInfo, liveChatStatus, rtcStatus, suggestions, streamBuffer]);
+
   // ── Server log — only finalized messages, once each ─────────────────────
   const loggedCount = useRef(0);
   useEffect(() => {
@@ -362,38 +390,229 @@ export default function ChatAgent() {
     });
   }, []);
 
-  // ── AC widget launch ────────────────────────────────────────────────────
-  // Clicks the (hidden) widget button. This is the same trigger the widget
-  // listens for natively — we're just invoking it programmatically.
-  const openConnect = useCallback(() => {
-    if (connectOpening.current) return;
-    connectOpening.current = true;
-
-    const tryOpen = () => {
-      if (typeof document === 'undefined') return false;
-      const btn = document.getElementById('amazon-connect-open-widget-button');
-      if (btn) {
-        btn.click();
-        return true;
-      }
-      return false;
-    };
-
-    if (!tryOpen()) {
-      let attempts = 0;
-      const t = setInterval(() => {
-        if (tryOpen()) {
-          clearInterval(t);
-          setTimeout(() => { connectOpening.current = false; }, 3000);
-        } else if (++attempts > 20) {
-          clearInterval(t);
-          connectOpening.current = false;
-          typeAssistantMessage("The live chat widget didn't load — it may be blocked by an ad blocker or still initializing. Try \"Leave a message\" and I'll get it to Aaron.");
-        }
-      }, 400);
-    } else {
-      setTimeout(() => { connectOpening.current = false; }, 3000);
+  // ── Live chat (Amazon Connect ChatJS, in-panel) ─────────────────────────
+  // StartChatContact (our /api/connect-start-chat route) returns a
+  // ParticipantToken. We hand that to amazon-connect-chatjs ChatSession which
+  // opens a WebSocket to Connect's participant service. Inbound messages
+  // land here as 'agent' bubbles; outbound user input routes to
+  // chatSession.sendMessage instead of the local AI model.
+  const endLiveChat = useCallback(async ({ announce = true } = {}) => {
+    const session = chatSessionRef.current;
+    chatSessionRef.current = null;
+    setLiveChatStatus('idle');
+    if (session) {
+      try { await session.disconnectParticipant(); } catch { /* already gone */ }
     }
+    if (announce) {
+      typeAssistantMessage(`The chat has disconnected. Let me know if I can answer any further questions, or if you'd like to re-connect.`);
+    }
+  }, [typeAssistantMessage]);
+
+  const startLiveChat = useCallback(async () => {
+    if (chatSessionRef.current || liveChatStatus === 'connecting') return;
+    setLiveChatStatus('connecting');
+    try {
+      const res = await fetch('/api/connect-start-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ displayName: 'Website Visitor' }),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`start-chat failed: ${res.status} ${errText}`);
+      }
+      const { contactId, participantId, participantToken, region } = await res.json();
+
+      // Load the SDK (attaches to window.connect). Dynamic import keeps this
+      // out of the main bundle until the visitor actually opens live chat.
+      await import('amazon-connect-chatjs');
+      const connect = (typeof window !== 'undefined' && window.connect);
+      if (!connect?.ChatSession) throw new Error('amazon-connect-chatjs failed to initialize');
+
+      connect.ChatSession.setGlobalConfig({
+        region,
+        loggerConfig: { useDefaultLogger: false },
+      });
+
+      const session = connect.ChatSession.create({
+        chatDetails: {
+          contactId,
+          participantId,
+          participantToken,
+        },
+        type: 'CUSTOMER',
+        options: { region },
+      });
+
+      session.onMessage((event) => {
+        const data = event?.data;
+        if (!data) return;
+        // Plain text/markdown from agent or system. Skip our own echoes.
+        const isChat = data.ContentType === 'text/plain' || data.ContentType === 'text/markdown';
+        if (!isChat) return;
+        if (data.ParticipantRole === 'CUSTOMER') return; // our own message, already shown
+        // Only label agent messages with a name. System (bot flow) messages
+        // render as plain inbound bubbles — the "SYSTEM_MESSAGE" display
+        // name from Connect isn't user-friendly.
+        const isAgent = data.ParticipantRole === 'AGENT';
+        const who = isAgent ? (data.DisplayName || 'Aaron') : null;
+        setMessages((prev) => [
+          ...prev.filter((m) => m.role !== '__stream__'),
+          { role: 'agent', content: data.Content, displayName: who },
+        ]);
+      });
+
+      session.onEnded(() => {
+        chatSessionRef.current = null;
+        setLiveChatStatus('ended');
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: `The chat has disconnected. Let me know if I can answer any further questions, or if you'd like to re-connect.` },
+        ]);
+      });
+
+      await session.connect();
+      chatSessionRef.current = session;
+      setLiveChatStatus('connected');
+    } catch (err) {
+      console.error('[A-A-Bot] live chat start failed:', err);
+      chatSessionRef.current = null;
+      setLiveChatStatus('idle');
+      typeAssistantMessage(`I couldn't open the live chat. Try "Leave a message" and I'll get it to Aaron directly.`);
+    }
+  }, [liveChatStatus, typeAssistantMessage]);
+
+  // Close any active live chat on unmount.
+  useEffect(() => {
+    return () => {
+      const session = chatSessionRef.current;
+      chatSessionRef.current = null;
+      if (session) { try { session.disconnectParticipant(); } catch { /* ignore */ } }
+    };
+  }, []);
+
+  // ── WebRTC voice + video (amazon-chime-sdk-js) ──────────────────────────
+  // StartWebRTCContact returns a Chime Meeting + Attendee. We spin up a
+  // DefaultMeetingSession in the browser, bind mic (and camera for video)
+  // to the session's device controller, attach the remote audio stream to
+  // an <audio> element, and render remote video tiles into a <video>
+  // element. Voice calls skip the video pieces entirely.
+  const endRtcCall = useCallback(async ({ announce = true } = {}) => {
+    const session = rtcSessionRef.current;
+    rtcSessionRef.current = null;
+    setRtcStatus('idle');
+    setRtcKind(null);
+    setRemoteVideoTileId(null);
+    if (session) {
+      try { session.audioVideo.stop(); } catch { /* ignore */ }
+    }
+    if (announce) {
+      typeAssistantMessage(`The call has ended. Let me know if I can answer any further questions, or if you'd like to re-connect.`);
+    }
+  }, [typeAssistantMessage]);
+
+  const startRtcCall = useCallback(async (kind /* 'voice' | 'video' */) => {
+    if (rtcSessionRef.current || rtcStatus === 'connecting') return;
+    setRtcStatus('connecting');
+    setRtcKind(kind);
+    try {
+      const res = await fetch('/api/connect-start-rtc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ displayName: 'Website Visitor', video: kind === 'video' }),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`start-rtc failed: ${res.status} ${errText}`);
+      }
+      const { connectionData } = await res.json();
+      if (!connectionData?.Meeting || !connectionData?.Attendee) {
+        throw new Error('RTC: missing Meeting/Attendee in response');
+      }
+
+      const chime = await import('amazon-chime-sdk-js');
+      const {
+        ConsoleLogger, LogLevel, DefaultDeviceController,
+        DefaultMeetingSession, MeetingSessionConfiguration,
+      } = chime;
+
+      const logger = new ConsoleLogger('a-a-bot-rtc', LogLevel.WARN);
+      const deviceController = new DefaultDeviceController(logger);
+      const cfg = new MeetingSessionConfiguration(connectionData.Meeting, connectionData.Attendee);
+      const session = new DefaultMeetingSession(cfg, logger, deviceController);
+
+      // Mic
+      const audioInputs = await session.audioVideo.listAudioInputDevices();
+      if (audioInputs.length === 0) throw new Error('No microphone available');
+      await session.audioVideo.startAudioInput(audioInputs[0].deviceId);
+
+      // Remote audio sink
+      if (remoteAudioRef.current) {
+        await session.audioVideo.bindAudioElement(remoteAudioRef.current);
+      }
+
+      // Video observer — render remote tiles to the shared <video> element,
+      // and bind our own local camera feed so the visitor sees themselves.
+      session.audioVideo.addObserver({
+        videoTileDidUpdate: (tileState) => {
+          if (!tileState?.boundAttendeeId) return;
+          if (tileState.localTile) {
+            if (localVideoRef.current) {
+              session.audioVideo.bindVideoElement(tileState.tileId, localVideoRef.current);
+            }
+          } else {
+            if (remoteVideoRef.current) {
+              session.audioVideo.bindVideoElement(tileState.tileId, remoteVideoRef.current);
+              setRemoteVideoTileId(tileState.tileId);
+            }
+          }
+        },
+        videoTileWasRemoved: (tileId) => {
+          setRemoteVideoTileId((cur) => (cur === tileId ? null : cur));
+        },
+        audioVideoDidStop: () => {
+          // Agent hung up or call timed out — clean up on our side.
+          rtcSessionRef.current = null;
+          setRtcStatus('ended');
+          setRtcKind(null);
+          setRemoteVideoTileId(null);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'assistant', content: `The call has ended. Let me know if I can answer any further questions, or if you'd like to re-connect.` },
+          ]);
+        },
+      });
+
+      session.audioVideo.start();
+
+      if (kind === 'video') {
+        const videoInputs = await session.audioVideo.listVideoInputDevices();
+        if (videoInputs.length > 0) {
+          await session.audioVideo.startVideoInput(videoInputs[0].deviceId);
+          session.audioVideo.startLocalVideoTile();
+        } else {
+          console.warn('[A-A-Bot] no camera available — continuing as voice-only');
+        }
+      }
+
+      rtcSessionRef.current = session;
+      setRtcStatus('connected');
+    } catch (err) {
+      console.error('[A-A-Bot] RTC start failed:', err);
+      rtcSessionRef.current = null;
+      setRtcStatus('idle');
+      setRtcKind(null);
+      typeAssistantMessage(`I couldn't start the ${kind} call (${err.message || 'unknown error'}). Try live chat, or leave a message with a number and Aaron will reach out.`);
+    }
+  }, [rtcStatus, typeAssistantMessage]);
+
+  // Close any active RTC call on unmount.
+  useEffect(() => {
+    return () => {
+      const session = rtcSessionRef.current;
+      rtcSessionRef.current = null;
+      if (session) { try { session.audioVideo.stop(); } catch { /* ignore */ } }
+    };
   }, []);
 
   // ── Model send (wllama + LFM2-700M, WASM, with RAG) ─────────────────
@@ -602,17 +821,21 @@ export default function ChatAgent() {
 
   // ── Quick action handler ────────────────────────────────────────────────
   const handleAction = useCallback((id) => {
-    if (id === 'chat' || id === 'call' || id === 'video') {
-      if (online === false) {
-        typeAssistantMessage(OFFLINE_MESSAGE);
-        return;
-      }
+    if (id === 'chat') {
+      if (online === false) { typeAssistantMessage(OFFLINE_MESSAGE); return; }
+      typeAssistantMessage(`Connecting you to Aaron — one moment!`);
+      setTimeout(() => { startLiveChat(); }, 400);
+      return;
+    }
+    if (id === 'call' || id === 'video') {
+      if (online === false) { typeAssistantMessage(OFFLINE_MESSAGE); return; }
+      const kind = id === 'call' ? 'voice' : 'video';
       typeAssistantMessage(
-        id === 'chat'
-          ? `Opening the live chat with Aaron — one moment!`
-          : `Opening ${id === 'call' ? 'a voice' : 'a video'} call — the chat widget will start first, then you can escalate to ${id === 'call' ? 'audio' : 'video'}.`,
+        kind === 'voice'
+          ? `Starting a voice call with Aaron. Your browser will ask for microphone access.`
+          : `Starting a video call with Aaron. Your browser will ask for camera + microphone access.`,
       );
-      setTimeout(openConnect, 400);
+      setTimeout(() => { startRtcCall(kind); }, 400);
       return;
     }
     if (id === 'message') { startFlow('message'); return; }
@@ -622,7 +845,7 @@ export default function ChatAgent() {
       typeAssistantMessage(`Go ahead — ask me anything about Aaron's experience, skills, projects, or background!`);
       rotateSuggestions();
     }
-  }, [online, openConnect, startFlow, rotateSuggestions, typeAssistantMessage]);
+  }, [online, startLiveChat, startRtcCall, startFlow, rotateSuggestions, typeAssistantMessage]);
 
   // ── Main submit handler ─────────────────────────────────────────────────
   const send = useCallback(async (text) => {
@@ -633,6 +856,17 @@ export default function ChatAgent() {
 
     const userMsg = { role: 'user', content: q };
     setMessages((prev) => [...prev, userMsg]);
+
+    // Live chat takes priority over everything — user is talking to a human.
+    if (liveChatStatus === 'connected' && chatSessionRef.current) {
+      try {
+        await chatSessionRef.current.sendMessage({ message: q, contentType: 'text/plain' });
+      } catch (err) {
+        console.error('[A-A-Bot] live send failed:', err);
+        typeAssistantMessage(`That didn't send — the live chat may have dropped. Try "Leave a message" instead.`);
+      }
+      return;
+    }
 
     // Collecting flow takes priority.
     if (collectingInfo) {
@@ -679,7 +913,7 @@ export default function ChatAgent() {
     if (busy) return;
     const allMsgs = [...messages.filter((m) => m.role !== '__stream__'), userMsg];
     sendToAI(allMsgs);
-  }, [input, messages, busy, collectingInfo, runCollectingStep, handleAction, startFlow, sendToAI, rotateSuggestions, online]);
+  }, [input, messages, busy, collectingInfo, runCollectingStep, handleAction, startFlow, sendToAI, rotateSuggestions, online, liveChatStatus, typeAssistantMessage]);
 
   const showGreeting = messages.length === 0;
   const actions = online === false ? OFFLINE_ACTIONS : ONLINE_ACTIONS;
@@ -699,12 +933,76 @@ export default function ChatAgent() {
           <div className={Style.header}>
             <div className={Style.headerIcon}><i className="fa-solid fa-microchip-ai" /></div>
             <div>
-              <strong>A-A-Bot · Aaron&apos;s AI Assistant</strong>
-              <span>{online === false ? 'Aaron is offline — I can still help' : 'Ask anything or get in touch'}</span>
+              <strong>A-A-Bot · Aaron&apos;s AI assistant</strong>
+              <span>
+                {liveChatStatus === 'connected'
+                  ? 'Live chat with Aaron — you\'re talking to a human'
+                  : liveChatStatus === 'connecting'
+                    ? 'Connecting you to Aaron...'
+                    : 'Fine-tuned LLM, runs in your browser'}
+              </span>
             </div>
           </div>
 
           <div className={Style.messages}>
+            {/* Always-visible presence banner. Shows Aaron's status and
+                nudges visitors toward live chat when he's available. */}
+            {rtcStatus === 'connected' ? (
+              <div className={[Style.presence, Style.presenceLive].join(' ')}>
+                <span className={Style.dot} /> {rtcKind === 'video' ? 'Video call' : 'Voice call'} with Aaron — live
+              </div>
+            ) : rtcStatus === 'connecting' ? (
+              <div className={[Style.presence, Style.presenceLive].join(' ')}>
+                <span className={[Style.dot, Style.dotPulse].join(' ')} /> Connecting {rtcKind === 'video' ? 'video' : 'voice'} call...
+              </div>
+            ) : liveChatStatus === 'connected' ? (
+              <div className={[Style.presence, Style.presenceLive].join(' ')}>
+                <span className={Style.dot} /> Live with Aaron — you&apos;re talking to a human
+              </div>
+            ) : liveChatStatus === 'connecting' ? (
+              <div className={[Style.presence, Style.presenceLive].join(' ')}>
+                <span className={[Style.dot, Style.dotPulse].join(' ')} /> Connecting you to Aaron...
+              </div>
+            ) : online === true ? (
+              <button
+                className={[Style.presence, Style.presenceOnline].join(' ')}
+                onClick={() => handleAction('chat')}
+                type="button"
+              >
+                <span className={Style.dot} /> Aaron is online — tap to start a live chat
+              </button>
+            ) : online === false ? (
+              <div className={[Style.presence, Style.presenceOffline].join(' ')}>
+                <span className={Style.dot} /> Aaron is offline — I can take a message
+              </div>
+            ) : null}
+
+            {/* Video tiles for active video calls. Audio element is always
+                rendered (hidden) so Chime has an audio sink to bind to. */}
+            {rtcKind === 'video' && (rtcStatus === 'connected' || rtcStatus === 'connecting') && (
+              <div className={Style.videoStage}>
+                <video
+                  ref={remoteVideoRef}
+                  className={Style.remoteVideo}
+                  autoPlay
+                  playsInline
+                  muted={false}
+                />
+                {!remoteVideoTileId && (
+                  <div className={Style.videoPlaceholder}>
+                    Waiting for Aaron&apos;s camera…
+                  </div>
+                )}
+                <video
+                  ref={localVideoRef}
+                  className={Style.localVideo}
+                  autoPlay
+                  playsInline
+                  muted
+                />
+              </div>
+            )}
+
             {showGreeting && (
               <>
                 <div className={[Style.bubble, Style.bubbleAI].join(' ')}>
@@ -736,12 +1034,22 @@ export default function ChatAgent() {
                   Style.bubble,
                   m.role === 'user' ? Style.bubbleUser : Style.bubbleAI,
                   m.role === '__stream__' ? Style.bubbleStream : '',
+                  m.role === 'agent' ? Style.bubbleAgent : '',
                 ].join(' ')}
               >
+                {m.role === 'agent' && m.displayName && (
+                  <span className={Style.agentName}>{m.displayName}</span>
+                )}
                 {m.content}
                 {m.role === '__stream__' && <span className={Style.cursor} />}
               </div>
             ))}
+
+            {liveChatStatus === 'connecting' && (
+              <div className={[Style.bubble, Style.bubbleAI].join(' ')}>
+                Connecting you to Aaron... <i className="fa-solid fa-spinner fa-spin" />
+              </div>
+            )}
 
             {workerStatus === 'loading' && (
               <div className={Style.loadingWrap}>
@@ -760,7 +1068,7 @@ export default function ChatAgent() {
               <div className={Style.thinking}><span /><span /><span /></div>
             )}
 
-            {suggestions.length > 0 && workerStatus === 'idle' && !collectingInfo && (
+            {suggestions.length > 0 && workerStatus === 'idle' && !collectingInfo && liveChatStatus !== 'connected' && liveChatStatus !== 'connecting' && rtcStatus !== 'connected' && rtcStatus !== 'connecting' && (
               <div className={Style.suggestions}>
                 {suggestions.map((s, i) => (
                   <button key={i} className={Style.suggestionChip} onClick={() => send(s)}>
@@ -770,7 +1078,7 @@ export default function ChatAgent() {
               </div>
             )}
 
-            {messages.length > 0 && !collectingInfo && workerStatus === 'idle' && (
+            {messages.length > 0 && !collectingInfo && workerStatus === 'idle' && liveChatStatus !== 'connected' && liveChatStatus !== 'connecting' && rtcStatus !== 'connected' && rtcStatus !== 'connecting' && (
               <div className={Style.inlineActions}>
                 <button onClick={() => startFlow('schedule')}><i className="fa-solid fa-calendar-check" /> Schedule a call</button>
                 <button onClick={() => startFlow('message')}><i className="fa-solid fa-envelope" /> Leave a message</button>
@@ -791,20 +1099,48 @@ export default function ChatAgent() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
-              placeholder={collectingInfo ? 'Type your answer...' : 'Ask about Aaron or leave a message...'}
-              disabled={busy}
+              placeholder={
+                liveChatStatus === 'connected'
+                  ? 'Message Aaron...'
+                  : collectingInfo
+                    ? 'Type your answer...'
+                    : 'Ask about Aaron or leave a message...'
+              }
+              disabled={busy && liveChatStatus !== 'connected'}
             />
             <button
               className={Style.sendBtn}
               onClick={() => send()}
-              disabled={(busy && !collectingInfo) || !input.trim()}
+              disabled={(busy && !collectingInfo && liveChatStatus !== 'connected') || !input.trim()}
             >
               {busy && !collectingInfo ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-paper-plane" />}
             </button>
           </div>
 
+          {liveChatStatus === 'connected' && (
+            <div className={Style.liveActions}>
+              <button className={Style.disconnectBtn} onClick={() => endLiveChat()}>
+                <i className="fa-solid fa-xmark" /> Disconnect from Aaron
+              </button>
+            </div>
+          )}
+
+          {(rtcStatus === 'connected' || rtcStatus === 'connecting') && (
+            <div className={Style.liveActions}>
+              <button className={Style.disconnectBtn} onClick={() => endRtcCall()}>
+                <i className="fa-solid fa-phone-slash" /> End {rtcKind === 'video' ? 'video' : 'voice'} call
+              </button>
+            </div>
+          )}
+
+          {/* Hidden <audio> always rendered when RTC is active so Chime has
+              a stable element to bind the remote audio stream to. */}
+          {(rtcStatus === 'connected' || rtcStatus === 'connecting') && (
+            <audio ref={remoteAudioRef} autoPlay />
+          )}
+
           <p className={Style.disclaimer}>
-            A-A-Bot runs entirely in your browser. Nothing leaves your device except messages to Aaron. A.I. makes mistakes and sometimes hallucinates facts — double-check anything important.
+            A-A-Bot is Aaron&apos;s AI assistant — fine-tuned on his background and running entirely in your browser. Nothing leaves your device except messages to Aaron. A.I. makes mistakes and sometimes hallucinates facts — double-check anything important.
           </p>
         </div>
       )}

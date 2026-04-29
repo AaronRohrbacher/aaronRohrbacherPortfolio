@@ -11,14 +11,16 @@ async function openPanel(page) {
   const fab = page.locator('button[aria-label="Open chat"]');
   await expect(fab).toBeVisible({ timeout: 15000 });
   await fab.click();
-  await expect(page.locator('strong').filter({ hasText: /A-A-Bot/i })).toBeVisible();
+  // There's an A-A-Bot mention on the home page (hero tagline) in addition
+  // to the panel header, so use the panel-specific text to target.
+  await expect(page.getByText(/A-A-Bot · Aaron/i)).toBeVisible();
 }
 
 test.describe('A-A-Bot UI + flows', () => {
   test('opens, shows greeting, shows quick actions', async ({ page }) => {
     await page.goto('/');
     await openPanel(page);
-    await expect(page.getByText("I'm A-A-Bot, Aaron's AI assistant")).toBeVisible();
+    await expect(page.getByText("I'm A-A-Bot").first()).toBeVisible();
     await expect(page.locator('button', { hasText: 'Leave a message' })).toBeVisible();
     await expect(page.locator('button', { hasText: 'Request contact info' })).toBeVisible();
   });
@@ -115,60 +117,133 @@ test.describe('A-A-Bot UI + flows', () => {
     });
   }
 
-  test('Live chat action clicks the (hidden) AC widget button via openConnect', async ({ page }) => {
-    await stubOnline(page, true);
-    await page.goto('/');
-    // Give the AC script time to mount the button, then instrument it.
-    await page.waitForFunction(() => !!document.getElementById('amazon-connect-open-widget-button'), null, { timeout: 15000 });
-    await page.evaluate(() => {
-      window.__ac_click_count = 0;
-      const btn = document.getElementById('amazon-connect-open-widget-button');
-      btn.addEventListener('click', () => { window.__ac_click_count++; }, true);
+  // Stub the StartChatContact endpoint so we can count calls without
+  // actually opening a WebSocket. Returns a malformed token so chatjs
+  // fails fast (surfaced as a typed error message) — we only care that
+  // the action reached our backend.
+  async function stubStartChat(page) {
+    let hits = 0;
+    await page.route('**/api/connect-start-chat', async (route) => {
+      hits++;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          contactId: 'stub-contact',
+          participantId: 'stub-participant',
+          participantToken: 'stub-token',
+          region: 'us-west-2',
+        }),
+      });
     });
+    return () => hits;
+  }
+
+  test('Live chat action POSTs /api/connect-start-chat', async ({ page }) => {
+    await stubOnline(page, true);
+    const hits = await stubStartChat(page);
+    await page.goto('/');
 
     await openPanel(page);
-
     await page.locator('button', { hasText: 'Live chat' }).first().click();
-    // openConnect is debounced ~400ms then clicks the hidden AC button.
-    await page.waitForTimeout(1500);
-    const clickCount = await page.evaluate(() => window.__ac_click_count ?? 0);
-    expect(clickCount).toBeGreaterThanOrEqual(1);
+    // startLiveChat is debounced ~400ms then fetches the endpoint.
+    await page.waitForTimeout(2000);
+    expect(hits()).toBeGreaterThanOrEqual(1);
   });
 
-  test('Typing "connect me" routes to live chat (online: AC click; offline: notice)', async ({ page }) => {
+  test('Typing "connect me" routes to live chat (online: POSTs start-chat; offline: notice)', async ({ page }) => {
     await stubOnline(page, true);
+    const hits = await stubStartChat(page);
     await page.goto('/');
-    await page.waitForFunction(() => !!document.getElementById('amazon-connect-open-widget-button'), null, { timeout: 15000 });
-    await page.evaluate(() => {
-      window.__ac_click_count = 0;
-      const btn = document.getElementById('amazon-connect-open-widget-button');
-      btn.addEventListener('click', () => { window.__ac_click_count++; }, true);
-    });
 
     await openPanel(page);
     const input = page.locator('input[placeholder*="Ask about Aaron"]');
     await input.fill('connect me');
     await input.press('Enter');
-    await page.waitForTimeout(1500);
-
-    const clicked = await page.evaluate(() => window.__ac_click_count ?? 0);
-    expect(clicked).toBeGreaterThanOrEqual(1);
+    await page.waitForTimeout(2000);
+    expect(hits()).toBeGreaterThanOrEqual(1);
   });
 
-  test('Offline mode: Live chat / Voice / Video buttons hidden, leave-message still shown', async ({ page }) => {
+  test('Offline mode: Live chat hidden, offline presence banner shown, leave-message still shown', async ({ page }) => {
     await stubOnline(page, false);
     await page.goto('/');
     await openPanel(page);
 
-    // Online-only actions should not render.
+    // Online-only actions should not render. Voice/video are gone entirely
+    // (not just offline-gated) — they aren't implemented in the in-panel
+    // client.
     await expect(page.locator('button', { hasText: /^Live chat$/ })).toHaveCount(0);
     await expect(page.locator('button', { hasText: /^Voice call$/ })).toHaveCount(0);
     await expect(page.locator('button', { hasText: /^Video call$/ })).toHaveCount(0);
+    // Offline presence banner shows status explicitly.
+    await expect(page.getByText(/Aaron is offline/i).first()).toBeVisible();
     // Offline still lets the user leave a message, request contact info,
     // or schedule a call (scheduling doesn't require AC online).
     await expect(page.locator('button', { hasText: 'Leave a message' }).first()).toBeVisible();
     await expect(page.locator('button', { hasText: 'Request contact info' }).first()).toBeVisible();
     await expect(page.locator('button', { hasText: 'Schedule a call' }).first()).toBeVisible();
+  });
+
+  test('Online mode: presence banner is clickable; voice/video quick actions present', async ({ page }) => {
+    await stubOnline(page, true);
+    await page.goto('/');
+    await openPanel(page);
+
+    await expect(page.locator('button', { hasText: 'Voice call' }).first()).toBeVisible();
+    await expect(page.locator('button', { hasText: 'Video call' }).first()).toBeVisible();
+
+    const banner = page.getByText(/Aaron is online — tap to start a live chat/i).first();
+    await expect(banner).toBeVisible();
+
+    let hits = 0;
+    await page.route('**/api/connect-start-chat', async (route) => {
+      hits++;
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ contactId: 's', participantId: 'p', participantToken: 't', region: 'us-west-2' }),
+      });
+    });
+    await banner.click();
+    await page.waitForTimeout(2000);
+    expect(hits).toBeGreaterThanOrEqual(1);
+  });
+
+  test('Voice-call action POSTs /api/connect-start-rtc with video=false', async ({ page }) => {
+    await stubOnline(page, true);
+    let lastBody = null;
+    await page.route('**/api/connect-start-rtc', async (route) => {
+      try { lastBody = route.request().postDataJSON(); } catch { lastBody = null; }
+      // Fail the call so Chime SDK init doesn't run — we only care the
+      // action reaches the right endpoint with the right flag.
+      await route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"stub"}' });
+    });
+    await page.goto('/');
+    await openPanel(page);
+    await page.locator('button', { hasText: 'Voice call' }).first().click();
+    await page.waitForTimeout(2500);
+    expect(lastBody).toMatchObject({ video: false });
+  });
+
+  test('Video-call action POSTs /api/connect-start-rtc with video=true', async ({ page }) => {
+    await stubOnline(page, true);
+    let lastBody = null;
+    await page.route('**/api/connect-start-rtc', async (route) => {
+      try { lastBody = route.request().postDataJSON(); } catch { lastBody = null; }
+      await route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"stub"}' });
+    });
+    await page.goto('/');
+    await openPanel(page);
+    await page.locator('button', { hasText: 'Video call' }).first().click();
+    await page.waitForTimeout(2500);
+    expect(lastBody).toMatchObject({ video: true });
+  });
+
+  test('Chat disclaimer identifies A-A-Bot as Aaron\'s AI assistant + hallucination warning', async ({ page }) => {
+    await stubOnline(page, true);
+    await page.goto('/');
+    await openPanel(page);
+    await expect(page.getByText(/Aaron's AI assistant/i).first()).toBeVisible();
+    await expect(page.getByText(/hallucinates facts/i)).toBeVisible();
   });
 
   test('Schedule a call — fetches slots, picks one, submits booking', async ({ page }) => {

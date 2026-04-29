@@ -48,8 +48,8 @@
 
     {
       "Parameters": {
-        "MetricType": "NumberOfAgentsOnline",
-        "AgentId": "arn:aws:connect:us-west-2:{{AWS_ACCOUNT_ID}}:instance/{{CONNECT_INSTANCE_ID}}/agent/{{CONNECT_AGENT_ID}}"
+        "MetricType": "NumberOfAgentsAvailable",
+        "QueueId": "arn:aws:connect:us-west-2:{{AWS_ACCOUNT_ID}}:instance/{{CONNECT_INSTANCE_ID}}/queue/{{CONNECT_QUEUE_ID}}"
       },
       "Identifier": "Find Aaron",
       "Type": "CheckMetricData",

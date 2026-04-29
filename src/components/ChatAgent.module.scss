@@ -36,8 +36,8 @@
   bottom: 5.5rem;
   right: 1.25rem;
   z-index: 9998;
-  width: min(400px, calc(100vw - 2rem));
-  max-height: min(600px, calc(100vh - 8rem));
+  width: min(440px, calc(100vw - 2rem));
+  max-height: min(760px, calc(100vh - 7rem));
   display: flex;
   flex-direction: column;
   background: var(--white);
@@ -126,8 +126,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  min-height: 200px;
-  max-height: 400px;
+  min-height: 260px;
+  max-height: 560px;
 }
 
 .bubble {
@@ -161,9 +161,30 @@
   border-bottom-left-radius: 4px;
 }
 
+.bubbleAgent {
+  align-self: flex-start;
+  background: rgba(166, 104, 255, 0.12);
+  color: inherit;
+  border-bottom-left-radius: 4px;
+  border-left: 3px solid var(--accent-2, #a668ff);
+}
+
+.agentName {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.7;
+  margin-bottom: 0.2rem;
+  color: var(--accent-2, #a668ff);
+}
+
 :global(html[data-theme="dark"]) .bubbleAI,
 :global(html[data-theme="dark"]) .bubbleStream {
   background: rgba(255, 255, 255, 0.08);
+}
+
+:global(html[data-theme="dark"]) .bubbleAgent {
+  background: rgba(166, 104, 255, 0.18);
 }
 
 .cursor {
@@ -378,6 +399,164 @@
 
   &:hover:not(:disabled) { opacity: 0.85; }
   &:disabled { opacity: 0.4; cursor: default; }
+}
+
+// ─── Presence Banner (online/offline/live) ──────────────────────────────────
+.presence {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 10px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  align-self: stretch;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+}
+
+// Button variant (online, clickable)
+.presenceOnline {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.35);
+  cursor: pointer;
+  transition: background 180ms, border-color 180ms;
+  // Sticky so the "Aaron is online — tap to start a live chat" nudge
+  // stays visible as the conversation scrolls. Only applies to the
+  // online/idle variant; during live chat/call it isn't rendered.
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  backdrop-filter: blur(8px);
+
+  &:hover {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.6);
+  }
+
+  .dot {
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+  }
+}
+
+:global(html[data-theme="dark"]) .presenceOnline {
+  background: rgba(34, 197, 94, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.presenceLive {
+  background: rgba(166, 104, 255, 0.12);
+  border-color: rgba(166, 104, 255, 0.4);
+
+  .dot {
+    background: var(--accent-2, #a668ff);
+    box-shadow: 0 0 0 3px rgba(166, 104, 255, 0.25);
+  }
+}
+
+.presenceOffline {
+  background: rgba(128, 128, 128, 0.08);
+  border-color: rgba(128, 128, 128, 0.2);
+  opacity: 0.75;
+
+  .dot { background: #9ca3af; }
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.dotPulse {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+// ─── Video call stage ──────────────────────────────────────────────────────
+.videoStage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #111;
+  align-self: stretch;
+}
+
+.remoteVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #111;
+}
+
+.videoPlaceholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  background: #111;
+}
+
+.localVideo {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 28%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background: #000;
+  transform: scaleX(-1); // mirror local preview
+}
+
+// ─── Live-chat action area ──────────────────────────────────────────────────
+// Sits below the input bar so the disconnect button never overlaps the
+// conversation flow.
+.liveActions {
+  display: flex;
+  padding: 0 0.85rem 0.5rem;
+  flex-shrink: 0;
+}
+
+.disconnectBtn {
+  flex: 1;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1.5px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  cursor: pointer;
+  transition: background 180ms, border-color 180ms;
+  font-family: inherit;
+
+  i { margin-right: 0.4rem; font-size: 0.8rem; }
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: rgba(239, 68, 68, 0.65);
+  }
+}
+
+:global(html[data-theme="dark"]) .disconnectBtn {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.12);
 }
 
 // ─── Disclaimer ──────────────────────────────────────────────────────────────

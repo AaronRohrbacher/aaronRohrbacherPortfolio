@@ -25,6 +25,8 @@ export default $config({
     const connectSnippetId = process.env.CONNECT_SNIPPET_ID!;
     const connectSecurityKey = process.env.CONNECT_SECURITY_KEY!;
     const connectWidgetId = process.env.CONNECT_WIDGET_ID!;
+    const connectContactFlowId = process.env.CONNECT_CONTACT_FLOW_ID!;
+    const connectVoiceFlowId = process.env.CONNECT_VOICE_FLOW_ID!;
     const googleOauthClientId = process.env.GOOGLE_OAUTH_CLIENT_ID!;
     const googleOauthClientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET!;
     const googleRefreshToken = process.env.GOOGLE_REFRESH_TOKEN!;
@@ -49,7 +51,7 @@ export default $config({
       "ConnectNotify",
       {
         handler: "src/functions/connect-notify.handler",
-        runtime: "nodejs20.x",
+        runtime: "nodejs24.x",
         permissions: [{
           actions: ["ses:SendEmail", "ses:SendRawEmail"],
           resources: ["*"],
@@ -82,7 +84,7 @@ export default $config({
       "ScheduleCall",
       {
         handler: "src/functions/schedule-call.handler",
-        runtime: "nodejs20.x",
+        runtime: "nodejs24.x",
         timeout: "10 seconds",
         environment: {
           GOOGLE_OAUTH_CLIENT_ID: googleOauthClientId,
@@ -158,6 +160,21 @@ export default $config({
         content: buildFlowContent("src/connect/flows/inbound.json"),
       },
       { provider: connectAwsProvider, dependsOn: [notifyAssoc, scheduleAssoc] }
+    );
+
+    // WebRTC (voice + video) entry flow. VOICE-channel-compatible — the
+    // chat inbound flow uses MessageParticipant + Lex actions that orphan
+    // a VOICE contact (never routes to queue, no agent alert).
+    new aws.connect.ContactFlow(
+      "PortfolioWebRTCFlow",
+      {
+        instanceId: connectInstanceId,
+        name: "Aaron Portfolio — WebRTC Voice/Video",
+        type: "CONTACT_FLOW",
+        description: "Voice + video (WebRTC) entry flow",
+        content: buildFlowContent("src/connect/flows/webrtc-voice.json"),
+      },
+      { provider: connectAwsProvider }
     );
 
     new aws.connect.ContactFlow(
@@ -306,7 +323,11 @@ export default $config({
           ],
         },
         {
-          actions: ["connect:GetCurrentMetricData"],
+          actions: [
+            "connect:GetCurrentMetricData",
+            "connect:StartChatContact",
+            "connect:StartWebRTCContact",
+          ],
           resources: [
             `arn:aws:connect:${connectRegion}:${awsAccountId}:instance/${connectInstanceId}`,
             `arn:aws:connect:${connectRegion}:${awsAccountId}:instance/${connectInstanceId}/*`,
@@ -332,6 +353,8 @@ export default $config({
         CONNECT_INSTANCE_ID: connectInstanceId,
         CONNECT_AGENT_ID: connectAgentId,
         CONNECT_QUEUE_ID: connectQueueId,
+        CONNECT_CONTACT_FLOW_ID: connectContactFlowId,
+        CONNECT_VOICE_FLOW_ID: connectVoiceFlowId,
         MUSIC_CDN_DOMAIN: musicCdn.domainName,
       },
     });

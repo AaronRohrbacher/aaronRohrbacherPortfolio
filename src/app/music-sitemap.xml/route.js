@@ -18,7 +18,18 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
-  const now = new Date().toISOString().split('T')[0];
+  // lastmod must reflect content change, not request time. Per-dump
+  // lastmod uses that dump's own updatedAt (falling back to createdAt).
+  // The index lastmod is max(every dump's lastmod, BUILD_TIME) so that:
+  //   • adding/editing a dump bumps the index online (no deploy needed —
+  //     the route is force-dynamic), AND
+  //   • a deploy with no content changes still bumps the index, matching
+  //     the main site's "updates on deploy" behavior.
+  // BUILD_TIME is injected via next.config.mjs (captured at `next build`).
+  // Empty store + missing BUILD_TIME → epoch-style fallback so we never
+  // lie with today's date.
+  const FALLBACK_DATE = '1970-01-01';
+  const buildDate = (process.env.BUILD_TIME || '').split('T')[0] || FALLBACK_DATE;
 
   let dumps = [];
   try {
@@ -32,11 +43,15 @@ export async function GET() {
     dumps = [];
   }
 
+  const dumpDate = (d) => (d.updatedAt || d.createdAt || '').split('T')[0] || FALLBACK_DATE;
+  const newestDumpDate = dumps.length ? dumps.map(dumpDate).sort().pop() : FALLBACK_DATE;
+  const indexLastmod = [newestDumpDate, buildDate].sort().pop();
+
   const urls = [
-    { loc: `${MUSIC_BASE}/`, lastmod: now, changefreq: 'weekly', priority: '1.0' },
+    { loc: `${MUSIC_BASE}/`, lastmod: indexLastmod, changefreq: 'weekly', priority: '1.0' },
     ...dumps.map((d) => ({
       loc: `${MUSIC_BASE}/dump/${encodeURIComponent(d.slug || d.id)}`,
-      lastmod: ((d.updatedAt || d.createdAt) || now).split('T')[0],
+      lastmod: dumpDate(d),
       changefreq: 'weekly',
       priority: '0.8',
     })),

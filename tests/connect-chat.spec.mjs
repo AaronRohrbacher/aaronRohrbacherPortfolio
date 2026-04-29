@@ -1,10 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-// End-to-end Connect chat flow requires a live Connect backend that
-// CORS-blocks localhost (the chat iframe loads from a CloudFront origin
-// that won't talk to localhost:3000). Skipped on local + CI; runs only as
-// a manual smoke test against prod via PROD_CONNECT_TEST=1.
-test.skip(!process.env.PROD_CONNECT_TEST, 'Connect chat backend CORS-blocked locally — set PROD_CONNECT_TEST=1 to run against prod');
+// Obsolete: this test targeted the Connect-hosted chat widget popup. Live
+// chat now runs inside the A-A-Bot panel via amazon-connect-chatjs — see
+// tests/live-chat-in-panel.spec.mjs.
+test.skip(true, 'Connect-hosted widget removed; replaced by in-panel live chat (see live-chat-in-panel.spec.mjs)');
 
 async function sendMessage(chatFrame, page, text) {
   await page.waitForTimeout(2000);

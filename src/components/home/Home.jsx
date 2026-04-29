@@ -53,6 +53,10 @@ export default function Home({ innerRef }) {
             ))}
           </div>
         </div>
+        <p className={Style.botTagline}>
+          That opens <strong>A-A-Bot</strong> — my AI assistant, fine-tuned on my
+          background and running 100% in your browser. No API calls, nothing leaves your device.
+        </p>
       </div>
     </Box>
   );

@@ -15,7 +15,9 @@ const QUEUE_ID = process.env.CONNECT_QUEUE_ID;
 const REGION = process.env.AWS_REGION || 'us-west-2';
 
 let cached = { online: false, ts: 0 };
-const TTL = 15000; // 15s cache to avoid hammering the API
+const TTL = 8000; // 8s cache — keeps load light but reflects agent
+                   // Available-flips within ~20s end-to-end (8s server
+                   // cache + 15s client poll).
 
 export async function GET() {
   if (!INSTANCE_ID || !QUEUE_ID) {

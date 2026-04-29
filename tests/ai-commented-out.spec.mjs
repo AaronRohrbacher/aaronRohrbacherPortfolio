@@ -30,7 +30,8 @@ async function expectFab(page) {
 }
 
 async function expectPanelOpen(page) {
-  await expect(page.locator('strong').filter({ hasText: /A-A-Bot/i })).toBeVisible({ timeout: 5000 });
+  // A-A-Bot appears twice (home hero tagline + panel header); target the panel header.
+  await expect(page.getByText(/A-A-Bot · Aaron/i)).toBeVisible({ timeout: 5000 });
 }
 
 test.describe('A-A-Bot live + Amazon Connect integration', () => {

@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
+// Captured at build time (when next.config evaluates during `next build`).
+// Used by sitemaps so deploys bump <lastmod> even when no DB content changed.
+const BUILD_TIME = new Date().toISOString();
+
 const nextConfig = {
+  env: {
+    BUILD_TIME,
+  },
+
   // Allow Next.js to process the png assets inside @codinix/device-mockup
   transpilePackages: ['@codinix/device-mockup'],
 

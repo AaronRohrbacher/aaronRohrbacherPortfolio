@@ -85,6 +85,24 @@
   }
 }
 
+.botTagline {
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  opacity: 0.65;
+  max-width: 42ch;
+  text-align: center;
+
+  strong {
+    font-weight: 600;
+    opacity: 1;
+  }
+
+  @media (min-width: 900px) {
+    text-align: left;
+  }
+}
+
 // ─── Waving hand ─────────────────────────────────────────────────────────────
 
 .hand {

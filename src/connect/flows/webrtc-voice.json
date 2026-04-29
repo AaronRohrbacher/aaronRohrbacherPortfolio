@@ -1,0 +1,37 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "set-queue",
+  "Actions": [
+    {
+      "Identifier": "set-queue",
+      "Type": "UpdateContactTargetQueue",
+      "Parameters": {
+        "QueueId": "arn:aws:connect:us-west-2:{{AWS_ACCOUNT_ID}}:instance/{{CONNECT_INSTANCE_ID}}/queue/{{CONNECT_QUEUE_ID}}"
+      },
+      "Transitions": {
+        "NextAction": "transfer",
+        "Errors": [
+          { "NextAction": "disconnect", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+    {
+      "Identifier": "transfer",
+      "Type": "TransferContactToQueue",
+      "Parameters": {},
+      "Transitions": {
+        "NextAction": "disconnect",
+        "Errors": [
+          { "NextAction": "disconnect", "ErrorType": "QueueAtCapacity" },
+          { "NextAction": "disconnect", "ErrorType": "NoMatchingError" }
+        ]
+      }
+    },
+    {
+      "Identifier": "disconnect",
+      "Type": "DisconnectParticipant",
+      "Parameters": {},
+      "Transitions": {}
+    }
+  ]
+}
