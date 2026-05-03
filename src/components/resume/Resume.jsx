@@ -327,9 +327,9 @@ function AskAI() {
     <motion.div className={Style.aiPanel} variants={fadeUp} custom={0} initial="hidden" animate="visible">
       <div className={Style.aiIntro}>
         <div className={Style.aiIcon}><i className="fa-solid fa-microchip-ai" /></div>
-        <p>Ask my AI assistant anything — experience, skills, projects, or just curiosity. You can also leave a message, request my contact info, or connect by voice or video.</p>
+        <p>Ask the AI assistant I built and fine-tuned anything — experience, skills, projects, or just curiosity. You can also leave a message, request my contact info, or connect by voice or video.</p>
         <p className={Style.aiDisclaimer}>
-          <i className="fa-solid fa-circle-info" /> AI runs entirely in your browser via Transformers.js.
+          <i className="fa-solid fa-circle-info" /> Unusually, the AI runs 100% on your own machine — right in your browser, via Transformers.js. No server round-trips.
         </p>
       </div>
       <button className={Style.aiOpenBtn} onClick={openChat}>

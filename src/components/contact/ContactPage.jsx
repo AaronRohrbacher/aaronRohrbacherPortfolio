@@ -13,7 +13,7 @@ export default function ContactPage() {
       <div className={Style.hero}>
         <h1 className={Style.title}>Let's talk.</h1>
         <p className={Style.sub}>
-          My AI assistant can answer your questions, connect you by chat, voice, or video,
+          The AI assistant I built and fine-tuned can answer your questions, connect you by chat, voice, or video,
           take a message, or send you my contact details — all right from the chat.
         </p>
       </div>

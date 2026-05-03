@@ -34,7 +34,7 @@ import {
 import { Wllama } from '@wllama/wllama/esm/index.js';
 import { pipeline as hfPipeline, env as tfEnv } from '@huggingface/transformers';
 
-const GREETING = `Hey! I'm A-A-Bot, Aaron's AI assistant — fine-tuned on his background and running entirely in your browser. No servers, no API calls to OpenAI or anyone else.\n\nAsk me anything about Aaron's skills, experience, projects, or background. When you're ready, I can hand you off to a live chat with Aaron or take a message.`;
+const GREETING = `Hey! I'm A-A-Bot — an AI assistant Aaron built and fine-tuned on his own background. Unusually, I run 100% on your machine, right in your browser — no servers, no API calls to OpenAI or anyone else.\n\nAsk me anything about Aaron's skills, experience, projects, or background. When you're ready, I can hand you off to a live chat with Aaron or take a message.`;
 
 const OFFLINE_NOTICE = `Aaron's stepped away and live chat isn't available right now. I can take a message or send you his contact info — both reach him directly.`;
 
@@ -1142,7 +1142,7 @@ export default function ChatAgent() {
           )}
 
           <p className={Style.disclaimer}>
-            A-A-Bot is Aaron&apos;s AI assistant — fine-tuned on his background and running entirely in your browser. Nothing leaves your device except messages to Aaron. A.I. makes mistakes and sometimes hallucinates facts — double-check anything important.
+            A-A-Bot is an AI assistant Aaron built and fine-tuned on his own background. Unusually, it runs 100% on your own machine, right in your browser — nothing leaves your device except messages to Aaron. A.I. makes mistakes and sometimes hallucinates facts — double-check anything important.
           </p>
         </div>
       )}

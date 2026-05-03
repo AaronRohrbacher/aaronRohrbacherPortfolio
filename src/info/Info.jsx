@@ -112,7 +112,7 @@ export const info = {
         },
         {
             title: "Developer Website",
-            desc: "This site. A fork of Payton Jewell's React design refactored into Next.js with SSR, SST, and AWS. Includes a fine-tuned Qwen LLM running entirely in-browser via Transformers.js (ONNX) for the floating chat agent, Amazon Connect integration for live chat / voice / video handoff, and a music streaming section backed by S3 + presigned URLs with a WaveSurfer playlist player and an admin panel for track metadata.",
+            desc: "This site. A fork of Payton Jewell's React design refactored into Next.js with SSR, SST, and AWS. Includes A-A-Bot — a Qwen LLM I fine-tuned on my own background and, unusually, wired up to run 100% on the visitor's own machine via Transformers.js (ONNX) as the floating chat agent — no server inference, no third-party API calls, Amazon Connect integration for live chat / voice / video handoff, and a music streaming section backed by S3 + presigned URLs with a WaveSurfer playlist player and an admin panel for track metadata.",
             source: "https://github.com/AaronRohrbacher/aaronRohrbacherPortfolio",
             website: "https://aaronrohrbacher.com",
             image: site.src,
