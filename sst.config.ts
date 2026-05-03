@@ -169,7 +169,7 @@ export default $config({
       "PortfolioWebRTCFlow",
       {
         instanceId: connectInstanceId,
-        name: "Aaron Portfolio — WebRTC Voice/Video",
+        name: "Aaron Portfolio — Call Inbound",
         type: "CONTACT_FLOW",
         description: "Voice + video (WebRTC) entry flow",
         content: buildFlowContent("src/connect/flows/webrtc-voice.json"),
@@ -333,6 +333,10 @@ export default $config({
             `arn:aws:connect:${connectRegion}:${awsAccountId}:instance/${connectInstanceId}/*`,
           ],
         },
+        {
+          actions: ["ses:SendEmail", "ses:SendRawEmail"],
+          resources: ["*"],
+        },
       ],
       domain: isProd
         ? {
@@ -356,6 +360,9 @@ export default $config({
         CONNECT_CONTACT_FLOW_ID: connectContactFlowId,
         CONNECT_VOICE_FLOW_ID: connectVoiceFlowId,
         MUSIC_CDN_DOMAIN: musicCdn.domainName,
+        NEXT_PUBLIC_MODELS_URL: "https://aaron-portfolio-models.s3.us-west-2.amazonaws.com",
+        CONTACT_EMAIL_TO: contactEmailTo,
+        NOTIFY_FROM_EMAIL: "Portfolio Connect <connect@aaronrohrbacher.com>",
       },
     });
 

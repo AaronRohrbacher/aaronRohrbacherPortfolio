@@ -61,20 +61,25 @@ export async function POST(request) {
       return NextResponse.json({ error: result.reason || 'booking_failed' }, { status: 500 });
     }
 
-    // Fire-and-forget notification to Aaron with full visitor metadata.
-    // Don't block the response on it — the booking already succeeded.
-    notifyAaron({
-      request,
-      kind: 'schedule_book',
-      payload: {
-        name: customerName,
-        contactMethod,
-        slotIso,
-        bookedLabel: result.bookedLabel,
-        eventId: result.eventId,
-        eventLink: result.eventLink,
-      },
-    }).catch(() => { /* swallow — we already booked */ });
+    // Await notify so the SES send completes before the Lambda response
+    // freezes the execution context. Wrap in try/catch so a notify failure
+    // doesn't poison the booked-successfully response to the user.
+    try {
+      await notifyAaron({
+        request,
+        kind: 'schedule_book',
+        payload: {
+          name: customerName,
+          contactMethod,
+          slotIso,
+          bookedLabel: result.bookedLabel,
+          eventId: result.eventId,
+          eventLink: result.eventLink,
+        },
+      });
+    } catch (err) {
+      console.error('notifyAaron failed for schedule_book:', err);
+    }
 
     return NextResponse.json({
       ok: true,

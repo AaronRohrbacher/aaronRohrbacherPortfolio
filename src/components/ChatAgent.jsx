@@ -183,7 +183,9 @@ export default function ChatAgent() {
         'multi-thread/wllama.wasm': 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.7/src/multi-thread/wllama.wasm',
       });
 
-      const modelUrl = `${window.location.origin}/models/lfm2-700m-gguf/LFM2-700M-Q8_0-aaron.gguf`;
+      const modelsBase = process.env.NEXT_PUBLIC_MODELS_URL;
+      if (!modelsBase) throw new Error('NEXT_PUBLIC_MODELS_URL is not set');
+      const modelUrl = `${modelsBase}/lfm2-700m-gguf/LFM2-700M-Q8_0-aaron.gguf`;
       const nThreads = Math.max(1, (navigator.hardwareConcurrency || 4));
       await model.loadModelFromUrl(modelUrl, {
         n_ctx: 4096,
