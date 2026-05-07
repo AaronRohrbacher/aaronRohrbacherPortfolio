@@ -1,0 +1,372 @@
+@use "@/styles/variables" as vars;
+
+.main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+// ─── Hero ───────────────────────────────────────────────────────────────────
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 64px - 6rem);
+  text-align: center;
+  padding: 4rem 0 3rem;
+
+  @media (max-width: 640px) {
+    min-height: auto;
+    padding: 3rem 0 2rem;
+  }
+}
+
+.heroInner {
+  max-width: 720px;
+}
+
+.title {
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  margin: 0 0 0.5rem;
+}
+
+.tagline {
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-weight: 500;
+  opacity: 0.85;
+  margin: 0 0 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  opacity: 0.7;
+  max-width: 560px;
+  margin: 0 auto 2.5rem;
+
+  @media (max-width: 640px) {
+    font-size: 0.95rem;
+  }
+}
+
+// ─── CTA ────────────────────────────────────────────────────────────────────
+.cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.downloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 2rem;
+  border-radius: 12px;
+  background: var(--gradient);
+  color: #fff !important;
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  box-shadow: 0 4px 20px -4px rgba(0, 168, 120, 0.35);
+
+  i {
+    font-size: 1.15rem;
+    color: #fff !important;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 28px -4px rgba(0, 168, 120, 0.45);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.versionNote {
+  font-size: 0.82rem;
+  opacity: 0.5;
+  letter-spacing: 0.02em;
+}
+
+.platforms {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  font-size: 0.85rem;
+  opacity: 0.6;
+
+  i {
+    margin-right: 0.3rem;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+.available {
+  color: var(--accent-1);
+  font-weight: 500;
+}
+
+.coming {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+// ─── Sections ───────────────────────────────────────────────────────────────
+.section {
+  padding: 5rem 0;
+  border-top: 1px solid rgba(128, 128, 128, 0.1);
+
+  @media (max-width: 640px) {
+    padding: 3rem 0;
+  }
+}
+
+.sectionTitle {
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: -0.02em;
+  margin: 0 0 3rem;
+
+  @media (max-width: 640px) {
+    margin-bottom: 2rem;
+  }
+}
+
+// ─── Steps ──────────────────────────────────────────────────────────────────
+.stepsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.step {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(128, 128, 128, 0.1);
+  background: rgba(128, 128, 128, 0.03);
+  transition: border-color 250ms, background 250ms;
+
+  &:hover {
+    border-color: rgba(0, 168, 120, 0.25);
+    background: rgba(0, 168, 120, 0.03);
+  }
+}
+
+.stepNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--gradient);
+  color: #fff;
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.stepTitle {
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.stepDesc {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  opacity: 0.75;
+  margin: 0;
+}
+
+// ─── Features ───────────────────────────────────────────────────────────────
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.feature {
+  padding: 1.75rem;
+  border-radius: 16px;
+  border: 1px solid rgba(128, 128, 128, 0.1);
+  background: rgba(128, 128, 128, 0.03);
+  transition: border-color 250ms, background 250ms;
+
+  &:hover {
+    border-color: rgba(124, 58, 237, 0.25);
+    background: rgba(124, 58, 237, 0.03);
+  }
+}
+
+.featureIcon {
+  font-size: 1.4rem;
+  margin-bottom: 0.85rem;
+  display: block;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.featureName {
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.featureDesc {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  opacity: 0.7;
+  margin: 0;
+}
+
+// ─── Requirements ───────────────────────────────────────────────────────────
+.reqGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  max-width: 700px;
+  margin: 0 auto;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.reqCard {
+  padding: 2rem;
+  border-radius: 16px;
+  border: 1px solid rgba(128, 128, 128, 0.12);
+  background: rgba(128, 128, 128, 0.03);
+}
+
+.reqHeading {
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  i {
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.reqList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    position: relative;
+    padding-left: 1.2rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    opacity: 0.8;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.55rem;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gradient);
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// ─── Open Source ─────────────────────────────────────────────────────────────
+.openSource {
+  text-align: center;
+  border-bottom: none;
+}
+
+.openSourceDesc {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  opacity: 0.7;
+  max-width: 520px;
+  margin: 0 auto 2rem;
+}
+
+.githubLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 10px;
+  border: 1.5px solid rgba(128, 128, 128, 0.2);
+  font-family: 'Gucina', 'Inter', Helvetica, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: inherit !important;
+  transition: border-color 250ms, background 250ms;
+
+  i {
+    font-size: 1.15rem;
+    color: inherit !important;
+  }
+
+  &:hover {
+    border-color: var(--accent-1);
+    background: rgba(0, 168, 120, 0.06);
+  }
+}

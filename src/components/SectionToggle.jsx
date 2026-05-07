@@ -8,7 +8,6 @@ export default function SectionToggle({ active = 'software' }) {
   const otherLabel = isMusic ? 'software' : 'music';
   const otherIcon = isMusic ? 'fa-solid fa-code' : 'fa-solid fa-music';
 
-  // SSR-safe default (relative path); updated after hydration for production subdomain URLs
   const [otherHref, setOtherHref] = useState(isMusic ? '/' : '/music');
 
   useEffect(() => {
@@ -26,8 +25,6 @@ export default function SectionToggle({ active = 'software' }) {
       <span className={Style.current}>
         {isMusic ? 'music' : 'software'}
       </span>
-      {/* Use a plain <a> for cross-domain navigation (Next.js <Link> only
-          handles same-origin client-side transitions). */}
       <a href={otherHref} className={Style.switchLink} title={`Switch to ${otherLabel}`}>
         <i className={otherIcon} />
         <span>{otherLabel}</span>

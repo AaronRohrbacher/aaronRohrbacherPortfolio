@@ -341,7 +341,7 @@ export default $config({
       domain: isProd
         ? {
             name: "aaronrohrbacher.com",
-            aliases: ["www.aaronrohrbacher.com", "music.aaronrohrbacher.com"],
+            aliases: ["www.aaronrohrbacher.com", "music.aaronrohrbacher.com", "portaputer.aaronrohrbacher.com"],
             dns: sst.aws.dns({ zone: "Z0895814ZUITIQOAPVHT" }),
           }
         : undefined,

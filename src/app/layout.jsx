@@ -12,6 +12,9 @@ export const metadata = {
   },
   description: 'Portfolio of Aaron Rohrbacher — lead cross-platform software and DevOps engineer specializing in AI/ML, full-stack development, and cloud architecture. Based in Portland, Oregon.',
   keywords: ['software engineer', 'cross-platform', 'DevOps', 'AI engineer', 'machine learning', 'AWS', 'full stack', 'Portland'],
+  alternates: {
+    canonical: 'https://aaronrohrbacher.com',
+  },
   authors: [{ name: 'Aaron Rohrbacher' }],
   icons: {
     icon: [

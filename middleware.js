@@ -50,6 +50,16 @@ function isMusicHost(host) {
   return host.startsWith('music.') || host.startsWith('music-');
 }
 
+/** True when the host header belongs to the portaputer subdomain. */
+function isPortaputerHost(host) {
+  return host.startsWith('portaputer.') || host.startsWith('portaputer-');
+}
+
+function portaputerOriginFor(host, proto) {
+  const bare = host.replace(/^www\./, '');
+  return `${proto}://portaputer.${bare}`;
+}
+
 /** True for paths that should never be rewritten / redirected. */
 function isStaticOrInternal(pathname) {
   return (
@@ -57,7 +67,9 @@ function isStaticOrInternal(pathname) {
     pathname.startsWith('/fonts') ||
     pathname.startsWith('/icons') ||
     pathname === '/music-sitemap.xml' ||
-    pathname === '/music-robots.txt'
+    pathname === '/music-robots.txt' ||
+    pathname === '/portaputer-sitemap.xml' ||
+    pathname === '/portaputer-robots.txt'
   );
 }
 
@@ -89,7 +101,36 @@ export function middleware(request) {
   const { pathname, search } = request.nextUrl;
 
   const isMusic = isMusicHost(host);
+  const isPortaputer = isPortaputerHost(host);
   const isLocal = isLocalhost(host);
+
+  // ----- PORTAPUTER SUBDOMAIN -----
+  if (isPortaputer) {
+    if (pathname === '/portaputer' || pathname.startsWith('/portaputer/')) {
+      const clean = pathname.replace(/^\/portaputer/, '') || '/';
+      const url = request.nextUrl.clone();
+      url.pathname = clean;
+      return NextResponse.redirect(url, 308);
+    }
+
+    if (pathname === '/sitemap.xml') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/portaputer-sitemap.xml';
+      return NextResponse.rewrite(url);
+    }
+
+    if (pathname === '/robots.txt') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/portaputer-robots.txt';
+      return NextResponse.rewrite(url);
+    }
+
+    if (!isStaticOrInternal(pathname) && !pathname.startsWith('/api/')) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/portaputer${pathname === '/' ? '' : pathname}`;
+      return NextResponse.rewrite(url);
+    }
+  }
 
   // ----- MUSIC SUBDOMAIN -----
   if (isMusic) {
@@ -132,10 +173,11 @@ export function middleware(request) {
     }
   }
 
-  // ----- MAIN / WWW DOMAIN (non-local, non-music — all deployed stages) -----
-  if (!isLocal && !isMusic) {
+  // ----- MAIN / WWW DOMAIN (non-local, non-subdomain — all deployed stages) -----
+  if (!isLocal && !isMusic && !isPortaputer) {
     const proto = request.headers.get('x-forwarded-proto') || 'https';
     const musicOrigin = musicOriginFor(host, proto);
+    const portaputerOrigin = portaputerOriginFor(host, proto);
 
     // <stage>/music → redirect to music.<stage>
     if (pathname === '/music' || pathname.startsWith('/music/')) {
@@ -147,6 +189,12 @@ export function middleware(request) {
     if (pathname.startsWith('/api/music')) {
       const subpath = pathname.replace(/^\/api\/music/, '');
       return NextResponse.redirect(`${musicOrigin}/api${subpath}${search}`, 308);
+    }
+
+    // <stage>/portaputer → redirect to portaputer.<stage>
+    if (pathname === '/portaputer' || pathname.startsWith('/portaputer/')) {
+      const subpath = pathname.replace(/^\/portaputer/, '') || '/';
+      return NextResponse.redirect(`${portaputerOrigin}${subpath}${search}`, 308);
     }
   }
 
