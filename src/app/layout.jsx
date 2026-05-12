@@ -5,17 +5,46 @@ import Script from 'next/script';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import ChatAgentLoader from '@/components/ChatAgentLoader';
 
+// metadataBase lets every page in the site emit absolute URLs from relative
+// strings (canonicals, og.url, twitter images). Without it, relative URLs
+// in metadata cause a build warning AND get stamped with localhost in dev.
+//
+// IMPORTANT: do NOT set `alternates.canonical` here. Next.js shallow-merges
+// metadata from layout → page, so a canonical here would inherit onto every
+// child route that doesn't override it, telling Google that /about, /portfolio,
+// /resume, /contact are all the homepage. That collapses the site into one
+// indexed URL in SERPs. Per-page canonicals live in each page.jsx.
 export const metadata = {
+  metadataBase: new URL('https://aaronrohrbacher.com'),
   title: {
     default: 'Aaron Rohrbacher | Lead Cross-Platform Software and DevOps Engineer',
     template: '%s | Aaron Rohrbacher',
   },
   description: 'Portfolio of Aaron Rohrbacher — lead cross-platform software and DevOps engineer specializing in AI/ML, full-stack development, and cloud architecture. Based in Portland, Oregon.',
+  applicationName: 'Aaron Rohrbacher',
   keywords: ['software engineer', 'cross-platform', 'DevOps', 'AI engineer', 'machine learning', 'AWS', 'full stack', 'Portland'],
-  alternates: {
-    canonical: 'https://aaronrohrbacher.com',
+  authors: [{ name: 'Aaron Rohrbacher', url: 'https://aaronrohrbacher.com' }],
+  creator: 'Aaron Rohrbacher',
+  publisher: 'Aaron Rohrbacher',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
   },
-  authors: [{ name: 'Aaron Rohrbacher' }],
+  openGraph: {
+    type: 'website',
+    siteName: 'Aaron Rohrbacher',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary',
+  },
   icons: {
     icon: [
       { url: '/icons/favicon-96x96.png', sizes: '96x96', type: 'image/png' },

@@ -26,6 +26,7 @@ export const EVENT_TYPES = {
   // Content
   STREAM: 'content.stream',
   DOWNLOAD: 'content.download',
+  PORTAPUTER_DOWNLOAD: 'content.portaputer_download',
   // Share links
   SHARE_CREATE: 'share.create',
   SHARE_REDEEM: 'share.redeem',

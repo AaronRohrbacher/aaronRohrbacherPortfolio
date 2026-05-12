@@ -189,6 +189,21 @@ export default $config({
       { provider: connectAwsProvider, dependsOn: [notifyAssoc, scheduleAssoc] }
     );
 
+    // S3 bucket for the PortaPuter Windows installer (.exe). Lives in
+    // us-west-2 — its own provider so the bucket's region is explicit and
+    // doesn't drift if Music's region ever moves. Private — signed GET
+    // URLs are issued by /api/portaputer/download after logging the
+    // click, so the .exe never has to be public.
+    const portaputerRegion = "us-west-2";
+    const portaputerAwsProvider = new aws.Provider("PortaputerRegion", {
+      region: portaputerRegion,
+    });
+    const portaputerBucket = new sst.aws.Bucket(
+      "PortaputerInstallers",
+      {},
+      { provider: portaputerAwsProvider },
+    );
+
     // DynamoDB single-table for music data (tracks, permissions, groups)
     const musicTable = new sst.aws.Dynamo("MusicData", {
       fields: {
@@ -313,13 +328,20 @@ export default $config({
     );
 
     new sst.aws.Nextjs("Portfolio", {
-      link: [musicTable, userPool, userPoolClient],
+      link: [musicTable, userPool, userPoolClient, portaputerBucket],
       permissions: [
         {
           actions: ["s3:GetObject", "s3:ListBucket", "s3:PutObject"],
           resources: [
             "arn:aws:s3:::musicsforu",
             "arn:aws:s3:::musicsforu/*",
+          ],
+        },
+        {
+          actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"],
+          resources: [
+            portaputerBucket.arn,
+            $interpolate`${portaputerBucket.arn}/*`,
           ],
         },
         {
@@ -360,6 +382,8 @@ export default $config({
         CONNECT_CONTACT_FLOW_ID: connectContactFlowId,
         CONNECT_VOICE_FLOW_ID: connectVoiceFlowId,
         MUSIC_CDN_DOMAIN: musicCdn.domainName,
+        PORTAPUTER_S3_BUCKET: portaputerBucket.name,
+        PORTAPUTER_S3_REGION: portaputerRegion,
         NEXT_PUBLIC_MODELS_URL: "https://aaron-portfolio-models.s3.us-west-2.amazonaws.com",
         CONTACT_EMAIL_TO: contactEmailTo,
         NOTIFY_FROM_EMAIL: "Portfolio Connect <connect@aaronrohrbacher.com>",
@@ -372,6 +396,7 @@ export default $config({
       tableName,
       musicCdnDomain: musicCdn.domainName,
       connectNotifyArn: connectNotifyFn.arn,
+      portaputerBucket: portaputerBucket.name,
     };
   },
 });

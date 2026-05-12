@@ -63,6 +63,22 @@ export function renderRichText(text) {
   return nodes;
 }
 
+// Strip the rich-text markup down to a plain string. Used by SEO surfaces
+// (meta description, OG description, JSON-LD plain-text fields) where we
+// can't emit React nodes — `[label](url)` collapses to just `label`, bare
+// URLs are kept as-is. Returns '' for null/undefined/empty input.
+export function renderRichTextToPlainString(text) {
+  if (text == null || text === '') return '';
+  // Use a fresh regex each call — LINK_RE has the global flag and shared
+  // lastIndex state across callers would skip matches on later invocations.
+  const re = new RegExp(LINK_RE.source, 'g');
+  return String(text).replace(re, (match, label, _url, bareUrl) => {
+    if (label !== undefined) return label;
+    if (bareUrl !== undefined) return bareUrl;
+    return match;
+  });
+}
+
 // Prompt for a URL + label and insert `[label](url)` at the current cursor
 // position of the given textarea/input. Caller passes the current value and
 // an onChange handler to update controlled state.

@@ -10,13 +10,13 @@ const jsonLd = {
   operatingSystem: 'Windows 10, Windows 11',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   description:
-    'Capture a live Windows desktop into a single portable executable that launches with one double-click.',
+    'Capture a live Windows desktop into a portable package that launches with one double-click.',
   author: {
     '@type': 'Person',
     name: 'Aaron Rohrbacher',
     url: 'https://aaronrohrbacher.com',
   },
-  softwareVersion: '1.0',
+  softwareVersion: '0.1',
   license: 'https://opensource.org/licenses/MIT',
   url: 'https://portaputer.aaronrohrbacher.com',
 };
