@@ -8,10 +8,11 @@ import { MusicPlayerProvider } from './MusicPlayerContext';
 import { MusicHrefProvider } from '@/lib/musicLinks';
 import PlayerBar from './PlayerBar';
 import { Box, Grid } from '@mui/material';
-import { setCookie } from 'cookies-next';
+import { getCookie, setCookie } from 'cookies-next';
 
-export default function MusicLayout({ children, initialDark, isMusicSubdomain = false }) {
-  const [darkMode, setDarkMode] = useState(initialDark === true);
+export default function MusicLayout({ children }) {
+  const [darkMode, setDarkMode] = useState(false);
+  const [isMusicSubdomain, setIsMusicSubdomain] = useState(false);
 
   function handleToggleDarkMode() {
     const next = !darkMode;
@@ -20,11 +21,17 @@ export default function MusicLayout({ children, initialDark, isMusicSubdomain = 
   }
 
   useEffect(() => {
-    if (initialDark === null) {
+    const host = window.location.hostname;
+    setIsMusicSubdomain(host.startsWith('music.') || host.startsWith('music-'));
+
+    const cookie = getCookie('darkMode');
+    if (cookie === 'true') {
+      setDarkMode(true);
+    } else if (cookie === undefined) {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (prefersDark) setDarkMode(true);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     document.documentElement.style.backgroundColor = darkMode ? '#1f1f1f' : '#f8f8f8';

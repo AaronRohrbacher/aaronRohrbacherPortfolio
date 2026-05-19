@@ -6,7 +6,6 @@ import { motion, MotionConfig } from 'framer-motion';
 import { info } from '@/info/Info';
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
   visible: (i = 0) => ({
     opacity: 1, y: 0,
     transition: { duration: 0.5, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] },
@@ -39,21 +38,21 @@ export default function About({ innerRef }) {
 
           {/* Left: bio + philosophy */}
           <div className={Style.left}>
-            <motion.p className={Style.eyebrow} variants={fadeUp} custom={0} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <motion.p className={Style.eyebrow} variants={fadeUp} custom={0} initial={false} whileInView="visible" viewport={{ once: true }}>
               About
             </motion.p>
-            <motion.h1 className={Style.heading} variants={fadeUp} custom={1} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <motion.h1 className={Style.heading} variants={fadeUp} custom={1} initial={false} whileInView="visible" viewport={{ once: true }}>
               {info.firstName} {info.lastName}
             </motion.h1>
-            <motion.p className={Style.role} variants={fadeUp} custom={2} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <motion.p className={Style.role} variants={fadeUp} custom={2} initial={false} whileInView="visible" viewport={{ once: true }}>
               {info.position}
             </motion.p>
 
-            <motion.p className={Style.bioParagraph} variants={fadeUp} custom={3} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <motion.p className={Style.bioParagraph} variants={fadeUp} custom={3} initial={false} whileInView="visible" viewport={{ once: true }}>
               {info.bio}
             </motion.p>
 
-            <motion.div className={Style.philosophy} variants={fadeUp} custom={4} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <motion.div className={Style.philosophy} variants={fadeUp} custom={4} initial={false} whileInView="visible" viewport={{ once: true }}>
               <p className={Style.philosophyLabel}>Engineering philosophy</p>
               {PHILOSOPHY.map((item, i) => (
                 <div key={i} className={Style.philosophyItem}>
@@ -65,7 +64,7 @@ export default function About({ innerRef }) {
           </div>
 
           {/* Right: bento cards */}
-          <motion.div className={Style.bento} variants={fadeUp} custom={2} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          <motion.div className={Style.bento} variants={fadeUp} custom={2} initial={false} whileInView="visible" viewport={{ once: true }}>
 
             {/* Currently */}
             <div className={`${Style.card} ${Style.cardWide}`}>
@@ -120,7 +119,7 @@ export default function About({ innerRef }) {
         <div className={Style.skillsSection}>
           <motion.p
             className={Style.skillsHeading}
-            variants={fadeUp} custom={0} initial="hidden"
+            variants={fadeUp} custom={0} initial={false}
             whileInView="visible" viewport={{ once: true, margin: '-60px' }}
           >
             Skills &amp; Tools
@@ -130,7 +129,7 @@ export default function About({ innerRef }) {
               <motion.div
                 key={group.label}
                 className={Style.skillGroup}
-                variants={fadeUp} custom={i} initial="hidden"
+                variants={fadeUp} custom={i} initial={false}
                 whileInView="visible" viewport={{ once: true, margin: '-60px' }}
               >
                 <p className={Style.skillGroupLabel} style={{ color: group.color }}>{group.label}</p>

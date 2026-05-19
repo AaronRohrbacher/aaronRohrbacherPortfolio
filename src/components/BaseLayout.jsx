@@ -7,14 +7,14 @@ import PageTransition from './PageTransition';
 import { Box, Grid } from '@mui/material';
 import { singlePage } from '@/info/Info';
 import useScrollObserver from '@/hooks/useScrollObserver';
-import { setCookie } from 'cookies-next';
+import { getCookie, setCookie } from 'cookies-next';
 
-export default function BaseLayout({ children, activePage, initialDark }) {
+export default function BaseLayout({ children, activePage }) {
   const [active, setActive] = useState(activePage || 'home');
   const refHome = useScrollObserver(setActive);
   const refAbout = useScrollObserver(setActive);
   const refPortfolio = useScrollObserver(setActive);
-  const [darkMode, setDarkMode] = useState(initialDark === true);
+  const [darkMode, setDarkMode] = useState(false);
 
   function handleToggleDarkMode() {
     const next = !darkMode;
@@ -23,12 +23,14 @@ export default function BaseLayout({ children, activePage, initialDark }) {
   }
 
   useEffect(() => {
-    // On first visit with no saved preference, respect system preference
-    if (initialDark === null) {
+    const cookie = getCookie('darkMode');
+    if (cookie === 'true') {
+      setDarkMode(true);
+    } else if (cookie === undefined) {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (prefersDark) setDarkMode(true);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     // Keep html background in sync so no white flash behind the layout

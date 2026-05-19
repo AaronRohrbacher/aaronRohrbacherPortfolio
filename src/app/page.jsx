@@ -23,9 +23,10 @@ export const metadata = {
   },
 };
 
-import { cookies } from 'next/headers';
 import BaseLayout from '@/components/BaseLayout';
 import Home from '@/components/home/Home';
+
+export const dynamic = 'force-static';
 
 // Site-wide JSON-LD: a Person identity + the WebSite they live on. Lives on
 // the homepage (Google's canonical entry point) so the knowledge-graph
@@ -93,11 +94,9 @@ const homeJsonLd = {
   ],
 };
 
-export default async function HomePage() {
-  const cookieStore = await cookies();
-  const initialDark = cookieStore.get('darkMode')?.value === 'true';
+export default function HomePage() {
   return (
-    <BaseLayout activePage="home" initialDark={initialDark}>
+    <BaseLayout activePage="home">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }}

@@ -1,4 +1,3 @@
-import { cookies, headers } from 'next/headers';
 import MusicLayout from '@/components/music/MusicLayout';
 
 export const metadata = {
@@ -20,15 +19,9 @@ export const viewport = {
   viewportFit: 'cover',
 };
 
-export default async function MusicRootLayout({ children }) {
-  const cookieStore = await cookies();
-  const initialDark = cookieStore.get('darkMode')?.value === 'true';
-  const hdrs = await headers();
-  const host = hdrs.get('host') || '';
-  const isMusicSubdomain = host.startsWith('music.') || host.startsWith('music-');
-
+export default function MusicRootLayout({ children }) {
   return (
-    <MusicLayout initialDark={initialDark} isMusicSubdomain={isMusicSubdomain}>
+    <MusicLayout>
       {children}
     </MusicLayout>
   );

@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import PortaputerLayout from '@/components/portaputer/PortaputerLayout';
 
 export const metadata = {
@@ -38,14 +37,9 @@ export const viewport = {
   maximumScale: 5,
 };
 
-export default async function PortaputerRootLayout({ children }) {
-  const hdrs = await headers();
-  const host = hdrs.get('host') || '';
-  const isPortaputerSubdomain =
-    host.startsWith('portaputer.') || host.startsWith('portaputer-');
-
+export default function PortaputerRootLayout({ children }) {
   return (
-    <PortaputerLayout isPortaputerSubdomain={isPortaputerSubdomain}>
+    <PortaputerLayout>
       {children}
     </PortaputerLayout>
   );

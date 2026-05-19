@@ -26,7 +26,7 @@ export default function Portfolio({ innerRef }) {
           {projects.map((project, index) => (
             <Grid size={{ xs: 12, md: 6 }} key={project.id ?? index}>
               <motion.div
-                initial={{ opacity: 0, y: 32 }}
+                initial={false}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-60px' }}
                 transition={{ duration: 0.5, delay: (index % 2) * 0.12, ease: [0.22, 1, 0.36, 1] }}

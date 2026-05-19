@@ -18,9 +18,10 @@ export const metadata = {
   },
 };
 
-import { cookies } from 'next/headers';
 import BaseLayout from '@/components/BaseLayout';
 import Resume from '@/components/resume/Resume';
+
+export const dynamic = 'force-static';
 
 // ProfilePage with a Person hasOccupation timeline. Mirrors the EXPERIENCE
 // data in src/components/resume/Resume.jsx — kept in sync manually because
@@ -104,11 +105,9 @@ const resumeJsonLd = {
   },
 };
 
-export default async function ResumePage() {
-  const cookieStore = await cookies();
-  const initialDark = cookieStore.get('darkMode')?.value === 'true';
+export default function ResumePage() {
   return (
-    <BaseLayout activePage="resume" initialDark={initialDark}>
+    <BaseLayout activePage="resume">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(resumeJsonLd) }}

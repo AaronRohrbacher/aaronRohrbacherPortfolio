@@ -19,9 +19,10 @@ export const metadata = {
   },
 };
 
-import { cookies } from 'next/headers';
 import BaseLayout from '@/components/BaseLayout';
 import About from '@/components/about/About';
+
+export const dynamic = 'force-static';
 
 const aboutJsonLd = {
   '@context': 'https://schema.org',
@@ -41,11 +42,9 @@ const aboutJsonLd = {
   },
 };
 
-export default async function AboutPage() {
-  const cookieStore = await cookies();
-  const initialDark = cookieStore.get('darkMode')?.value === 'true';
+export default function AboutPage() {
   return (
-    <BaseLayout activePage="about" initialDark={initialDark}>
+    <BaseLayout activePage="about">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutJsonLd) }}

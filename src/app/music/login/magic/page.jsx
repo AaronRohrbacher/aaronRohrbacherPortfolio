@@ -1,10 +1,22 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useMusicHref } from '@/lib/musicLinks';
 
 export default function MagicLoginPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}><i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem' }} /></div>
+      </div>
+    }>
+      <MagicLoginInner />
+    </Suspense>
+  );
+}
+
+function MagicLoginInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState('Signing you in...');

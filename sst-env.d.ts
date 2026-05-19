@@ -23,6 +23,10 @@ declare module "sst" {
       "secret": string
       "type": "sst.aws.CognitoUserPoolClient"
     }
+    "PortaputerInstallers": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
     "Portfolio": {
       "type": "sst.aws.Nextjs"
       "url": string

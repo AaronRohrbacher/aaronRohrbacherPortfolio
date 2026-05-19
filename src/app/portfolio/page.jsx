@@ -21,9 +21,10 @@ export const metadata = {
   },
 };
 
-import { cookies } from 'next/headers';
 import BaseLayout from '@/components/BaseLayout';
 import Portfolio from '@/components/portfolio/Portfolio';
+
+export const dynamic = 'force-static';
 
 // ItemList of projects so Google can render rich list-style results when
 // the portfolio is the matched page. Sourced from the same `info.portfolio`
@@ -62,11 +63,9 @@ const portfolioJsonLd = {
   },
 };
 
-export default async function PortfolioPage() {
-  const cookieStore = await cookies();
-  const initialDark = cookieStore.get('darkMode')?.value === 'true';
+export default function PortfolioPage() {
   return (
-    <BaseLayout activePage="portfolio" initialDark={initialDark}>
+    <BaseLayout activePage="portfolio">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(portfolioJsonLd) }}

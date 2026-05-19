@@ -18,9 +18,10 @@ export const metadata = {
   },
 };
 
-import { cookies } from 'next/headers';
 import BaseLayout from '@/components/BaseLayout';
 import ContactPage from '@/components/contact/ContactPage';
+
+export const dynamic = 'force-static';
 
 const contactJsonLd = {
   '@context': 'https://schema.org',
@@ -40,11 +41,9 @@ const contactJsonLd = {
   },
 };
 
-export default async function Contact() {
-  const cookieStore = await cookies();
-  const initialDark = cookieStore.get('darkMode')?.value === 'true';
+export default function Contact() {
   return (
-    <BaseLayout activePage="contact" initialDark={initialDark}>
+    <BaseLayout activePage="contact">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(contactJsonLd) }}

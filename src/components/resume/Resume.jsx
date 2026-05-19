@@ -157,7 +157,6 @@ const TABS = ['Timeline', 'Skills', 'About' /*, 'Ask AI' */];
 // ─── Shared animation variants ────────────────────────────────────────────────
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
   visible: (i = 0) => ({
     opacity: 1, y: 0,
     transition: { duration: 0.45, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] },
@@ -224,8 +223,8 @@ function TimelineEntry({ job, index, isLast, open, onToggle, prevOpen }) {
       className={Style.entry}
       variants={fadeUp}
       custom={index}
-      initial="hidden"
-      animate={inView ? 'visible' : 'hidden'}
+      initial={false}
+      animate={inView ? 'visible' : undefined}
     >
       {job.recruitedTo && (
         <div className={Style.recruitedGutter}>
@@ -274,7 +273,7 @@ function TimelineEntry({ job, index, isLast, open, onToggle, prevOpen }) {
               transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
             >
               {job.bullets.map((b, i) => (
-                <motion.li key={i} variants={fadeUp} custom={i} initial="hidden" animate="visible">
+                <motion.li key={i} variants={fadeUp} custom={i} initial={false} animate="visible">
                   <span className={Style.bulletMark} style={{ color: job.color }}>▸</span>
                   {b}
                 </motion.li>
@@ -301,8 +300,8 @@ function SkillGroups() {
           className={Style.skillGroup}
           variants={fadeUp}
           custom={i}
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
+          initial={false}
+          animate={inView ? 'visible' : undefined}
         >
           <p className={Style.skillGroupLabel} style={{ color: group.color }}>{group.label}</p>
           <div className={Style.skillTags}>
@@ -324,7 +323,7 @@ function AskAI() {
   };
 
   return (
-    <motion.div className={Style.aiPanel} variants={fadeUp} custom={0} initial="hidden" animate="visible">
+    <motion.div className={Style.aiPanel} variants={fadeUp} custom={0} initial={false} animate="visible">
       <div className={Style.aiIntro}>
         <div className={Style.aiIcon}><i className="fa-solid fa-microchip-ai" /></div>
         <p>Ask the AI assistant I built and fine-tuned anything — experience, skills, projects, or just curiosity. You can also leave a message, request my contact info, or connect by voice or video.</p>
@@ -351,7 +350,7 @@ export default function Resume({ innerRef }) {
 
       <motion.header
         className={Style.header}
-        initial={{ opacity: 0, y: -20 }}
+        initial={false}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
@@ -401,11 +400,11 @@ export default function Resume({ innerRef }) {
           {tab === 'Skills' && <SkillGroups />}
 
           {tab === 'About' && (
-            <motion.div className={Style.about} variants={fadeUp} custom={0} initial="hidden" animate="visible">
+            <motion.div className={Style.about} variants={fadeUp} custom={0} initial={false} animate="visible">
               <p>I&apos;m a senior software &amp; DevOps engineer with language-agnostic proficiency in programming and DevOps, and deep expertise in fiduciary finance, HR, payroll, and logistics. I deliver creative, effective, and timely solutions across AWS, GCP, and Azure.</p>
               <p>Most recently at Forbes AAC, I led emergency stabilization and a ground-up enterprise rebuild of an assistive technology platform, including full rewrites of all native apps (iOS, Android, macOS, Windows, Linux). At SPARQ, I drove AI-powered conversational experiences and infrastructure for enterprise clients including a payroll overhaul serving 500k+ employees.</p>
               <p>AWS Certified Cloud Practitioner and Certified Developer – Associate. AWS DevOps Engineer – Professional in progress. Outside of engineering, I play saxophone and am learning instrument repair.</p>
-              <motion.div className={Style.cta} variants={fadeUp} custom={3} initial="hidden" animate="visible">
+              <motion.div className={Style.cta} variants={fadeUp} custom={3} initial={false} animate="visible">
                 <a href="/contact" className={Style.ctaBtn}>
                   <i className="fa-solid fa-envelope" /> Get in touch
                 </a>

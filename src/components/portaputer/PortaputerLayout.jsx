@@ -7,10 +7,14 @@ import { Box, Grid } from '@mui/material';
 import { getCookie, setCookie } from 'cookies-next';
 import { PortaputerHrefProvider } from '@/lib/portaputerLinks';
 
-export default function PortaputerLayout({ children, isPortaputerSubdomain = false }) {
+export default function PortaputerLayout({ children }) {
   const [darkMode, setDarkMode] = useState(false);
+  const [isPortaputerSubdomain, setIsPortaputerSubdomain] = useState(false);
 
   useEffect(() => {
+    const host = window.location.hostname;
+    setIsPortaputerSubdomain(host.startsWith('portaputer.') || host.startsWith('portaputer-'));
+
     const cookie = getCookie('darkMode');
     if (cookie === 'true') {
       setDarkMode(true);
