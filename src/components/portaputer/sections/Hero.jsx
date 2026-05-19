@@ -21,7 +21,7 @@ export default function Hero() {
             <i className="fa-brands fa-windows" />
             Download for Windows
           </a>
-          <span className={Style.versionNote}>v0.1 &middot; Free &amp; open source</span>
+          <span className={Style.versionNote}>v0.1.1 &middot; Free &amp; open source</span>
         </div>
 
         <div className={Style.platforms}>
