@@ -4,7 +4,12 @@ export const metadata = {
 };
 
 import PortaputerAdmin from '@/components/portaputer/PortaputerAdmin';
+import AuthProviderWrapper from '@/components/portaputer/AuthProviderWrapper';
 
 export default function PortaputerAdminPage() {
-  return <PortaputerAdmin />;
+  return (
+    <AuthProviderWrapper>
+      <PortaputerAdmin />
+    </AuthProviderWrapper>
+  );
 }

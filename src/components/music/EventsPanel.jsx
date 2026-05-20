@@ -231,7 +231,7 @@ export default function EventsPanel({ getAuthHeaders }) {
                 <td style={{ ...cellTd, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={e.userAgent || ''}>
                   {e.userAgent ? e.userAgent.slice(0, 40) : '—'}
                 </td>
-                <td style={cellTd}>{e.detail || '—'}</td>
+                <td style={cellTd}>{e.detail ? (typeof e.detail === 'object' ? JSON.stringify(e.detail) : e.detail) : '—'}</td>
               </tr>
             ))}
             {viewEvents.length === 0 && !loading && (

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/components/music/AuthContext';
 import Style from './PortaputerAdmin.module.scss';
 
 function formatBytes(n) {
@@ -25,35 +26,40 @@ function formatTime(iso) {
 }
 
 export default function PortaputerAdmin() {
+  const { user, loading: authLoading, signIn, getAuthHeaders } = useAuth();
+  const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
-  const [pwError, setPwError] = useState('');
-  const [authed, setAuthed] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [uploadState, setUploadState] = useState({ status: 'idle', progress: 0, message: null });
   const [refreshTick, setRefreshTick] = useState(0);
 
-  function login() {
-    if (!pw) return;
-    if (pw === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
-      setAuthed(true);
-      setPwError('');
-    } else {
-      setPwError('Incorrect password.');
+  async function login(e) {
+    e?.preventDefault();
+    if (!email || !pw) return;
+    setLoginError('');
+    setLoginLoading(true);
+    try {
+      await signIn(email, pw);
+    } catch (err) {
+      setLoginError(err.message || 'Sign in failed');
+    } finally {
+      setLoginLoading(false);
     }
   }
 
   useEffect(() => {
-    if (!authed) return;
+    if (!user?.isAdmin) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/portaputer/downloads?limit=500', {
-          headers: { Authorization: `Bearer ${pw}` },
-        });
+        const headers = await getAuthHeaders();
+        const res = await fetch('/api/portaputer/downloads?limit=500', { headers });
         if (!res.ok) throw new Error(`Request failed (${res.status})`);
         const json = await res.json();
         if (!cancelled) setData(json);
@@ -67,17 +73,18 @@ export default function PortaputerAdmin() {
     return () => {
       cancelled = true;
     };
-  }, [authed, pw, refreshTick]);
+  }, [user, getAuthHeaders, refreshTick]);
 
   async function uploadInstaller(file) {
     if (!file) return;
     setUploadState({ status: 'requesting', progress: 0, message: 'Requesting upload slot…' });
     try {
+      const headers = await getAuthHeaders();
       const signRes = await fetch('/api/portaputer/upload', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${pw}`,
+          ...headers,
         },
         body: JSON.stringify({ contentType: 'application/octet-stream' }),
       });
@@ -135,24 +142,55 @@ export default function PortaputerAdmin() {
     if (file) uploadInstaller(file);
   }
 
-  if (!authed) {
+  if (authLoading) {
+    return (
+      <main className={Style.gate}>
+        <div className={Style.gateCard}>
+          <p className={Style.muted}>Loading…</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!user) {
     return (
       <main className={Style.gate}>
         <div className={Style.gateCard}>
           <h1 className={Style.gateTitle}>PortaPuter Admin</h1>
-          <input
-            type="password"
-            placeholder="Password"
-            value={pw}
-            onChange={(e) => setPw(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && login()}
-            className={Style.gateInput}
-            autoFocus
-          />
-          <button onClick={login} className={Style.gateBtn}>
-            Sign in
-          </button>
-          {pwError && <p className={Style.gateError}>{pwError}</p>}
+          <form onSubmit={login}>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={Style.gateInput}
+              autoComplete="email"
+              autoFocus
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              className={Style.gateInput}
+              autoComplete="current-password"
+            />
+            <button type="submit" className={Style.gateBtn} disabled={loginLoading}>
+              {loginLoading ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+          {loginError && <p className={Style.gateError}>{loginError}</p>}
+        </div>
+      </main>
+    );
+  }
+
+  if (!user.isAdmin) {
+    return (
+      <main className={Style.gate}>
+        <div className={Style.gateCard}>
+          <h1 className={Style.gateTitle}>Access Denied</h1>
+          <p>Your account does not have admin privileges.</p>
         </div>
       </main>
     );

@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
 import { listEvents, EVENT_TYPES } from '@/lib/eventLog';
 import { headInstaller, isPortaputerStorageConfigured } from '@/lib/portaputerS3';
+import { authenticateRequest } from '@/lib/verifyToken';
 
 export const dynamic = 'force-dynamic';
 
-// Admin endpoint: read recent PortaPuter download events.
-// Gated by the same NEXT_PUBLIC_ADMIN_PASSWORD the portfolio admin uses,
-// passed via Authorization: Bearer <password> from the client component.
 export async function GET(request) {
-  const auth = request.headers.get('authorization') || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-  const expected = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
-  if (!expected || token !== expected) {
+  const user = await authenticateRequest(request);
+  if (!user?.isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
