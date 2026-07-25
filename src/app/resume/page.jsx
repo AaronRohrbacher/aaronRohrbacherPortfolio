@@ -1,19 +1,19 @@
 export const metadata = {
-  title: 'Resume — Aaron Rohrbacher, Lead Software & DevOps Engineer',
+  title: 'Resume — Lead Software & DevOps Engineer',
   description:
     'Resume of Aaron Rohrbacher — Lead Cross-Platform Software and DevOps Engineer, Portland, Oregon. Most recently Lead SDE at Forbes AAC stabilizing a critical Ruby/Ember platform and rebuilding native iOS, Android, macOS, Windows, and Linux apps. Prior: Technical Lead at SPARQ on AI conversational experiences and AWS Lambda microservices for a 500k-employee global logistics payroll system. AWS Certified Cloud Practitioner & Developer – Associate.',
   alternates: {
     canonical: '/resume',
   },
   openGraph: {
-    title: 'Resume — Aaron Rohrbacher, Lead Software & DevOps Engineer',
+    title: 'Resume — Lead Software & DevOps Engineer | Aaron Rohrbacher',
     description:
       'Lead Software & DevOps Engineer based in Portland, Oregon. 7+ years across AI/ML, multi-cloud architecture, and native cross-platform development.',
     url: 'https://aaronrohrbacher.com/resume',
     type: 'profile',
   },
   twitter: {
-    title: 'Resume — Aaron Rohrbacher',
+    title: 'Resume — Lead Software & DevOps Engineer | Aaron Rohrbacher',
     description: 'Lead Software & DevOps Engineer · Portland, OR · AI/ML, AWS, native cross-platform.',
   },
 };

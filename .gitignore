@@ -44,6 +44,9 @@ next-env.d.ts
 # fine-tuned ONNX model (too large for git)
 public/models/
 
+# local analytics exports, reports, and tooling
+/analytics-export/
+
 # misc
 .DS_Store
 .env.local

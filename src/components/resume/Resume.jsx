@@ -403,7 +403,7 @@ export default function Resume({ innerRef }) {
             <motion.div className={Style.about} variants={fadeUp} custom={0} initial={false} animate="visible">
               <p>I&apos;m a senior software &amp; DevOps engineer with language-agnostic proficiency in programming and DevOps, and deep expertise in fiduciary finance, HR, payroll, and logistics. I deliver creative, effective, and timely solutions across AWS, GCP, and Azure.</p>
               <p>Most recently at Forbes AAC, I led emergency stabilization and a ground-up enterprise rebuild of an assistive technology platform, including full rewrites of all native apps (iOS, Android, macOS, Windows, Linux). At SPARQ, I drove AI-powered conversational experiences and infrastructure for enterprise clients including a payroll overhaul serving 500k+ employees.</p>
-              <p>AWS Certified Cloud Practitioner and Certified Developer – Associate. AWS DevOps Engineer – Professional in progress. Outside of engineering, I play saxophone and am learning instrument repair.</p>
+              <p>AWS Certified Cloud Practitioner and Certified Developer – Associate. AWS DevOps Engineer – Professional in progress. I keep myself in a constant state of learning. Outside of engineering, I play saxophone and am learning instrument repair.</p>
               <motion.div className={Style.cta} variants={fadeUp} custom={3} initial={false} animate="visible">
                 <a href="/contact" className={Style.ctaBtn}>
                   <i className="fa-solid fa-envelope" /> Get in touch

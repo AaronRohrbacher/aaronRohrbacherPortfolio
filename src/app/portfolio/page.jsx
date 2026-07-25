@@ -1,21 +1,21 @@
 import { info } from '@/info/Info';
 
 export const metadata = {
-  title: 'Portfolio — Software Projects by Aaron Rohrbacher',
+  title: 'Portfolio — Software Projects',
   description:
     'Selected software projects by Aaron Rohrbacher: Session (a Rust digital audio workstation), Heard (an AI mastering plugin), Fanboy (a saxophone-tone DAW plugin), AppNow (LLM-powered CRUD app generator), MOVE (open-source macOS window tiler), Klear (KWin transparency script), and more — closed-source and open-source work spanning AI/ML, cross-platform apps, and developer tools.',
   alternates: {
     canonical: '/portfolio',
   },
   openGraph: {
-    title: 'Portfolio — Software Projects by Aaron Rohrbacher',
+    title: 'Portfolio — Software Projects | Aaron Rohrbacher',
     description:
       'Selected software projects: AI/ML plugins, a Rust DAW, LLM-powered tools, a macOS window tiler, and open-source utilities.',
     url: 'https://aaronrohrbacher.com/portfolio',
     type: 'website',
   },
   twitter: {
-    title: 'Portfolio — Software Projects by Aaron Rohrbacher',
+    title: 'Portfolio — Software Projects | Aaron Rohrbacher',
     description:
       'Selected software projects: AI/ML plugins, a Rust DAW, LLM tools, a macOS tiler, and OSS utilities.',
   },

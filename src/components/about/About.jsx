@@ -13,10 +13,10 @@ const fadeUp = {
 };
 
 const PHILOSOPHY = [
-  'Language and framework agnosticism. Tools get picked for the problem, not the other way around — and that goes for AI too.',
-  'The Open-Closed Principle is at the heart of most everything I build. Extend, don\'t gut.',
-  'Self-documenting code and the Principle of Least Astonishment. Magic isn\'t always magic for the next folks.',
-  'RFC-based decision-making. I\'ve laid down the law on architecture and tooling, but I\'ve learned more from my colleagues than from any course or book. Encourage discussion — even disagreement. That\'s how we grow as technologists.',
+  { lead: 'Language and framework agnosticism', rest: '. Tools get picked for the problem, not the other way around — and that goes for AI too.' },
+  { lead: 'The Open-Closed Principle', rest: ' is at the heart of most everything I build. Extend, don\'t gut.' },
+  { lead: 'Self-documenting code and the Principle of Least Astonishment', rest: '. Magic isn\'t always magic for the next folks.' },
+  { lead: 'RFC-based decision-making', rest: '. I set and enforce the standards on architecture and tooling, and I actively engage colleagues of every stripe around learning and best practices — I\'ve learned more from my colleagues than from any course or book. Encourage discussion — even disagreement. That\'s how we grow as technologists.' },
 ];
 
 const SKILL_GROUPS = [
@@ -57,7 +57,7 @@ export default function About({ innerRef }) {
               {PHILOSOPHY.map((item, i) => (
                 <div key={i} className={Style.philosophyItem}>
                   <span className={Style.philosophyMark} style={{ color: i % 2 === 0 ? 'var(--accent-1)' : 'var(--accent-2)' }}>▸</span>
-                  {item}
+                  <span><strong>{item.lead}</strong>{item.rest}</span>
                 </div>
               ))}
             </motion.div>

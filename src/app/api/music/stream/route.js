@@ -121,6 +121,15 @@ export async function GET(request) {
     const cdnDomain = process.env.MUSIC_CDN_DOMAIN;
     if (cdnDomain) {
       const cdnUrl = `https://${cdnDomain}/${encodeURI(key)}`;
+      // Authenticated media requests must not carry their bearer token across
+      // the redirect to CloudFront. Firefox preserves the custom header for
+      // the cross-origin media load and correctly requires a CORS preflight;
+      // the CDN only supports GET/HEAD, so playback is blocked. Let clients
+      // resolve the authorized stream URL as JSON first, then load the CDN
+      // URL as an ordinary anonymous media request.
+      if (searchParams.get('urlOnly') === '1') {
+        return NextResponse.json({ url: cdnUrl });
+      }
       return NextResponse.redirect(cdnUrl, 302);
     }
 
@@ -139,6 +148,11 @@ export async function GET(request) {
     // fine because fetch streams the body and Next's response passes it
     // through without buffering.
     const streamUrl = await getStreamUrl(key, format);
+    if (searchParams.get('urlOnly') === '1') {
+      const sameOriginUrl = new URL(request.url);
+      sameOriginUrl.searchParams.delete('urlOnly');
+      return NextResponse.json({ url: `${sameOriginUrl.pathname}${sameOriginUrl.search}`, requiresAuth: true });
+    }
     const upstream = await fetch(streamUrl);
     if (!upstream.ok || !upstream.body) {
       return NextResponse.json(

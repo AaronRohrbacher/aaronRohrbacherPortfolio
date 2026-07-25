@@ -311,6 +311,18 @@ test.describe('Stream & Download', () => {
     expect(res.headers()['content-disposition']).toContain('inline');
   });
 
+  test('authenticated players can resolve a header-safe playback URL', async ({ request }) => {
+    const res = await request.get(
+      `${BASE}/api/music/stream?id=${trackId}&format=mp3&urlOnly=1`,
+      { headers: authHeaders(adminToken), maxRedirects: 0 }
+    );
+    expect(res.status()).toBe(200);
+    expect(res.headers()['content-type']).toContain('application/json');
+    const data = await res.json();
+    expect(data.url).toBeTruthy();
+    expect(data.url).not.toContain('urlOnly=1');
+  });
+
   test('download returns file with Content-Disposition', async ({ request }) => {
     const res = await request.get(
       `${BASE}/api/music/stream?id=${trackId}&format=mp3&download=1`

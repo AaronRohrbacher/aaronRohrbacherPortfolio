@@ -101,6 +101,22 @@ export default function WaveformPlayer({ streamUrls, isPlaying, onPlayPause, onE
     if (streamUrls.wav) candidates.push({ url: streamUrls.wav, fmt: 'wav' });
     if (streamUrls.aiff) candidates.push({ url: streamUrls.aiff, fmt: 'aiff' });
 
+    async function resolvePlaybackUrl(url) {
+      if (!fetchHeaders) return { url, headers: undefined };
+
+      // Authorize on our own origin, but never attach the bearer token to the
+      // cross-origin CloudFront media request. Firefox follows media redirects
+      // with the supplied Authorization header and therefore preflights the
+      // CDN request; resolving the final URL first keeps that request simple.
+      const resolved = new URL(url, window.location.href);
+      resolved.searchParams.set('urlOnly', '1');
+      const response = await fetch(resolved, { headers: fetchHeaders });
+      if (!response.ok) throw new Error(`Fetch ${response.status}`);
+      const data = await response.json();
+      if (!data?.url) throw new Error('Missing stream URL');
+      return { url: data.url, headers: data.requiresAuth ? fetchHeaders : undefined };
+    }
+
     async function tryLoad(index) {
       if (destroyed || index >= candidates.length) {
         if (!destroyed) {
@@ -115,9 +131,11 @@ export default function WaveformPlayer({ streamUrls, isPlaying, onPlayPause, onE
       if (destroyed) return;
 
       try {
+        const playback = await resolvePlaybackUrl(url);
+        if (destroyed) return;
         if (fmt === 'aiff') {
           const { default: decodeAiff } = await import('@audio/decode-aiff');
-          const response = await fetch(url, fetchHeaders ? { headers: fetchHeaders } : undefined);
+          const response = await fetch(playback.url, playback.headers ? { headers: playback.headers } : undefined);
           if (!response.ok) throw new Error(`Fetch ${response.status}`);
           const arrayBuffer = await response.arrayBuffer();
           const { channelData, sampleRate } = await decodeAiff(arrayBuffer);
@@ -141,8 +159,8 @@ export default function WaveformPlayer({ streamUrls, isPlaying, onPlayPause, onE
           const mediaEl = document.createElement('audio');
           mediaEl.crossOrigin = 'anonymous';
           mediaEl.preload = 'auto';
-          const wsOpts = { container: containerRef.current, ...WS_OPTS, url, media: mediaEl };
-          if (fetchHeaders) wsOpts.fetchParams = { headers: fetchHeaders };
+          const wsOpts = { container: containerRef.current, ...WS_OPTS, url: playback.url, media: mediaEl };
+          if (playback.headers) wsOpts.fetchParams = { headers: playback.headers };
           ws = WaveSurfer.create(wsOpts);
         }
 

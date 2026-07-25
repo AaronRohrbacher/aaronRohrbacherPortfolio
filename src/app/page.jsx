@@ -2,7 +2,7 @@
 // without the layout's "%s | Aaron Rohrbacher" template appending the suffix.
 export const metadata = {
   title: {
-    absolute: 'Aaron Rohrbacher | Lead Cross-Platform Software and DevOps Engineer',
+    absolute: 'Aaron Rohrbacher | Lead Cross-Platform Software & DevOps Engineer',
   },
   description:
     'Aaron Rohrbacher — Lead Cross-Platform Software and DevOps Engineer based in Portland, Oregon. Building AI/ML systems with PyTorch and LLM fine-tuning, leading cloud architecture on AWS, GCP, and Azure, and shipping native apps for iOS, Android, macOS, Windows, and Linux.',
@@ -10,14 +10,14 @@ export const metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: 'Aaron Rohrbacher | Lead Cross-Platform Software and DevOps Engineer',
+    title: 'Aaron Rohrbacher | Lead Cross-Platform Software & DevOps Engineer',
     description:
       'Portfolio of Aaron Rohrbacher — Portland, Oregon. AI/ML engineering, full-stack development, multi-cloud architecture, and native cross-platform apps.',
     url: 'https://aaronrohrbacher.com',
     type: 'website',
   },
   twitter: {
-    title: 'Aaron Rohrbacher | Lead Cross-Platform Software and DevOps Engineer',
+    title: 'Aaron Rohrbacher | Lead Cross-Platform Software & DevOps Engineer',
     description:
       'Portfolio of Aaron Rohrbacher — Portland, Oregon. AI/ML, full-stack, multi-cloud, and native apps.',
   },

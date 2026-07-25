@@ -363,8 +363,17 @@ export default $config({
       domain: isProd
         ? {
             name: "aaronrohrbacher.com",
-            aliases: ["www.aaronrohrbacher.com", "music.aaronrohrbacher.com", "portaputer.aaronrohrbacher.com"],
-            dns: sst.aws.dns({ zone: "Z0895814ZUITIQOAPVHT" }),
+            // www 301-redirects to the apex (a true HTTP redirect, not a
+            // content-serving alias) so Google stops flagging www as a
+            // duplicate/alternate page. music + portaputer stay as aliases
+            // because middleware.js serves real content under those hosts.
+            redirects: ["www.aaronrohrbacher.com"],
+            aliases: ["music.aaronrohrbacher.com", "portaputer.aaronrohrbacher.com"],
+            // override: true lets SST replace pre-existing Route53 records
+            // (e.g. when migrating www from an alias to a redirect) instead of
+            // failing with "record already exists". Avoids manual DNS surgery
+            // and the downtime that comes with deleting records by hand.
+            dns: sst.aws.dns({ zone: "Z0895814ZUITIQOAPVHT", override: true }),
           }
         : undefined,
       environment: {

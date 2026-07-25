@@ -17,7 +17,7 @@ import ChatAgentLoader from '@/components/ChatAgentLoader';
 export const metadata = {
   metadataBase: new URL('https://aaronrohrbacher.com'),
   title: {
-    default: 'Aaron Rohrbacher | Lead Cross-Platform Software and DevOps Engineer',
+    default: 'Aaron Rohrbacher | Lead Cross-Platform Software & DevOps Engineer',
     template: '%s | Aaron Rohrbacher',
   },
   description: 'Portfolio of Aaron Rohrbacher — lead cross-platform software and DevOps engineer specializing in AI/ML, full-stack development, and cloud architecture. Based in Portland, Oregon.',

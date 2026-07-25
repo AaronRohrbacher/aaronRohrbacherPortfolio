@@ -20,7 +20,7 @@ export const info = {
     firstName: "Aaron",
     lastName: "Rohrbacher",
     initials: "ar",
-    position: "I'm a senior software & DevOps engineer building agentic AI",
+    position: "I'm a senior software & DevOps engineer in a constant state of learning, building agentic AI",
     selfPortrait: self.src,
     gradient: `linear-gradient(135deg, var(--accent-1), var(--accent-2))`,
     baseColor: accent1,

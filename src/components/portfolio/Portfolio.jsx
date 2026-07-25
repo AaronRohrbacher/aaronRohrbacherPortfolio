@@ -22,6 +22,21 @@ export default function Portfolio({ innerRef }) {
     <MotionConfig reducedMotion="user">
       <Box ref={innerRef} id={'portfolio'} py={'2rem'}>
         <h1 className="sr-only">Portfolio</h1>
+        <Box
+          sx={{
+            maxWidth: '720px',
+            margin: '0 auto 2.5rem',
+            padding: '0 1rem',
+            textAlign: 'center',
+            lineHeight: 1.6,
+            opacity: 0.85,
+          }}
+        >
+          Here are a few of my personal projects. In an industry that requires a
+          constant state of learning, I maintain a standard of practice around
+          language-agnostic problem solving. I choose the language for the
+          application, not the reverse.
+        </Box>
         <Grid container justifyContent={'center'} sx={{ maxWidth: '100%' }}>
           {projects.map((project, index) => (
             <Grid size={{ xs: 12, md: 6 }} key={project.id ?? index}>
