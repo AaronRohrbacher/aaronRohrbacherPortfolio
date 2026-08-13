@@ -1,19 +1,19 @@
 export const metadata = {
-  title: 'Contact',
+  title: 'Contact Aaron Rohrbacher',
   description:
     'Get in touch with Aaron Rohrbacher — Lead Cross-Platform Software and DevOps Engineer in Portland, Oregon. Available immediately for senior, lead, and architect roles. Reach out via the on-site AI assistant for chat, voice, or video, or for direct email.',
   alternates: {
     canonical: '/contact',
   },
   openGraph: {
-    title: 'Contact | Aaron Rohrbacher',
+    title: 'Contact Aaron Rohrbacher',
     description:
       'Open to new opportunities — chat, voice, video, or email. Lead Software & DevOps Engineer, Portland, Oregon.',
     url: 'https://aaronrohrbacher.com/contact',
     type: 'website',
   },
   twitter: {
-    title: 'Contact | Aaron Rohrbacher',
+    title: 'Contact Aaron Rohrbacher',
     description: 'Open to new opportunities. Lead Software & DevOps Engineer · Portland, OR.',
   },
 };

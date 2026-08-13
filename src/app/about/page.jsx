@@ -1,19 +1,19 @@
 export const metadata = {
-  title: 'About',
+  title: 'About Aaron Rohrbacher',
   description:
     'About Aaron Rohrbacher — a Portland, Oregon Lead AI/ML Software Engineer and DevOps Architect. Background in cross-platform app development (iOS, Android, macOS, Windows, Linux), enterprise cloud migrations, custom LLM fine-tuning, and conversational AI. AWS Certified Cloud Practitioner and Developer – Associate.',
   alternates: {
     canonical: '/about',
   },
   openGraph: {
-    title: 'About | Aaron Rohrbacher',
+    title: 'About Aaron Rohrbacher',
     description:
       'Lead AI/ML Software Engineer & DevOps Architect in Portland, Oregon. Multi-cloud (AWS / GCP / Azure), native cross-platform apps, LLM fine-tuning, and conversational AI.',
     url: 'https://aaronrohrbacher.com/about',
     type: 'profile',
   },
   twitter: {
-    title: 'About | Aaron Rohrbacher',
+    title: 'About Aaron Rohrbacher',
     description:
       'Lead AI/ML Software Engineer & DevOps Architect in Portland, Oregon.',
   },
@@ -29,7 +29,7 @@ const aboutJsonLd = {
   '@type': 'ProfilePage',
   '@id': 'https://aaronrohrbacher.com/about#profilepage',
   url: 'https://aaronrohrbacher.com/about',
-  name: 'About | Aaron Rohrbacher',
+  name: 'About Aaron Rohrbacher',
   description:
     'About Aaron Rohrbacher — Lead AI/ML Software Engineer and DevOps Architect based in Portland, Oregon.',
   mainEntity: { '@id': 'https://aaronrohrbacher.com/#person' },
