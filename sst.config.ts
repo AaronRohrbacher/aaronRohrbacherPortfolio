@@ -4,7 +4,7 @@ export default $config({
   app(input) {
     return {
       name: "aaron-portfolio",
-      removal: input?.stage === "production" ? "retain" : "remove",
+      removal: "remove",
       // protect: input?.stage === "production",
       home: "aws",
     };
@@ -32,9 +32,9 @@ export default $config({
     const googleRefreshToken = process.env.GOOGLE_REFRESH_TOKEN!;
     const calendarEmail = process.env.CALENDAR_EMAIL!;
 
-    // Music S3 bucket lives in us-east-2. BucketPolicy must target same region.
+    // Music S3 bucket lives in us-west-2. BucketPolicy must target same region.
     const musicAwsProvider = new aws.Provider("MusicRegion", {
-      region: "us-east-2",
+      region: "us-west-2",
     });
 
     // Amazon Connect lives in us-west-2 (instance alias "doctorbader"). The
@@ -284,7 +284,7 @@ export default $config({
     const musicCdn = new aws.cloudfront.Distribution("MusicCDN", {
       origins: [
         {
-          domainName: "musicsforu.s3.us-east-2.amazonaws.com",
+          domainName: "aarons-recordings.s3.us-west-2.amazonaws.com",
           originId: "musicS3",
           originAccessControlId: musicOac.id,
         },
@@ -308,7 +308,7 @@ export default $config({
     new aws.s3.BucketPolicy(
       "MusicBucketPolicy",
       {
-        bucket: "musicsforu",
+        bucket: "aarons-recordings",
         policy: musicCdn.arn.apply((arn) =>
           JSON.stringify({
             Version: "2012-10-17",
@@ -317,7 +317,7 @@ export default $config({
                 Effect: "Allow",
                 Principal: { Service: "cloudfront.amazonaws.com" },
                 Action: "s3:GetObject",
-                Resource: "arn:aws:s3:::musicsforu/*",
+                Resource: "arn:aws:s3:::aarons-recordings/*",
                 Condition: { StringEquals: { "AWS:SourceArn": arn } },
               },
             ],
@@ -333,8 +333,8 @@ export default $config({
         {
           actions: ["s3:GetObject", "s3:ListBucket", "s3:PutObject"],
           resources: [
-            "arn:aws:s3:::musicsforu",
-            "arn:aws:s3:::musicsforu/*",
+            "arn:aws:s3:::aarons-recordings",
+            "arn:aws:s3:::aarons-recordings/*",
           ],
         },
         {

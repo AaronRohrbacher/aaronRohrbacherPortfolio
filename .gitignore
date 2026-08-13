@@ -23,6 +23,7 @@
 
 # SST
 .sst/
+.sst.corrupt-*/
 .open-next/
 
 # testing artifacts

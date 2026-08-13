@@ -20,7 +20,7 @@ import {
 } from '@aws-sdk/client-cognito-identity-provider';
 import { createInterface } from 'readline';
 
-const REGION = process.env.NEXT_PUBLIC_AWS_REGION || 'us-east-2';
+const REGION = process.env.NEXT_PUBLIC_AWS_REGION || 'us-west-2';
 const USER_POOL_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
 
 if (!USER_POOL_ID) {

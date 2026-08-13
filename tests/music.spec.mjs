@@ -857,7 +857,7 @@ test.describe('Upload', () => {
     });
     const data = await res.json();
     expect(data.urls).toHaveLength(1);
-    expect(data.urls[0].uploadUrl).toContain('musicsforu');
+    expect(data.urls[0].uploadUrl).toContain('aarons-recordings');
     expect(data.urls[0].key).toBe('test-upload.mp3');
   });
 

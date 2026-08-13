@@ -67,7 +67,7 @@ async function getClient() {
   if (!_cognitoClient) {
     const { CognitoIdentityProviderClient } = await import('@aws-sdk/client-cognito-identity-provider');
     _cognitoClient = new CognitoIdentityProviderClient({
-      region: process.env.NEXT_PUBLIC_AWS_REGION || 'us-east-2',
+      region: process.env.NEXT_PUBLIC_AWS_REGION || 'us-west-2',
     });
   }
   return _cognitoClient;

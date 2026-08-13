@@ -20,7 +20,7 @@ if (!TABLE_NAME) {
   process.exit(1);
 }
 
-const REGION = process.env.AWS_REGION || 'us-east-2';
+const REGION = process.env.AWS_REGION || 'us-west-2';
 
 const ddb = new DynamoDBClient({ region: REGION });
 const doc = DynamoDBDocumentClient.from(ddb, {

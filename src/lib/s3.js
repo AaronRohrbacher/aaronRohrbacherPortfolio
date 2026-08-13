@@ -1,8 +1,8 @@
 import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-const BUCKET = 'musicsforu';
-const REGION = 'us-east-2';
+const BUCKET = 'aarons-recordings';
+const REGION = 'us-west-2';
 
 let _client;
 function getClient() {

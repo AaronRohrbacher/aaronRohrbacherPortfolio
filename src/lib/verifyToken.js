@@ -1,7 +1,7 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 const USE_LOCAL = !process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
-const REGION = process.env.NEXT_PUBLIC_AWS_REGION || 'us-east-2';
+const REGION = process.env.NEXT_PUBLIC_AWS_REGION || 'us-west-2';
 const USER_POOL_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
 const CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
 
