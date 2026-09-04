@@ -2,7 +2,7 @@ import { test } from '@playwright/test';
 test.use({ viewport: { width: 375, height: 812 } });
 
 test('check the download URLs and their auth behavior', async ({ page }) => {
-  await page.goto('/music/dump/tune-dump?share=d99c7b291aa3c71b81e9bd6d7a0b457041b60d48ddd56b16342491c59aa50283');
+  await page.goto('http://music.localhost:3000/dump/tune-dump?share=d99c7b291aa3c71b81e9bd6d7a0b457041b60d48ddd56b16342491c59aa50283');
   await page.waitForLoadState('networkidle');
 
   const info = await page.evaluate(() => {

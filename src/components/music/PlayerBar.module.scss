@@ -30,6 +30,41 @@
   }
 }
 
+.persistentMedia {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.videoVisible {
+  position: static;
+  width: min(34vw, 360px);
+  height: clamp(150px, 22vh, 220px);
+  opacity: 1;
+  pointer-events: auto;
+  object-fit: contain;
+  background: #000;
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+}
+
+.playbackStage {
+  display: block;
+}
+
+.videoStage {
+  display: grid;
+  grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+}
+
+.waveformColumn {
+  min-width: 0;
+}
+
 :global([data-theme="dark"]) .bar {
   background: rgba(12, 12, 12, 0.88);
   color: var(--white);
@@ -210,4 +245,17 @@
   gap: 0.3rem;
   flex-shrink: 0;
   margin-left: 1rem;
+}
+
+@media (max-width: 700px) {
+  .videoStage {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+  }
+
+  .videoVisible {
+    width: min(100%, 360px);
+    height: min(24vh, 190px);
+    margin: 0 auto;
+  }
 }

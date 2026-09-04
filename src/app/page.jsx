@@ -1,23 +1,23 @@
+import { absoluteSeoTitle, SEO_HOME_TITLES } from '@/lib/seoTitles';
+
 // Use `title.absolute` so the homepage renders the full marketing title
 // without the layout's "%s | Aaron Rohrbacher" template appending the suffix.
 export const metadata = {
-  title: {
-    absolute: 'Aaron Rohrbacher | Lead Cross-Platform Software and DevOps Engineer',
-  },
+  title: absoluteSeoTitle(SEO_HOME_TITLES.main),
   description:
     'Aaron Rohrbacher — Lead Cross-Platform Software and DevOps Engineer based in Portland, Oregon. Building AI/ML systems with PyTorch and LLM fine-tuning, leading cloud architecture on AWS, GCP, and Azure, and shipping native apps for iOS, Android, macOS, Windows, and Linux.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'Aaron Rohrbacher | Lead Cross-Platform Software and DevOps Engineer',
+    title: SEO_HOME_TITLES.main,
     description:
       'Portfolio of Aaron Rohrbacher — Portland, Oregon. AI/ML engineering, full-stack development, multi-cloud architecture, and native cross-platform apps.',
     url: 'https://aaronrohrbacher.com',
     type: 'website',
   },
   twitter: {
-    title: 'Aaron Rohrbacher | Lead Cross-Platform Software and DevOps Engineer',
+    title: SEO_HOME_TITLES.main,
     description:
       'Portfolio of Aaron Rohrbacher — Portland, Oregon. AI/ML, full-stack, multi-cloud, and native apps.',
   },
@@ -83,7 +83,7 @@ const homeJsonLd = {
       '@type': 'WebPage',
       '@id': 'https://aaronrohrbacher.com/#webpage',
       url: 'https://aaronrohrbacher.com',
-      name: 'Aaron Rohrbacher | Lead Cross-Platform Software and DevOps Engineer',
+      name: SEO_HOME_TITLES.main,
       isPartOf: { '@id': 'https://aaronrohrbacher.com/#website' },
       about: { '@id': 'https://aaronrohrbacher.com/#person' },
       primaryImageOfPage: {

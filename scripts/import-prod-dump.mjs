@@ -121,9 +121,9 @@ async function main() {
   await putRow(local, LOCAL_TABLE, linkItem);
 
   const slug = dumpRow.slug || DUMP_ID;
-  const localUrl = `http://localhost:3000/music/dump/${slug}?share=${token}`;
+  const localUrl = `http://music.localhost:3000/dump/${slug}?share=${token}`;
   const lanIp = process.env.DEV_LAN_IP || '10.1.1.236';
-  const lanUrl = `http://${lanIp}:3000/music/dump/${slug}?share=${token}`;
+  const lanUrl = `http://music.${lanIp}.nip.io:3000/dump/${slug}?share=${token}`;
 
   console.log('\n✔ done');
   console.log('');

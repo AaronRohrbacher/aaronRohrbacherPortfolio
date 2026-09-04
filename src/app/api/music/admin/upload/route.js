@@ -5,13 +5,19 @@ import { getUploadUrl } from '@/lib/s3';
 const MIME_MAP = {
   mp3: 'audio/mpeg',
   wav: 'audio/wav',
+  aac: 'audio/aac',
+  m4a: 'audio/mp4',
   aiff: 'audio/aiff',
   aif: 'audio/aiff',
+  mp4: 'video/mp4',
+  m4v: 'video/mp4',
+  webm: 'video/webm',
+  mov: 'video/quicktime',
 };
 
 /**
- * POST /api/music/admin/upload
- * Admin only: generate presigned upload URLs for audio files.
+ * POST /api/admin/upload
+ * Admin only: generate presigned upload URLs for supported audio/video variants.
  * Body: { files: [{ filename: "track.wav" }, ...] }
  * Returns: { urls: [{ filename, key, uploadUrl }] }
  */

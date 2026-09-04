@@ -11,17 +11,17 @@ import { test, expect } from '@playwright/test';
 
 test.describe.configure({ mode: 'serial' });
 
-const BASE = 'http://localhost:3000';
+const BASE = 'http://music.localhost:3000';
 
 async function signIn(request, email = 'admin@local.dev', password = 'admin') {
-  const res = await request.post(`${BASE}/api/music/auth/signin`, {
+  const res = await request.post(`${BASE}/api/auth/signin`, {
     data: { email, password },
   });
   return (await res.json()).idToken;
 }
 
 async function signUp(request, email, password = 'testpass1') {
-  const res = await request.post(`${BASE}/api/music/auth/signup`, {
+  const res = await request.post(`${BASE}/api/auth/signup`, {
     data: { email, password },
   });
   return res.json();
@@ -30,19 +30,19 @@ async function signUp(request, email, password = 'testpass1') {
 function authHeaders(token) { return { Authorization: `Bearer ${token}` }; }
 
 async function getRawTracks(request, token) {
-  const res = await request.get(`${BASE}/api/music/tracks?raw=1`, { headers: authHeaders(token) });
+  const res = await request.get(`${BASE}/api/tracks?raw=1`, { headers: authHeaders(token) });
   return res.json();
 }
 
 async function putSingleTrack(request, token, track) {
-  return request.put(`${BASE}/api/music/tracks`, {
+  return request.put(`${BASE}/api/tracks`, {
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     data: { track },
   });
 }
 
 async function createDump(request, token, { name, published = false, visibility = 'public' }) {
-  const res = await request.post(`${BASE}/api/music/admin/dumps`, {
+  const res = await request.post(`${BASE}/api/admin/dumps`, {
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     data: { name, published, visibility },
   });
@@ -50,7 +50,7 @@ async function createDump(request, token, { name, published = false, visibility 
 }
 
 async function deleteDump(request, token, id) {
-  return request.delete(`${BASE}/api/music/admin/dumps?id=${encodeURIComponent(id)}`, {
+  return request.delete(`${BASE}/api/admin/dumps?id=${encodeURIComponent(id)}`, {
     headers: authHeaders(token),
   });
 }
@@ -85,7 +85,7 @@ test.describe('/api/music/dump (public)', () => {
   });
 
   test('GET ?id= returns the dump and its tracks', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/music/dump?id=${encodeURIComponent(dumpId)}`);
+    const res = await request.get(`${BASE}/api/dump?id=${encodeURIComponent(dumpId)}`);
     expect(res.status()).toBe(200);
     const data = await res.json();
     expect(data.dump.id).toBe(dumpId);
@@ -96,12 +96,12 @@ test.describe('/api/music/dump (public)', () => {
   });
 
   test('GET missing id returns 400', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/music/dump`);
+    const res = await request.get(`${BASE}/api/dump`);
     expect(res.status()).toBe(400);
   });
 
   test('GET nonexistent dump returns 404', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/music/dump?id=does-not-exist-${Date.now()}`);
+    const res = await request.get(`${BASE}/api/dump?id=does-not-exist-${Date.now()}`);
     expect(res.status()).toBe(404);
   });
 
@@ -110,7 +110,7 @@ test.describe('/api/music/dump (public)', () => {
       name: `extras-unpub-${Date.now()}`,
       published: false,
     });
-    const res = await request.get(`${BASE}/api/music/dump?id=${encodeURIComponent(unpub.id)}`);
+    const res = await request.get(`${BASE}/api/dump?id=${encodeURIComponent(unpub.id)}`);
     expect(res.status()).toBe(404);
     await deleteDump(request, adminToken, unpub.id);
   });
@@ -121,14 +121,14 @@ test.describe('/api/music/dump (public)', () => {
       published: false,
     });
     // Mint a dump-share link for this private dump
-    const shareRes = await request.post(`${BASE}/api/music/admin/dump-share-links`, {
+    const shareRes = await request.post(`${BASE}/api/admin/dump-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { dumpId: unpub.id },
     });
     const { link } = await shareRes.json();
 
     const res = await request.get(
-      `${BASE}/api/music/dump?id=${encodeURIComponent(unpub.id)}&share=${encodeURIComponent(link.token)}`
+      `${BASE}/api/dump?id=${encodeURIComponent(unpub.id)}&share=${encodeURIComponent(link.token)}`
     );
     expect(res.status()).toBe(200);
     const data = await res.json();
@@ -152,7 +152,7 @@ test.describe('/api/music/admin/settings', () => {
   });
 
   test('GET returns the settings object (anonymous allowed)', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/music/admin/settings`);
+    const res = await request.get(`${BASE}/api/admin/settings`);
     expect(res.status()).toBe(200);
     const data = await res.json();
     // Settings is small — just confirm it's an object
@@ -161,7 +161,7 @@ test.describe('/api/music/admin/settings', () => {
   });
 
   test('PUT requires admin', async ({ request }) => {
-    const res = await request.put(`${BASE}/api/music/admin/settings`, {
+    const res = await request.put(`${BASE}/api/admin/settings`, {
       data: { tracksPerPage: 25 },
     });
     expect(res.status()).toBe(401);
@@ -169,19 +169,19 @@ test.describe('/api/music/admin/settings', () => {
 
   test('admin PUT updates and GET round-trips', async ({ request }) => {
     const newValue = 17;
-    const putRes = await request.put(`${BASE}/api/music/admin/settings`, {
+    const putRes = await request.put(`${BASE}/api/admin/settings`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { tracksPerPage: newValue },
     });
     expect(putRes.ok()).toBe(true);
 
-    const getRes = await request.get(`${BASE}/api/music/admin/settings`);
+    const getRes = await request.get(`${BASE}/api/admin/settings`);
     const data = await getRes.json();
     expect(data.tracksPerPage).toBe(newValue);
   });
 
   test('admin PUT can set back to default', async ({ request }) => {
-    const res = await request.put(`${BASE}/api/music/admin/settings`, {
+    const res = await request.put(`${BASE}/api/admin/settings`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { tracksPerPage: 10 },
     });
@@ -199,12 +199,12 @@ test.describe('/api/music/admin/events', () => {
   });
 
   test('GET requires admin', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/music/admin/events`);
+    const res = await request.get(`${BASE}/api/admin/events`);
     expect(res.status()).toBe(401);
   });
 
   test('admin GET returns events array', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/music/admin/events`, {
+    const res = await request.get(`${BASE}/api/admin/events`, {
       headers: authHeaders(adminToken),
     });
     expect(res.status()).toBe(200);
@@ -218,12 +218,12 @@ test.describe('/api/music/admin/events', () => {
       name: `events-${Date.now()}`,
       published: true,
     });
-    await request.post(`${BASE}/api/music/admin/dump-share-links`, {
+    await request.post(`${BASE}/api/admin/dump-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { dumpId: dump.id },
     });
 
-    const res = await request.get(`${BASE}/api/music/admin/events?type=share.create`, {
+    const res = await request.get(`${BASE}/api/admin/events?type=share.create`, {
       headers: authHeaders(adminToken),
     });
     expect(res.status()).toBe(200);
@@ -252,12 +252,12 @@ test.describe('/api/music/admin/permissions', () => {
   });
 
   test('GET requires admin', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/music/admin/permissions?trackId=${trackId}`);
+    const res = await request.get(`${BASE}/api/admin/permissions?trackId=${trackId}`);
     expect(res.status()).toBe(401);
   });
 
   test('admin GET returns users + groups arrays', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/music/admin/permissions?trackId=${trackId}`, {
+    const res = await request.get(`${BASE}/api/admin/permissions?trackId=${trackId}`, {
       headers: authHeaders(adminToken),
     });
     expect(res.status()).toBe(200);
@@ -268,27 +268,27 @@ test.describe('/api/music/admin/permissions', () => {
 
   test('PUT grant + revoke round-trip on a user', async ({ request }) => {
     // Grant
-    const grantRes = await request.put(`${BASE}/api/music/admin/permissions`, {
+    const grantRes = await request.put(`${BASE}/api/admin/permissions`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId, targetType: 'user', targetId: userEmail, action: 'grant' },
     });
     expect(grantRes.ok()).toBe(true);
 
     let perms = await (await request.get(
-      `${BASE}/api/music/admin/permissions?trackId=${trackId}`,
+      `${BASE}/api/admin/permissions?trackId=${trackId}`,
       { headers: authHeaders(adminToken) }
     )).json();
     expect(perms.users.some((u) => u.userId === userEmail)).toBe(true);
 
     // Revoke
-    const revokeRes = await request.put(`${BASE}/api/music/admin/permissions`, {
+    const revokeRes = await request.put(`${BASE}/api/admin/permissions`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId, targetType: 'user', targetId: userEmail, action: 'revoke' },
     });
     expect(revokeRes.ok()).toBe(true);
 
     perms = await (await request.get(
-      `${BASE}/api/music/admin/permissions?trackId=${trackId}`,
+      `${BASE}/api/admin/permissions?trackId=${trackId}`,
       { headers: authHeaders(adminToken) }
     )).json();
     expect(perms.users.some((u) => u.userId === userEmail)).toBe(false);

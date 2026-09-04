@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/verifyToken';
 import { getSetting, setSetting } from '@/lib/trackStore';
+import { invalidatePublicMusic } from '@/lib/musicCache';
 
 export async function GET(request) {
   try {
@@ -22,6 +23,7 @@ export async function PUT(request) {
     const body = await request.json();
     if (body.tracksPerPage != null) {
       await setSetting('tracksPerPage', Number(body.tracksPerPage));
+      invalidatePublicMusic();
     }
     return NextResponse.json({ ok: true });
   } catch (err) {

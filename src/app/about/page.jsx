@@ -1,19 +1,23 @@
+import { SEO_SITES, seoPageTitle } from '@/lib/seoTitles';
+
+const PAGE_TITLE = seoPageTitle('About', SEO_SITES.main);
+
 export const metadata = {
-  title: 'About Aaron Rohrbacher',
+  title: { absolute: PAGE_TITLE },
   description:
     'About Aaron Rohrbacher — a Portland, Oregon Lead AI/ML Software Engineer and DevOps Architect. Background in cross-platform app development (iOS, Android, macOS, Windows, Linux), enterprise cloud migrations, custom LLM fine-tuning, and conversational AI. AWS Certified Cloud Practitioner and Developer – Associate.',
   alternates: {
     canonical: '/about',
   },
   openGraph: {
-    title: 'About Aaron Rohrbacher',
+    title: PAGE_TITLE,
     description:
       'Lead AI/ML Software Engineer & DevOps Architect in Portland, Oregon. Multi-cloud (AWS / GCP / Azure), native cross-platform apps, LLM fine-tuning, and conversational AI.',
     url: 'https://aaronrohrbacher.com/about',
     type: 'profile',
   },
   twitter: {
-    title: 'About Aaron Rohrbacher',
+    title: PAGE_TITLE,
     description:
       'Lead AI/ML Software Engineer & DevOps Architect in Portland, Oregon.',
   },

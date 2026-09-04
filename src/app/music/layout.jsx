@@ -1,11 +1,13 @@
 import MusicLayout from '@/components/music/MusicLayout';
+import { SEO_HOME_TITLES, SEO_SITES } from '@/lib/seoTitles';
 
 export const metadata = {
+  metadataBase: new URL('https://music.aaronrohrbacher.com'),
   title: {
-    default: 'Music | Aaron Rohrbacher',
-    template: '%s | Aaron Rohrbacher',
+    default: SEO_HOME_TITLES.music,
+    template: `%s | ${SEO_SITES.music}`,
   },
-  description: 'Listen to and download music by Aaron Rohrbacher. Stream and download tracks in MP3, WAV, and AIFF.',
+  description: 'Listen to and download music by Aaron Rohrbacher in uploaded audio and video formats, including MP3, WAV, AAC, AIFF, and MP4.',
   alternates: {
     canonical: 'https://music.aaronrohrbacher.com',
   },

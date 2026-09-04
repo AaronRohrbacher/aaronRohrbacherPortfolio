@@ -13,12 +13,12 @@ import { test, expect } from '@playwright/test';
 // serial mode where the tests mutate shared admin state. File-wide serial
 // would cascade-skip every remaining test on a single flake.
 
-const BASE = 'http://localhost:3000';
+const BASE = 'http://music.localhost:3000';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 async function adminToken(request) {
-  const res = await request.post(`${BASE}/api/music/auth/signin`, {
+  const res = await request.post(`${BASE}/api/auth/signin`, {
     data: { email: 'admin@local.dev', password: 'admin' },
   });
   const data = await res.json();
@@ -52,20 +52,20 @@ async function retryable(fn, { tries = 3, delayMs = 500 } = {}) {
  */
 async function signInBrowser(page) {
   const idToken = await retryable(async () => {
-    const res = await page.request.post(`${BASE}/api/music/auth/signin`, {
+    const res = await page.request.post(`${BASE}/api/auth/signin`, {
       data: { email: 'admin@local.dev', password: 'admin' },
     });
     const data = await res.json();
     if (!data.idToken) throw new Error('signin returned no idToken');
     return data.idToken;
   });
-  await retryable(() => page.goto('/music'));
+  await retryable(() => page.goto('http://music.localhost:3000'));
   await page.evaluate((t) => localStorage.setItem('music_auth_token', t), idToken);
   return idToken;
 }
 
 async function gotoAdmin(page) {
-  await page.goto('/music/admin');
+  await page.goto('http://music.localhost:3000/admin');
   // Wait for the tabs row to render (means auth passed and admin UI mounted).
   await expect(page.getByRole('button', { name: /^Tracks$/i })).toBeVisible({ timeout: 15000 });
 }
@@ -74,7 +74,7 @@ async function createLoginMagicLink(request, token, label) {
   const email = `ml-ui-${Date.now()}-${Math.floor(Math.random() * 1e6)}@local.dev`;
   // The user has to exist for the UI's target column to render cleanly, but
   // createMagicLink doesn't require it — either way this is fine for list UI.
-  const res = await request.post(`${BASE}/api/music/admin/magic-links`, {
+  const res = await request.post(`${BASE}/api/admin/magic-links`, {
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     data: { email, label },
   });
@@ -83,7 +83,7 @@ async function createLoginMagicLink(request, token, label) {
 }
 
 async function createDump(request, token, name) {
-  const res = await request.post(`${BASE}/api/music/admin/dumps`, {
+  const res = await request.post(`${BASE}/api/admin/dumps`, {
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     data: { name, description: '', artists: '', visibility: 'public', published: false },
   });
@@ -92,7 +92,7 @@ async function createDump(request, token, name) {
 }
 
 async function createDumpShareLink(request, token, dumpId, label) {
-  const res = await request.post(`${BASE}/api/music/admin/dump-share-links`, {
+  const res = await request.post(`${BASE}/api/admin/dump-share-links`, {
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     data: { dumpId, label },
   });
@@ -101,7 +101,7 @@ async function createDumpShareLink(request, token, dumpId, label) {
 }
 
 async function createTrackShareLink(request, token, trackId, label) {
-  const res = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+  const res = await request.post(`${BASE}/api/admin/track-share-links`, {
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     data: { trackId, label },
   });
@@ -110,7 +110,7 @@ async function createTrackShareLink(request, token, trackId, label) {
 }
 
 async function getAllShareLinks(request, token) {
-  const res = await request.get(`${BASE}/api/music/admin/share-links`, {
+  const res = await request.get(`${BASE}/api/admin/share-links`, {
     headers: authHeaders(token),
   });
   const data = await res.json();
@@ -118,7 +118,7 @@ async function getAllShareLinks(request, token) {
 }
 
 async function getFirstTrackId(request, token) {
-  const res = await request.get(`${BASE}/api/music/tracks?raw=1`, {
+  const res = await request.get(`${BASE}/api/tracks?raw=1`, {
     headers: authHeaders(token),
   });
   const data = await res.json();
@@ -267,7 +267,7 @@ test.describe('MagicLinksManager — list / filter / show inactive', () => {
 
   test('show inactive checkbox hides deactivated links until toggled on', async ({ page, request }) => {
     // Deactivate via API so this test is deterministic regardless of UI flow.
-    await request.patch(`${BASE}/api/music/admin/share-links`, {
+    await request.patch(`${BASE}/api/admin/share-links`, {
       headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
       data: { kind: 'login', token: loginLink.token, active: false },
     });
@@ -285,7 +285,7 @@ test.describe('MagicLinksManager — list / filter / show inactive', () => {
     await expect(rowByLabel(page, loginLabel)).toBeVisible();
 
     // Clean up: reactivate so it doesn't pollute later tests.
-    await request.patch(`${BASE}/api/music/admin/share-links`, {
+    await request.patch(`${BASE}/api/admin/share-links`, {
       headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
       data: { kind: 'login', token: loginLink.token, active: true },
     });
@@ -295,24 +295,24 @@ test.describe('MagicLinksManager — list / filter / show inactive', () => {
     // Best-effort cleanup. Ignore failures.
     if (loginLink) {
       await request.delete(
-        `${BASE}/api/music/admin/share-links?kind=login&token=${loginLink.token}`,
+        `${BASE}/api/admin/share-links?kind=login&token=${loginLink.token}`,
         { headers: authHeaders(token) },
       ).catch(() => {});
     }
     if (dumpLink) {
       await request.delete(
-        `${BASE}/api/music/admin/share-links?kind=dump&token=${dumpLink.token}`,
+        `${BASE}/api/admin/share-links?kind=dump&token=${dumpLink.token}`,
         { headers: authHeaders(token) },
       ).catch(() => {});
     }
     if (trackLink) {
       await request.delete(
-        `${BASE}/api/music/admin/share-links?kind=track&token=${trackLink.token}`,
+        `${BASE}/api/admin/share-links?kind=track&token=${trackLink.token}`,
         { headers: authHeaders(token) },
       ).catch(() => {});
     }
     if (dump) {
-      await request.delete(`${BASE}/api/music/admin/dumps?id=${dump.id}`, {
+      await request.delete(`${BASE}/api/admin/dumps?id=${dump.id}`, {
         headers: authHeaders(token),
       }).catch(() => {});
     }
@@ -333,13 +333,13 @@ test.describe('MagicLinksManager — edit modal', () => {
   test.afterAll(async ({ request }) => {
     if (link) {
       await request.delete(
-        `${BASE}/api/music/admin/share-links?kind=login&token=${link.token}`,
+        `${BASE}/api/admin/share-links?kind=login&token=${link.token}`,
         { headers: authHeaders(token) },
       ).catch(() => {});
     }
   });
 
-  test('edit modal opens, saves new label, then round-trips date and never expiry', async ({ page }) => {
+  test('edit modal opens, saves a new label, and keeps login expiry mandatory', async ({ page }) => {
     await signInBrowser(page);
     await gotoAdmin(page);
     await clickMagicLinksTab(page);
@@ -388,17 +388,12 @@ test.describe('MagicLinksManager — edit modal', () => {
     await expect(updatedRow.getByText(/expires /)).toBeVisible();
     await expect(updatedRow.getByText(/no expiry/)).toHaveCount(0);
 
-    // ── Switch back to never expires ─────────────────────────────────────────
+    // Login links are required to expire; the UI must not offer an unsafe
+    // never-expiring choice.
     await updatedRow.getByRole('button', { name: /^Edit$/ }).click();
-    await page.locator('label', { hasText: /^Expiry/ }).locator('select').selectOption('never');
-    await page.getByRole('button', { name: /^Save$/ }).click();
-    await expect(page.locator('label', { hasText: /^Label/ })).toHaveCount(0, { timeout: 10000 });
-
-    const againRow = rowByLabel(page, newLabel);
-    await expect(againRow.getByText(/no expiry/)).toBeVisible();
+    await expect(page.locator('label', { hasText: /^Expiry/ }).locator('option[value="never"]')).toHaveCount(0);
 
     // ── Cancel doesn't persist changes ───────────────────────────────────────
-    await againRow.getByRole('button', { name: /^Edit$/ }).click();
     const cancelLabelInput = page.locator('label', { hasText: /^Label/ }).locator('input');
     await cancelLabelInput.fill('THIS_SHOULD_NOT_PERSIST');
     await page.getByRole('button', { name: /^Cancel$/ }).click();
@@ -415,7 +410,7 @@ test.describe('MagicLinksManager — actions', () => {
     token = await adminToken(request);
   });
 
-  test('Copy URL button shows "Copied" feedback', async ({ page, request, context }) => {
+  test('stored login tokens are hashed and cannot be copied back out', async ({ page, request, context }) => {
     // Grant clipboard perms up front so navigator.clipboard.writeText doesn't reject.
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
@@ -429,14 +424,11 @@ test.describe('MagicLinksManager — actions', () => {
       const row = rowByLabel(page, label);
       await expect(row).toBeVisible({ timeout: 10000 });
 
-      const copyBtn = row.getByRole('button', { name: /Copy URL/i });
-      await copyBtn.click();
-
-      // Button text toggles to "Copied" briefly.
-      await expect(row.getByRole('button', { name: /^Copied$/ })).toBeVisible({ timeout: 5000 });
+      const copyBtn = row.getByRole('button', { name: /Token hidden/i });
+      await expect(copyBtn).toBeDisabled();
     } finally {
       await request.delete(
-        `${BASE}/api/music/admin/share-links?kind=login&token=${link.token}`,
+        `${BASE}/api/admin/share-links?kind=login&token=${link.token}`,
         { headers: authHeaders(token) },
       ).catch(() => {});
     }
@@ -469,7 +461,7 @@ test.describe('MagicLinksManager — actions', () => {
         .toBeVisible({ timeout: 10000 });
     } finally {
       await request.delete(
-        `${BASE}/api/music/admin/share-links?kind=login&token=${link.token}`,
+        `${BASE}/api/admin/share-links?kind=login&token=${link.token}`,
         { headers: authHeaders(token) },
       ).catch(() => {});
     }
@@ -553,7 +545,7 @@ test.describe('Per-track Magic Link button', () => {
     // Clean up the new link(s).
     for (const l of newOnes) {
       await request.delete(
-        `${BASE}/api/music/admin/share-links?kind=track&token=${l.token}`,
+        `${BASE}/api/admin/share-links?kind=track&token=${l.token}`,
         { headers: authHeaders(token) },
       ).catch(() => {});
     }
@@ -571,7 +563,7 @@ test.describe('Dumps drag-and-drop file picker', () => {
 
   test.afterAll(async ({ request }) => {
     if (dumpToEdit) {
-      await request.delete(`${BASE}/api/music/admin/dumps?id=${dumpToEdit.id}`, {
+      await request.delete(`${BASE}/api/admin/dumps?id=${dumpToEdit.id}`, {
         headers: authHeaders(token),
       }).catch(() => {});
     }
@@ -626,7 +618,7 @@ test.describe('Dumps drag-and-drop file picker', () => {
       mimeType: 'text/plain',
       buffer: Buffer.from('not audio'),
     });
-    await expect(page.getByText(/only \.mp3, \.wav, \.aiff, \.aif/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/only MP3, WAV, AAC, AIFF, MP4, M4V, WebM, or MOV/i)).toBeVisible({ timeout: 5000 });
 
     // Cancel the create form.
     await page.getByRole('button', { name: /^Cancel$/ }).click();

@@ -9,7 +9,7 @@ async function requireAdmin(request) {
 }
 
 /**
- * GET /api/music/admin/users — List all users with their groups
+ * GET /api/admin/users — List all users with their groups
  */
 export async function GET(request) {
   if (!(await requireAdmin(request))) {
@@ -32,7 +32,7 @@ export async function GET(request) {
 }
 
 /**
- * POST /api/music/admin/users — Invite a new user by email
+ * POST /api/admin/users — Invite a new user by email
  * Body: { email: string }
  */
 export async function POST(request) {
@@ -54,7 +54,7 @@ export async function POST(request) {
 }
 
 /**
- * DELETE /api/music/admin/users?username=xxx — Delete a user
+ * DELETE /api/admin/users?username=xxx — Delete a user
  */
 export async function DELETE(request) {
   if (!(await requireAdmin(request))) {

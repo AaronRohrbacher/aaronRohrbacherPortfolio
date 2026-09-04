@@ -51,7 +51,7 @@ export default function Installation() {
           </p>
         </div>
         <a
-          href="/api/portaputer/download"
+          href="/api/download"
           className={Style.downloadCardBtn}
           rel="nofollow noopener"
         >

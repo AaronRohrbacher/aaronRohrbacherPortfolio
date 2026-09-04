@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Style from './PortaputerLayout.module.scss';
 import PortaputerNav from './PortaputerNav';
-import { Box, Grid } from '@mui/material';
+import { Box } from '@mui/material';
 import { getCookie, setCookie } from 'cookies-next';
 import { PortaputerHrefProvider } from '@/lib/portaputerLinks';
 
@@ -30,7 +30,7 @@ export default function PortaputerLayout({ children }) {
 
   function handleToggle() {
     const next = !darkMode;
-    setCookie('darkMode', String(next), { maxAge: 60 * 60 * 24 * 365 });
+    setCookie('darkMode', String(next), { maxAge: 60 * 60 * 24 * 365, path: '/', sameSite: 'lax' });
     setDarkMode(next);
   }
 
@@ -44,12 +44,11 @@ export default function PortaputerLayout({ children }) {
         data-theme={darkMode ? 'dark' : 'light'}
         sx={{ width: '100%', overflowX: 'hidden' }}
       >
-        <Grid
-          container
-          display="flex"
-          flexDirection="column"
-          justifyContent="space-between"
+        <Box
           sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
             maxWidth: '100%',
             margin: 0,
             padding: 0,
@@ -57,24 +56,19 @@ export default function PortaputerLayout({ children }) {
             '@supports (min-height: 100dvh)': { minHeight: '100dvh' },
           }}
         >
-          <Grid>
+          <Box>
             <PortaputerNav darkMode={darkMode} handleToggle={handleToggle} />
-          </Grid>
-          <Grid flexGrow={1}>{children}</Grid>
-          <Grid>
+          </Box>
+          <Box sx={{ flexGrow: 1 }}>{children}</Box>
+          <Box>
             <Box
               component="footer"
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              py="1.5rem"
-              sx={{ opacity: 0.7 }}
-              width="100%"
+              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: '1.5rem', opacity: 0.7, width: '100%' }}
             >
-              <p>&copy; 2025 Aaron Rohrbacher</p>
+              <p>&copy; {new Date().getFullYear()} Aaron Rohrbacher</p>
             </Box>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Box>
     </PortaputerHrefProvider>
   );

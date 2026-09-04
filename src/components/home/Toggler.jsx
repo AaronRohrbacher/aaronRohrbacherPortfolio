@@ -5,7 +5,7 @@ export default function Toggler({darkMode, handleClick}) {
     const transition = 'all 250ms ease'
 
    return (
-      <Box fontSize={'1.5rem'} sx={{cursor: 'pointer', ":hover": {transform: 'translateY(-3px)', transition: transition}}}>
+      <Box sx={{ fontSize: '1.5rem', cursor: 'pointer', ":hover": {transform: 'translateY(-3px)', transition: transition}}}>
          {
             darkMode ?
                <span onClick={handleClick} aria-label="Full Moon" role="img">🌕</span>

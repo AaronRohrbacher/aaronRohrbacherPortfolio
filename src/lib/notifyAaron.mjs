@@ -73,6 +73,15 @@ function parseUserAgent(ua) {
 export function extractClientMeta(request) {
   const headers = request?.headers;
   const get = (h) => (headers?.get ? headers.get(h) : null) || null;
+  const geo = (name) => {
+    const value = get(`x-open-next-${name}`) || get(`cloudfront-viewer-${name}`);
+    if (!value) return null;
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  };
   const xff = get('x-forwarded-for');
   const ip = (xff ? xff.split(',')[0].trim() : null) || get('x-real-ip') || 'unknown';
   const userAgent = get('user-agent') || 'unknown';
@@ -88,6 +97,9 @@ export function extractClientMeta(request) {
     acceptLanguage: acceptLanguage.split(',')[0].trim(),
     referer,
     host,
+    city: geo('city'),
+    region: geo('region') || geo('country-region'),
+    country: geo('country'),
   };
 }
 
@@ -103,6 +115,7 @@ function formatBody({ kind, payload, meta, sessionId, timestamp }) {
   lines.push(`OS:          ${meta.os}`);
   lines.push(`Browser:     ${meta.browser}`);
   lines.push(`Language:    ${meta.acceptLanguage}`);
+  lines.push(`Location:    ${[meta.city, meta.region, meta.country].filter(Boolean).join(', ') || '-'}`);
   lines.push(`Host:        ${meta.host || '-'}`);
   lines.push(`Referer:     ${meta.referer || '-'}`);
   lines.push(`User-Agent:  ${meta.userAgent}`);
@@ -172,6 +185,9 @@ export async function notifyAaron({ request, kind, payload = {}, sessionId }) {
       ip: meta.ip,
       os: meta.os,
       browser: meta.browser,
+      city: meta.city,
+      region: meta.region,
+      country: meta.country,
       subject,
       payload,
       timestamp,

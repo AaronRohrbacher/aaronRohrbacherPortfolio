@@ -10,12 +10,13 @@ export default function UserManager({ getAuthHeaders }) {
   const [autoConfirm, setAutoConfirm] = useState(false);
   const [error, setError] = useState('');
   const [linkCopied, setLinkCopied] = useState(null); // email of user whose link was just copied
+  const [magicDestination, setMagicDestination] = useState('/');
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/admin/users', { headers });
+      const res = await fetch('/api/admin/users', { headers });
       const data = await res.json();
       setUsers(data.users || []);
     } catch (err) {
@@ -32,7 +33,7 @@ export default function UserManager({ getAuthHeaders }) {
     setError('');
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/admin/users', {
+      const res = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), autoConfirm }),
@@ -50,7 +51,7 @@ export default function UserManager({ getAuthHeaders }) {
     if (!confirm(`Delete user ${username}?`)) return;
     try {
       const headers = await getAuthHeaders();
-      await fetch(`/api/music/admin/users?username=${encodeURIComponent(username)}`, {
+      await fetch(`/api/admin/users?username=${encodeURIComponent(username)}`, {
         method: 'DELETE',
         headers,
       });
@@ -63,15 +64,15 @@ export default function UserManager({ getAuthHeaders }) {
   async function generateMagicLink(userEmail) {
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/admin/magic-links', {
+      const res = await fetch('/api/admin/magic-links', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail }),
+        body: JSON.stringify({ email: userEmail, destination: magicDestination || '/' }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       const origin = window.location.origin;
-      const url = `${origin}/music/login/magic?token=${data.link.token}`;
+      const url = `${origin}/login/magic?token=${data.link.token}`;
       await navigator.clipboard.writeText(url);
       setLinkCopied(userEmail);
       setTimeout(() => setLinkCopied(null), 3000);
@@ -116,6 +117,20 @@ export default function UserManager({ getAuthHeaders }) {
           Auto-confirm (no email)
         </label>
         <button className={Style.btn} onClick={inviteUser}>Invite</button>
+      </div>
+
+      <div className={Style.inlineForm}>
+        <label style={{ flex: '1 1 260px', fontSize: '0.82rem' }}>
+          Magic-link destination
+          <input
+            className={Style.input}
+            value={magicDestination}
+            onChange={(event) => setMagicDestination(event.target.value)}
+            placeholder="/track/id, /dump/slug, or /"
+            inputMode="url"
+          />
+        </label>
+        <span className={Style.formats}>Login links expire in 7 days and work once.</span>
       </div>
 
       <div className={Style.list}>

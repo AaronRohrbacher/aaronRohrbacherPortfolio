@@ -11,7 +11,7 @@ test.beforeAll(async () => {
 test.use({ viewport: { width: 375, height: 667 } }); // iPhone SE
 
 test('music front page: content visible above the fold on mobile', async ({ page }) => {
-  await page.goto('/music');
+  await page.goto('http://music.localhost:3000');
   await page.waitForLoadState('networkidle');
 
   const body = await page.evaluate(() => ({
@@ -23,14 +23,14 @@ test('music front page: content visible above the fold on mobile', async ({ page
 
   // At least one dump card or track must appear in the initial viewport —
   // otherwise Mom sees only the navbar+title and thinks it's broken.
-  const firstItem = page.locator('a[href*="/music/dump/"], button[aria-label^="Play"]').first();
+  const firstItem = page.locator('a[href*="/dump/"], button[aria-label^="Play"]').first();
   await expect(firstItem).toBeVisible();
   const box = await firstItem.boundingBox();
   expect(box.y).toBeLessThan(500);
 });
 
 test('music front page: play a track, minimized bar is in-view and track list still visible', async ({ page }) => {
-  await page.goto('/music');
+  await page.goto('http://music.localhost:3000');
   await page.waitForLoadState('networkidle');
 
   // Try to find a play button on a track and click it
@@ -42,6 +42,10 @@ test('music front page: play a track, minimized bar is in-view and track list st
   }
 
   await playBtn.click();
+
+  const media = page.locator('video');
+  await expect(media).toHaveCount(1);
+  await media.evaluate((element) => { element.dataset.persistenceProbe = 'same-element'; });
 
   // Player bar should appear — in minimized form on mobile
   const miniBar = page.locator('button[aria-label="Expand player"]');
@@ -60,13 +64,22 @@ test('music front page: play a track, minimized bar is in-view and track list st
   const trackBox = await firstTrack.boundingBox();
   // The track should not be covered by the player bar
   expect(trackBox.y).toBeLessThan(barBox.y);
+
+  // Expanding/minimizing changes only the controls. The one native media
+  // element must remain mounted so lock-screen/background playback survives.
+  await miniBar.click();
+  await expect(page.locator('button[aria-label="Minimize player"]')).toBeVisible();
+  await expect(media).toHaveAttribute('data-persistence-probe', 'same-element');
+  await page.locator('button[aria-label="Minimize player"]').click();
+  await expect(media).toHaveCount(1);
+  await expect(media).toHaveAttribute('data-persistence-probe', 'same-element');
 });
 
 test('dump page: player defaults minimized on mobile and tracks visible', async ({ page, request }) => {
   // Fetch dumps list via SSR page and grab first dump slug
-  await page.goto('/music');
+  await page.goto('http://music.localhost:3000');
   await page.waitForLoadState('networkidle');
-  const dumpLink = page.locator('a[href*="/music/dump/"]').first();
+  const dumpLink = page.locator('a[href*="/dump/"]').first();
   const linkCount = await dumpLink.count();
   if (linkCount === 0) {
     test.skip(true, 'No dump cards on /music — skipping dump test');

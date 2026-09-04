@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Style from './MusicAdmin.module.scss';
 import { promptInsertLink } from '@/lib/richText';
 
-const AUDIO_EXTS = ['.mp3', '.wav', '.aiff', '.aif'];
+const AUDIO_EXTS = ['.mp3', '.wav', '.aac', '.m4a', '.aiff', '.aif', '.mp4', '.m4v', '.webm', '.mov'];
 
 // Map the raw visibility enum to a user-facing label.
 // Data values stay the same ('authenticated' etc.); only the label changes.
@@ -53,7 +53,7 @@ function FileDropZone({ files, onFilesChange, disabled, idPrefix }) {
     if (rejected.length > 0) {
       setRejectMsg(
         `Skipped ${rejected.length} file${rejected.length > 1 ? 's' : ''} ` +
-        `(only .mp3, .wav, .aiff, .aif allowed): ${rejected.map((r) => r.name).join(', ')}`
+        `(only MP3, WAV, AAC, AIFF, MP4, M4V, WebM, or MOV allowed): ${rejected.map((r) => r.name).join(', ')}`
       );
     } else {
       setRejectMsg('');
@@ -111,7 +111,7 @@ function FileDropZone({ files, onFilesChange, disabled, idPrefix }) {
         onDrop={onDrop}
       >
         <p>{dragActive ? 'Drop audio files here' : 'Drag & drop audio files here'}</p>
-        <small>.mp3 · .wav · .aiff · .aif</small>
+        <small>.mp3 · .wav · .aac · .m4a · .aiff · .mp4 · .m4v · .webm · .mov</small>
         <div className={Style.dropZoneActions}>
           <button
             type="button"
@@ -137,7 +137,7 @@ function FileDropZone({ files, onFilesChange, disabled, idPrefix }) {
           id={inputId}
           type="file"
           multiple
-          accept=".mp3,.wav,.aiff,.aif,audio/*"
+          accept=".mp3,.wav,.aac,.m4a,.aiff,.aif,.mp4,.m4v,.webm,.mov,audio/*,video/*"
           className={Style.hiddenFileInput}
           disabled={disabled}
           onChange={(e) => {
@@ -199,7 +199,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
   async function createShareLink(dumpId) {
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/admin/dump-share-links', {
+      const res = await fetch('/api/admin/dump-share-links', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ dumpId }),
@@ -210,7 +210,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
       // raw dump id for legacy rows that haven't been resaved yet.
       const target = dumps.find((d) => d.id === dumpId);
       const handle = target?.slug || dumpId;
-      const url = `${window.location.origin}/music/dump/${encodeURIComponent(handle)}?share=${data.link.token}`;
+      const url = `${window.location.origin}/dump/${encodeURIComponent(handle)}?share=${data.link.token}`;
       await navigator.clipboard.writeText(url);
       setShareCopied(dumpId);
       setTimeout(() => setShareCopied(null), 3000);
@@ -223,7 +223,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
     setLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/admin/dumps', { headers });
+      const res = await fetch('/api/admin/dumps', { headers });
       const data = await res.json();
       setDumps(data.dumps || []);
     } catch (err) {
@@ -244,7 +244,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
       setCreateTracksLoading(true);
       try {
         const headers = await getAuthHeaders();
-        const res = await fetch('/api/music/tracks?raw=1', { headers });
+        const res = await fetch('/api/tracks?raw=1', { headers });
         const data = await res.json();
         if (!cancelled) setCreateAllTracks(data.tracks || []);
       } catch {} finally {
@@ -264,7 +264,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
 
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/admin/dumps', {
+      const res = await fetch('/api/admin/dumps', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, published: false }),
@@ -290,7 +290,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
             visibility: form.visibility,
           };
           delete next.dumpId;
-          await fetch('/api/music/tracks', {
+          await fetch('/api/tracks', {
             method: 'PUT',
             headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify({ track: next }),
@@ -302,7 +302,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
         setUploading(true);
         setUploadProgress(`Uploading 0/${audioFiles.length}...`);
 
-        const urlRes = await fetch('/api/music/admin/upload', {
+        const urlRes = await fetch('/api/admin/upload', {
           method: 'POST',
           headers: { ...headers, 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -330,12 +330,12 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
         }
 
         setUploadProgress('Syncing with S3...');
-        const tracksRes = await fetch('/api/music/tracks?raw=1', { headers });
+        const tracksRes = await fetch('/api/tracks?raw=1', { headers });
         const tracksData = await tracksRes.json();
         const allTracks = tracksData.tracks || [];
 
         const uploadedNames = audioFiles.map((f) =>
-          f.name.replace(/\.(mp3|wav|aiff|aif)$/i, '')
+          f.name.replace(/\.(mp3|wav|aac|m4a|aiff|aif|mp4|m4v|webm|mov)$/i, '')
         );
         const toAssign = allTracks.filter((t) => uploadedNames.includes(t.id));
         // Use per-track PUT so the backend's diff-aware sibling sync fires
@@ -352,7 +352,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
             visibility: form.visibility,
           };
           delete next.dumpId;
-          await fetch('/api/music/tracks', {
+          await fetch('/api/tracks', {
             method: 'PUT',
             headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify({ track: next }),
@@ -379,7 +379,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
   async function togglePublish(dump) {
     try {
       const headers = await getAuthHeaders();
-      await fetch('/api/music/admin/dumps', {
+      await fetch('/api/admin/dumps', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...dump, published: !dump.published }),
@@ -394,7 +394,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
     if (!confirm('Delete this dump? Tracks will be unlinked but not deleted from S3.')) return;
     try {
       const headers = await getAuthHeaders();
-      await fetch(`/api/music/admin/dumps?id=${encodeURIComponent(id)}`, {
+      await fetch(`/api/admin/dumps?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers,
       });
@@ -423,7 +423,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
     setDumps(renumbered);
     try {
       const headers = await getAuthHeaders();
-      await fetch('/api/music/admin/dumps', {
+      await fetch('/api/admin/dumps', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ dumps: renumbered.map((d) => ({ id: d.id, order: d.order })) }),
@@ -739,7 +739,7 @@ export default function DumpManager({ getAuthHeaders, onRefresh }) {
           onSave={async (updated) => {
             try {
               const headers = await getAuthHeaders();
-              await fetch('/api/music/admin/dumps', {
+              await fetch('/api/admin/dumps', {
                 method: 'POST',
                 headers: { ...headers, 'Content-Type': 'application/json' },
                 body: JSON.stringify(updated),
@@ -797,7 +797,7 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
     try {
       const headers = await getAuthHeaders();
       setUploadProgress(`Uploading 0/${audioFiles.length}...`);
-      const urlRes = await fetch('/api/music/admin/upload', {
+      const urlRes = await fetch('/api/admin/upload', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ files: audioFiles.map((f) => ({ filename: f.name })) }),
@@ -822,10 +822,10 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
       }
 
       setUploadProgress('Syncing with S3...');
-      const tracksRes = await fetch('/api/music/tracks?raw=1', { headers });
+      const tracksRes = await fetch('/api/tracks?raw=1', { headers });
       const tracksData = await tracksRes.json();
       const allTracks = tracksData.tracks || [];
-      const uploadedNames = audioFiles.map((f) => f.name.replace(/\.(mp3|wav|aiff|aif)$/i, ''));
+      const uploadedNames = audioFiles.map((f) => f.name.replace(/\.(mp3|wav|aac|m4a|aiff|aif|mp4|m4v|webm|mov)$/i, ''));
       const toAssign = allTracks.filter((t) => uploadedNames.includes(t.id));
       for (const t of toAssign) {
         const currentDumpIds = Array.isArray(t.dumpIds)
@@ -840,7 +840,7 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
           visibility: form.visibility,
         };
         delete next.dumpId;
-        await fetch('/api/music/tracks', {
+        await fetch('/api/tracks', {
           method: 'PUT',
           headers: { ...headers, 'Content-Type': 'application/json' },
           body: JSON.stringify({ track: next }),
@@ -872,7 +872,7 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
     setTracksLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/tracks?raw=1', { headers });
+      const res = await fetch('/api/tracks?raw=1', { headers });
       const data = await res.json();
       setAllTracks(data.tracks || []);
     } catch {} finally {
@@ -896,7 +896,7 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
     delete next.dumpId;
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/tracks', {
+      const res = await fetch('/api/tracks', {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ track: next }),
@@ -932,8 +932,8 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
     try {
       const headers = await getAuthHeaders();
       const [usersRes, groupsRes] = await Promise.all([
-        fetch('/api/music/admin/users', { headers }),
-        fetch('/api/music/admin/groups', { headers }),
+        fetch('/api/admin/users', { headers }),
+        fetch('/api/admin/groups', { headers }),
       ]);
       const usersData = await usersRes.json();
       const groupsData = await groupsRes.json();
@@ -947,7 +947,7 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
     setPermLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`/api/music/admin/permissions?trackId=${encodeURIComponent(trackIds[0])}`, { headers });
+      const res = await fetch(`/api/admin/permissions?trackId=${encodeURIComponent(trackIds[0])}`, { headers });
       const data = await res.json();
       setPerms(data);
     } catch {} finally {
@@ -963,7 +963,7 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
       const headers = await getAuthHeaders();
       await Promise.all(
         trackIds.map((trackId) =>
-          fetch('/api/music/admin/permissions', {
+          fetch('/api/admin/permissions', {
             method: 'PUT',
             headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify({ trackId, targetType: 'user', targetId: userId, action }),
@@ -990,7 +990,7 @@ function DumpEditor({ dump, getAuthHeaders, onSave, onCancel, onRefresh }) {
       const headers = await getAuthHeaders();
       await Promise.all(
         trackIds.map((trackId) =>
-          fetch('/api/music/admin/permissions', {
+          fetch('/api/admin/permissions', {
             method: 'PUT',
             headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify({ trackId, targetType: 'group', targetId: groupName, action }),

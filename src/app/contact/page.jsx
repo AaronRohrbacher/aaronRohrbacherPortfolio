@@ -1,19 +1,23 @@
+import { SEO_SITES, seoPageTitle } from '@/lib/seoTitles';
+
+const PAGE_TITLE = seoPageTitle('Contact', SEO_SITES.main);
+
 export const metadata = {
-  title: 'Contact Aaron Rohrbacher',
+  title: { absolute: PAGE_TITLE },
   description:
     'Get in touch with Aaron Rohrbacher — Lead Cross-Platform Software and DevOps Engineer in Portland, Oregon. Available immediately for senior, lead, and architect roles. Reach out via the on-site AI assistant for chat, voice, or video, or for direct email.',
   alternates: {
     canonical: '/contact',
   },
   openGraph: {
-    title: 'Contact Aaron Rohrbacher',
+    title: PAGE_TITLE,
     description:
       'Open to new opportunities — chat, voice, video, or email. Lead Software & DevOps Engineer, Portland, Oregon.',
     url: 'https://aaronrohrbacher.com/contact',
     type: 'website',
   },
   twitter: {
-    title: 'Contact Aaron Rohrbacher',
+    title: PAGE_TITLE,
     description: 'Open to new opportunities. Lead Software & DevOps Engineer · Portland, OR.',
   },
 };

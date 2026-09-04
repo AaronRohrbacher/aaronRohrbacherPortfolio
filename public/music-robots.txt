@@ -1,9 +1,0 @@
-# Music subdomain robots.txt — served at music.aaronrohrbacher.com/robots.txt
-User-agent: *
-Disallow: /admin
-Disallow: /login
-Disallow: /signup
-Disallow: /forgot-password
-Disallow: /api/
-
-Sitemap: https://music.aaronrohrbacher.com/sitemap.xml

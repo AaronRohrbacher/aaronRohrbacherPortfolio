@@ -149,6 +149,34 @@ export async function updateItem(pk, sk, updates = {}) {
   return result.Attributes || null;
 }
 
+/** Atomically consume one use without exceeding a link's maximum. */
+export async function consumeLimitedUse(pk, sk, maxUses, set = {}) {
+  const names = { '#useCount': 'useCount' };
+  const values = { ':one': 1, ':max': maxUses };
+  const setParts = [];
+  for (const [key, value] of Object.entries(set)) {
+    if (value === undefined) continue;
+    names[`#set_${key}`] = key;
+    values[`:set_${key}`] = value;
+    setParts.push(`#set_${key} = :set_${key}`);
+  }
+  try {
+    const result = await getDocClient().send(new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { PK: pk, SK: sk },
+      UpdateExpression: `${setParts.length ? `SET ${setParts.join(', ')} ` : ''}ADD #useCount :one`,
+      ConditionExpression: 'attribute_exists(PK) AND (attribute_not_exists(#useCount) OR #useCount < :max)',
+      ExpressionAttributeNames: names,
+      ExpressionAttributeValues: values,
+      ReturnValues: 'ALL_NEW',
+    }));
+    return result.Attributes || null;
+  } catch (error) {
+    if (error?.name === 'ConditionalCheckFailedException') return null;
+    throw error;
+  }
+}
+
 export async function deleteItem(pk, sk) {
   await getDocClient().send(
     new DeleteCommand({ TableName: TABLE_NAME, Key: { PK: pk, SK: sk } })

@@ -1,5 +1,0 @@
-# PortaPuter subdomain robots.txt — served at portaputer.aaronrohrbacher.com/robots.txt
-User-agent: *
-Disallow: /api/
-
-Sitemap: https://portaputer.aaronrohrbacher.com/sitemap.xml

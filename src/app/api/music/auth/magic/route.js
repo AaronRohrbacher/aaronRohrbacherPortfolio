@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { redeemMagicLink } from '@/lib/trackStore';
-import { getUser, issueTokens } from '@/lib/localAuth';
+import { getUser, listGroupsForUser } from '@/lib/cognitoAdmin';
+import { issueAppSession } from '@/lib/appTokens';
 import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
 
 /**
- * GET /api/music/auth/magic?token=xxx
+ * GET /api/auth/magic?token=xxx
  * Redeem a magic link — returns auth tokens if valid.
  */
 export async function GET(request) {
@@ -27,7 +28,18 @@ export async function GET(request) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
-  const tokens = await issueTokens(user);
+  const groups = await listGroupsForUser(user.username || result.email);
+  const idToken = await issueAppSession({
+    sub: user.sub || user.username || result.email,
+    email: user.email || result.email,
+    groups,
+  });
   await logEvent({ type: EVENT_TYPES.MAGIC_REDEEM, actor: result.email, ...meta });
-  return NextResponse.json(tokens);
+  return NextResponse.json({
+    idToken,
+    sub: user.sub || user.username || result.email,
+    email: user.email || result.email,
+    groups,
+    destination: result.destination || '/',
+  });
 }

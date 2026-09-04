@@ -179,8 +179,7 @@ export default function ChatAgent() {
     const promise = (async () => {
       const tLoadStart = performance.now();
       const model = new Wllama({
-        'single-thread/wllama.wasm': 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.7/src/single-thread/wllama.wasm',
-        'multi-thread/wllama.wasm': 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.7/src/multi-thread/wllama.wasm',
+        default: 'https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/src/wasm/wllama.wasm',
       });
 
       const modelsBase = process.env.NEXT_PUBLIC_MODELS_URL;
@@ -206,10 +205,12 @@ export default function ChatAgent() {
       // first question doesn't eat the warmup.
       try {
         const tWarmStart = performance.now();
-        const warmStream = await model.createChatCompletion(
-          [{ role: 'user', content: 'hi' }],
-          { nPredict: 1, stream: true, useCache: false },
-        );
+        const warmStream = await model.createChatCompletion({
+          messages: [{ role: 'user', content: 'hi' }],
+          max_tokens: 1,
+          stream: true,
+          cache_prompt: false,
+        });
         for await (const _ of warmStream) { /* drain */ }
         console.log(`[A-A-Bot] JIT warmup done in ${((performance.now() - tWarmStart) / 1000).toFixed(1)}s`);
       } catch (e) {
@@ -652,7 +653,7 @@ export default function ChatAgent() {
       const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
       const systemPrompt = `${AARON_CHAT_SYSTEM_PROMPT}\n\nToday's date is ${today}.\n\n${facts}`;
 
-      // Full conversation history so wllama's useCache can match the prefix.
+      // Full conversation history so wllama's prompt cache can match the prefix.
       const history = allMessages
         .filter((m) => m.role === 'user' || m.role === 'assistant')
         .map((m) => ({ role: m.role, content: m.content }));
@@ -664,11 +665,14 @@ export default function ChatAgent() {
       const tGenStart = performance.now();
       let firstTokenLogged = false;
       let reply = '';
-      const stream = await model.createChatCompletion(chatMessages, {
-        nPredict: 200,
-        sampling: { temp: 0, top_k: 1, penalty_repeat: 1.2 },
+      const stream = await model.createChatCompletion({
+        messages: chatMessages,
+        max_tokens: 200,
+        temperature: 0,
+        top_k: 1,
+        penalty_repeat: 1.2,
         stream: true,
-        useCache: true,
+        cache_prompt: true,
       });
 
       for await (const chunk of stream) {
@@ -676,7 +680,7 @@ export default function ChatAgent() {
           firstTokenLogged = true;
           console.log(`[A-A-Bot] first token at ${((performance.now() - tGenStart) / 1000).toFixed(1)}s`);
         }
-        const piece = new TextDecoder().decode(chunk.piece);
+        const piece = chunk.choices?.[0]?.delta?.content ?? '';
         reply += piece;
         if (acceptTokens.current) {
           setStreamBuffer((prev) => prev + piece);

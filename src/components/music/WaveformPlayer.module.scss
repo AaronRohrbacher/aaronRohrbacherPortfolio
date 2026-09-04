@@ -101,11 +101,10 @@
 
 .waveform {
   width: 100%;
+  min-height: 72px;
   cursor: pointer;
 }
 
-// Canvas overlay rendering the FFT EQ bars. Non-interactive — clicks fall
-// through to the waveform div beneath so WaveSurfer can handle seeking.
 .eqCanvas {
   position: absolute;
   inset: 0;

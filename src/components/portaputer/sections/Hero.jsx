@@ -14,7 +14,7 @@ export default function Hero() {
 
         <div className={Style.cta}>
           <a
-            href="/api/portaputer/download"
+            href="/api/download"
             className={Style.downloadBtn}
             rel="nofollow noopener"
           >

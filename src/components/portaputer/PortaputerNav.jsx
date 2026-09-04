@@ -28,10 +28,9 @@ export default function PortaputerNav({ darkMode, handleToggle }) {
 
   function isActive(linkPath) {
     if (linkPath === '/') {
-      return pathname === '/' || pathname === '/portaputer' || pathname === '/portaputer/';
+      return pathname === '/';
     }
-    const candidates = [linkPath, `/portaputer${linkPath}`];
-    return candidates.some((c) => pathname === c || pathname.startsWith(`${c}/`));
+    return pathname === linkPath || pathname.startsWith(`${linkPath}/`);
   }
 
   return (

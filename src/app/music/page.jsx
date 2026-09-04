@@ -7,32 +7,35 @@ import {
   canViewTrackDirect,
 } from '@/lib/trackStore';
 import MusicPlaylist from '@/components/music/MusicPlaylist';
+import { absoluteSeoTitle, SEO_HOME_TITLES, SEO_SITES } from '@/lib/seoTitles';
 
 export const metadata = {
   metadataBase: new URL('https://music.aaronrohrbacher.com'),
-  title: 'Music',
+  title: absoluteSeoTitle(SEO_HOME_TITLES.music),
   description:
-    'Saxophone, clarinet, and home recordings by Aaron Rohrbacher — a Portland, Oregon software engineer and amateur audio engineer. Stream and download tracks in MP3, WAV, and AIFF.',
+    'Saxophone, clarinet, and home recordings by Aaron Rohrbacher — a Portland, Oregon software engineer and amateur audio engineer. Stream and download uploaded audio and video formats.',
   alternates: {
     canonical: 'https://music.aaronrohrbacher.com/',
   },
   openGraph: {
-    title: 'Music | Aaron Rohrbacher',
+    title: SEO_HOME_TITLES.music,
     description:
-      'Saxophone, clarinet, and home recordings by Aaron Rohrbacher — Portland, Oregon. Stream and download MP3, WAV, AIFF.',
+      'Saxophone, clarinet, and home recordings by Aaron Rohrbacher — Portland, Oregon. Stream and download uploaded audio and video formats.',
     type: 'music.playlist',
     url: 'https://music.aaronrohrbacher.com/',
-    siteName: 'Aaron Rohrbacher · Music',
+    siteName: SEO_SITES.music,
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Music | Aaron Rohrbacher',
+    title: SEO_HOME_TITLES.music,
     description:
-      'Saxophone, clarinet, and home recordings by Aaron Rohrbacher — Portland, Oregon. Stream and download MP3, WAV, AIFF.',
+      'Saxophone, clarinet, and home recordings by Aaron Rohrbacher — Portland, Oregon. Stream and download uploaded audio and video formats.',
   },
 };
 
-export const dynamic = 'force-dynamic';
+// Public catalog HTML is generated on demand and stored in OpenNext's normal
+// S3 ISR cache. Admin writes explicitly invalidate it via musicCache.js.
+export const revalidate = 300;
 
 export default async function MusicPage() {
   let initialTracks = [];
@@ -64,7 +67,7 @@ export default async function MusicPage() {
       addedAt: track.addedAt,
       formats: Object.keys(track.formats),
       streamUrls: Object.fromEntries(
-        Object.keys(track.formats).map((f) => [f, `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${f}`])
+        Object.keys(track.formats).map((f) => [f, `/api/stream?id=${encodeURIComponent(track.id)}&format=${f}`])
       ),
     });
 
@@ -147,14 +150,14 @@ export default async function MusicPage() {
         url: 'https://music.aaronrohrbacher.com/',
         name: 'Music by Aaron Rohrbacher',
         description:
-          'Saxophone, clarinet, and home recordings by Aaron Rohrbacher — a Portland, Oregon software engineer and amateur audio engineer. Stream and download tracks in MP3, WAV, and AIFF.',
-        isPartOf: { '@type': 'WebSite', url: 'https://music.aaronrohrbacher.com', name: 'Aaron Rohrbacher · Music' },
+          'Saxophone, clarinet, and home recordings by Aaron Rohrbacher — a Portland, Oregon software engineer and amateur audio engineer. Stream and download uploaded audio and video formats.',
+        isPartOf: { '@type': 'WebSite', url: 'https://music.aaronrohrbacher.com', name: SEO_SITES.music },
         creator: aaron,
       },
       {
         '@type': 'MusicPlaylist',
         name: 'Music by Aaron Rohrbacher',
-        description: 'Stream and download original recordings by Aaron Rohrbacher in MP3, WAV, and AIFF.',
+        description: 'Stream and download original recordings by Aaron Rohrbacher in their uploaded audio and video formats.',
         url: 'https://music.aaronrohrbacher.com/',
         numTracks: allItems.length,
         track: allItems.map((t, i) => ({

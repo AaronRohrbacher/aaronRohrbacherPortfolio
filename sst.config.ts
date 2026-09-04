@@ -10,6 +10,8 @@ export default $config({
     };
   },
   async run() {
+    const { RandomPassword } = await import("@pulumi/random");
+    const { runtime: pulumiRuntime } = await import("@pulumi/pulumi");
     const { readFileSync } = await import("node:fs");
     const { resolve: resolvePath } = await import("node:path");
     const { config: loadEnv } = await import("dotenv");
@@ -192,7 +194,7 @@ export default $config({
     // S3 bucket for the PortaPuter Windows installer (.exe). Lives in
     // us-west-2 — its own provider so the bucket's region is explicit and
     // doesn't drift if Music's region ever moves. Private — signed GET
-    // URLs are issued by /api/portaputer/download after logging the
+    // URLs are issued by the PortaPuter host's clean /api/download route after logging the
     // click, so the .exe never has to be public.
     const portaputerRegion = "us-west-2";
     const portaputerAwsProvider = new aws.Provider("PortaputerRegion", {
@@ -224,6 +226,18 @@ export default $config({
     });
 
     const userPoolClient = userPool.addClient("MusicWebClient");
+    const appSessionSecret = new RandomPassword("AppSessionSecret", {
+      length: 48,
+      special: false,
+    });
+    // A newly generated Pulumi output is intentionally unknown during preview.
+    // Passing that unknown into Nextjs.environment prevents SST's local site
+    // builder from registering any OpenNext resources, which produces a false
+    // preview that deletes the server and ISR stack. The placeholder is only
+    // used by dry-run builds; an update receives the generated secret.
+    const appSessionSecretForSite = pulumiRuntime.isDryRun()
+      ? "sst-preview-session-secret-not-used-at-runtime"
+      : appSessionSecret.result;
 
     // Create admin group in Cognito (IaC)
     new aws.cognito.UserGroup("MusicAdminGroup", {
@@ -327,7 +341,113 @@ export default $config({
       { provider: musicAwsProvider },
     );
 
-    new sst.aws.Nextjs("Portfolio", {
+    // Same semantics as SST/OpenNext's standard server cache policy, made
+    // explicit here so host is guaranteed to be part of the cache key for
+    // the three aliases served by this one distribution.
+    const portfolioCachePolicy = new aws.cloudfront.CachePolicy("PortfolioHostCachePolicy", {
+      name: `portfolio-host-cache-${$app.stage}`,
+      defaultTtl: 0,
+      maxTtl: 31536000,
+      minTtl: 0,
+      parametersInCacheKeyAndForwardedToOrigin: {
+        cookiesConfig: { cookieBehavior: "none" },
+        headersConfig: {
+          headerBehavior: "whitelist",
+          headers: { items: ["x-open-next-cache-key", "x-forwarded-host"] },
+        },
+        queryStringsConfig: { queryStringBehavior: "all" },
+        enableAcceptEncodingBrotli: true,
+        enableAcceptEncodingGzip: true,
+      },
+    });
+
+    // CloudFront can serve static and cached responses without invoking the Next.js
+    // server, so application logs cannot see every page request. Keep standard access
+    // logs in a private bucket for 90 days. CloudFront's legacy log delivery requires
+    // ACLs and its canonical delivery user to have FULL_CONTROL on the bucket.
+    const cloudFrontLogBucket = isProd
+      ? new aws.s3.BucketV2("PortfolioAccessLogs", {})
+      : undefined;
+    const cloudFrontLogOwnership = cloudFrontLogBucket
+      ? new aws.s3.BucketOwnershipControls("PortfolioAccessLogsOwnership", {
+          bucket: cloudFrontLogBucket.id,
+          rule: { objectOwnership: "BucketOwnerPreferred" },
+        })
+      : undefined;
+    const cloudFrontLogPublicAccess = cloudFrontLogBucket
+      ? new aws.s3.BucketPublicAccessBlock("PortfolioAccessLogsPublicAccess", {
+          bucket: cloudFrontLogBucket.id,
+          blockPublicAcls: true,
+          blockPublicPolicy: true,
+          ignorePublicAcls: true,
+          restrictPublicBuckets: true,
+        })
+      : undefined;
+    const cloudFrontLogAcl = cloudFrontLogBucket && cloudFrontLogOwnership
+      ? (() => {
+          const owner = aws.s3.getCanonicalUserIdOutput({});
+          return new aws.s3.BucketAclV2(
+            "PortfolioAccessLogsAcl",
+            {
+              bucket: cloudFrontLogBucket.id,
+              accessControlPolicy: {
+                owner: { id: owner.id },
+                grants: [
+                  {
+                    grantee: { id: owner.id, type: "CanonicalUser" },
+                    permission: "FULL_CONTROL",
+                  },
+                  {
+                    grantee: {
+                      // CloudFront standard logging delivery account.
+                      id: "c4c1ede66af53448b93c283ce9448c4ba468c9432aa01d700d3878632f77d2d0",
+                      type: "CanonicalUser",
+                    },
+                    permission: "FULL_CONTROL",
+                  },
+                ],
+              },
+            },
+            { dependsOn: [cloudFrontLogOwnership, cloudFrontLogPublicAccess].filter(Boolean) },
+          );
+        })()
+      : undefined;
+    if (cloudFrontLogBucket) {
+      new aws.s3.BucketLifecycleConfigurationV2("PortfolioAccessLogsLifecycle", {
+        bucket: cloudFrontLogBucket.id,
+        rules: [{
+          id: "expire-cloudfront-access-logs",
+          status: "Enabled",
+          expiration: { days: 90 },
+        }],
+      });
+    }
+
+    const portfolio = new sst.aws.Nextjs("Portfolio", {
+      // SST 4.17.1 defaults to OpenNext 3.9.14, whose supported Next range
+      // stops before Next 16.3. Pin the current adapter that explicitly
+      // supports Next >=16.3.3 so production builds match this app's Next
+      // version while retaining OpenNext's S3/SQS ISR architecture.
+      openNextVersion: "4.1.4",
+      cachePolicy: portfolioCachePolicy.id,
+      transform: cloudFrontLogBucket && cloudFrontLogAcl
+        ? {
+            cdn: (args) => {
+              args.transform = {
+                distribution: (distributionArgs) => {
+                  distributionArgs.loggingConfig = $resolve([
+                    cloudFrontLogBucket.bucketDomainName,
+                    cloudFrontLogAcl.id,
+                  ]).apply(([bucketDomainName]) => ({
+                    bucket: bucketDomainName,
+                    includeCookies: false,
+                    prefix: "cloudfront/",
+                  }));
+                },
+              };
+            },
+          }
+        : undefined,
       link: [musicTable, userPool, userPoolClient, portaputerBucket],
       permissions: [
         {
@@ -366,7 +486,7 @@ export default $config({
             // www 301-redirects to the apex (a true HTTP redirect, not a
             // content-serving alias) so Google stops flagging www as a
             // duplicate/alternate page. music + portaputer stay as aliases
-            // because middleware.js serves real content under those hosts.
+            // because proxy.js serves real content under those hosts.
             redirects: ["www.aaronrohrbacher.com"],
             aliases: ["music.aaronrohrbacher.com", "portaputer.aaronrohrbacher.com"],
             // override: true lets SST replace pre-existing Route53 records
@@ -396,6 +516,7 @@ export default $config({
         NEXT_PUBLIC_MODELS_URL: "https://aaron-portfolio-models.s3.us-west-2.amazonaws.com",
         CONTACT_EMAIL_TO: contactEmailTo,
         NOTIFY_FROM_EMAIL: "Portfolio Connect <connect@aaronrohrbacher.com>",
+        APP_SESSION_SECRET: appSessionSecretForSite,
       },
     });
 
@@ -406,6 +527,10 @@ export default $config({
       musicCdnDomain: musicCdn.domainName,
       connectNotifyArn: connectNotifyFn.arn,
       portaputerBucket: portaputerBucket.name,
+      portfolioDistributionId: portfolio.nodes.cdn?.nodes.distribution.id,
+      portfolioCacheBucket: portfolio.nodes.assets?.name,
+      cloudFrontLogBucket: cloudFrontLogBucket?.bucket,
+      revalidationQueueUrl: portfolio.nodes.revalidationQueue?.apply((queue) => queue?.url),
     };
   },
 });

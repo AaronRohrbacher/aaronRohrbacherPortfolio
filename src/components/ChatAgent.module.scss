@@ -26,6 +26,17 @@
   font-size: 1.3rem;
 }
 
+// Keep the global assistant clear of Music's persistent bottom player. The
+// player publishes only its presentation state on <html>; playback itself
+// remains owned by the single persistent media element.
+:global(html[data-music-player]) .fab {
+  bottom: calc(var(--music-player-height, 64px) + 1.25rem);
+}
+:global(html[data-music-player]) .panel {
+  bottom: calc(var(--music-player-height, 64px) + 5.5rem);
+  max-height: calc(100vh - var(--music-player-height, 64px) - 7rem);
+}
+
 // ─── Chat Panel ──────────────────────────────────────────────────────────────
 // Theme-adaptive: defaults to light, switches via html[data-theme="dark"]
 // which BaseLayout sets on <html>. Uses the same Inter/Gucina fonts and

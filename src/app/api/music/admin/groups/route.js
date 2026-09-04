@@ -9,7 +9,7 @@ async function requireAdmin(request) {
 }
 
 /**
- * GET /api/music/admin/groups — List all groups with members
+ * GET /api/admin/groups — List all groups with members
  */
 export async function GET(request) {
   if (!(await requireAdmin(request))) {
@@ -32,7 +32,7 @@ export async function GET(request) {
 }
 
 /**
- * POST /api/music/admin/groups — Create a group or add member
+ * POST /api/admin/groups — Create a group or add member
  * Body: { name, description } or { groupName, username, action: "add"|"remove" }
  */
 export async function POST(request) {
@@ -71,7 +71,7 @@ export async function POST(request) {
 }
 
 /**
- * DELETE /api/music/admin/groups?name=xxx — Delete a group
+ * DELETE /api/admin/groups?name=xxx — Delete a group
  */
 export async function DELETE(request) {
   if (!(await requireAdmin(request))) {

@@ -15,7 +15,7 @@ async function requireAdmin(request) {
 }
 
 /**
- * GET /api/music/admin/share-links
+ * GET /api/admin/share-links
  * Returns every share link in the system (login + dump + track), including
  * inactive and expired ones — the admin tab handles filtering on the client.
  */
@@ -29,7 +29,7 @@ export async function GET(request) {
 }
 
 /**
- * PATCH /api/music/admin/share-links
+ * PATCH /api/admin/share-links
  * Edit a share link's mutable fields (label, active, expiresAt/expiresInDays).
  * Body: { kind, token, label?, active?, expiresInDays?, expiresAt? }
  * Target id (email/dumpId/trackId) is immutable.
@@ -53,7 +53,7 @@ export async function PATCH(request) {
 }
 
 /**
- * DELETE /api/music/admin/share-links?kind=login|dump|track&token=xxx
+ * DELETE /api/admin/share-links?kind=login|dump|track&token=xxx
  * Delete a share link of any kind.
  */
 export async function DELETE(request) {

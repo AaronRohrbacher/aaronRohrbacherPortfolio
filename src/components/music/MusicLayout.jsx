@@ -7,7 +7,7 @@ import { AuthProvider } from './AuthContext';
 import { MusicPlayerProvider } from './MusicPlayerContext';
 import { MusicHrefProvider } from '@/lib/musicLinks';
 import PlayerBar from './PlayerBar';
-import { Box, Grid } from '@mui/material';
+import { Box } from '@mui/material';
 import { getCookie, setCookie } from 'cookies-next';
 
 export default function MusicLayout({ children }) {
@@ -16,7 +16,7 @@ export default function MusicLayout({ children }) {
 
   function handleToggleDarkMode() {
     const next = !darkMode;
-    setCookie('darkMode', String(next), { maxAge: 60 * 60 * 24 * 365 });
+    setCookie('darkMode', String(next), { maxAge: 60 * 60 * 24 * 365, path: '/', sameSite: 'lax' });
     setDarkMode(next);
   }
 
@@ -44,20 +44,19 @@ export default function MusicLayout({ children }) {
     <AuthProvider>
       <MusicPlayerProvider>
         <Box suppressHydrationWarning className={themeClass} data-theme={darkMode ? 'dark' : 'light'} sx={{ width: '100%', overflowX: 'hidden' }}>
-          <Grid container display="flex" flexDirection="column" justifyContent="space-between" sx={{ maxWidth: '100%', margin: 0, padding: 0, minHeight: '100vh', '@supports (min-height: 100dvh)': { minHeight: '100dvh' } }}>
-            <Grid>
+          <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', maxWidth: '100%', margin: 0, padding: 0, minHeight: '100vh', '@supports (min-height: 100dvh)': { minHeight: '100dvh' } }}>
+            <Box>
               <MusicNav darkMode={darkMode} handleToggle={handleToggleDarkMode} />
-            </Grid>
-            <Grid flexGrow={1}>
+            </Box>
+            <Box sx={{ flexGrow: 1 }}>
               {children}
-            </Grid>
-            <Grid>
-              <Box component="footer" display="flex" flexDirection="column" alignItems="center"
-                py="1.5rem" sx={{ opacity: 0.7, paddingBottom: '5rem' }} width="100%">
-                <p>&copy; 2025 Aaron Rohrbacher</p>
+            </Box>
+            <Box>
+              <Box component="footer" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: '1.5rem', opacity: 0.7, paddingBottom: '5rem', width: '100%' }}>
+                <p>&copy; {new Date().getFullYear()} Aaron Rohrbacher</p>
               </Box>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
           <PlayerBar />
         </Box>
       </MusicPlayerProvider>

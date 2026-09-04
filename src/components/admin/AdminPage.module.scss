@@ -208,3 +208,62 @@
   gap: 0.75rem;
   margin-top: 1.5rem;
 }
+
+@media (max-width: 640px) {
+  .wrap {
+    width: 100%;
+    max-width: 100%;
+    padding: 1rem;
+    overflow-x: clip;
+    box-sizing: border-box;
+  }
+
+  .header,
+  .headerActions,
+  .item,
+  .itemActions,
+  .modalActions {
+    width: 100%;
+  }
+
+  .headerActions,
+  .itemActions,
+  .modalActions {
+    flex-wrap: wrap;
+  }
+
+  .item {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .itemInfo {
+    flex-basis: calc(100% - 88px);
+  }
+
+  .itemActions {
+    padding-left: 88px;
+  }
+
+  .btn,
+  .btnSecondary,
+  .iconBtn {
+    min-height: 44px;
+  }
+
+  .loginWrap {
+    padding: 1rem;
+  }
+
+  .loginCard {
+    width: 100%;
+    max-width: 320px;
+    box-sizing: border-box;
+  }
+
+  .modal {
+    max-width: 100%;
+    padding: 1.25rem;
+    box-sizing: border-box;
+  }
+}

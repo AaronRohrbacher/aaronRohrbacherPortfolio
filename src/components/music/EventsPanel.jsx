@@ -11,6 +11,9 @@ const TYPE_FILTERS = [
   { label: 'Magic redeem', value: 'auth.magic_redeem' },
   { label: 'Streams', value: 'content.stream' },
   { label: 'Downloads', value: 'content.download' },
+  { label: 'Playback starts', value: 'content.playback_start' },
+  { label: 'Playback progress', value: 'content.playback_progress' },
+  { label: 'Playback completed', value: 'content.playback_complete' },
   { label: 'Share created', value: 'share.create' },
   { label: 'Share redeemed', value: 'share.redeem' },
 ];
@@ -22,12 +25,17 @@ const COLUMNS = [
   { key: 'actor', label: 'Actor' },
   { key: 'target', label: 'Target' },
   { key: 'ip', label: 'IP' },
+  { key: 'location', label: 'Location' },
   { key: 'userAgent', label: 'UA' },
   { key: 'detail', label: 'Detail' },
 ];
 
 function targetStr(e) {
   return e.targetId ? `${e.targetType || ''}:${e.targetId}` : '';
+}
+
+function locationStr(e) {
+  return [e.city, e.region, e.country].filter(Boolean).join(', ');
 }
 
 function csvEscape(val) {
@@ -53,7 +61,7 @@ export default function EventsPanel({ getAuthHeaders }) {
     try {
       const headers = await getAuthHeaders();
       const qs = type ? `?type=${encodeURIComponent(type)}&limit=200` : '?limit=200';
-      const res = await fetch(`/api/music/admin/events${qs}`, { headers });
+      const res = await fetch(`/api/admin/events${qs}`, { headers });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load events');
       setEvents(data.events || []);
@@ -79,6 +87,7 @@ export default function EventsPanel({ getAuthHeaders }) {
             e.actor,
             targetStr(e),
             e.ip,
+            locationStr(e),
             e.userAgent,
             e.detail,
           ]
@@ -105,6 +114,9 @@ export default function EventsPanel({ getAuthHeaders }) {
         if (key === 'target') {
           av = targetStr(a);
           bv = targetStr(b);
+        } else if (key === 'location') {
+          av = locationStr(a);
+          bv = locationStr(b);
         } else {
           av = a[key] == null ? '' : String(a[key]);
           bv = b[key] == null ? '' : String(b[key]);
@@ -125,7 +137,7 @@ export default function EventsPanel({ getAuthHeaders }) {
   }, []);
 
   const exportCsv = useCallback(() => {
-    const headers = ['When', 'Type', 'Actor', 'TargetType', 'TargetId', 'IP', 'UserAgent', 'Detail'];
+    const headers = ['When', 'Type', 'Actor', 'TargetType', 'TargetId', 'IP', 'City', 'Region', 'Country', 'UserAgent', 'Detail'];
     const rows = viewEvents.map((e) => [
       e.timestamp ? new Date(e.timestamp).toLocaleString() : '',
       e.type || '',
@@ -133,6 +145,9 @@ export default function EventsPanel({ getAuthHeaders }) {
       e.targetType || '',
       e.targetId || '',
       e.ip || '',
+      e.city || '',
+      e.region || '',
+      e.country || '',
       e.userAgent || '',
       e.detail || '',
     ]);
@@ -198,8 +213,8 @@ export default function EventsPanel({ getAuthHeaders }) {
         </div>
       )}
 
-      <div style={{ maxHeight: '60vh', overflowY: 'auto', border: '1px solid rgba(128,128,128,0.2)', borderRadius: '8px' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
+      <div className={Style.eventsTableWrap}>
+        <table className={Style.eventsTable}>
           <thead style={{ position: 'sticky', top: 0, background: 'rgba(128,128,128,0.08)', backdropFilter: 'blur(4px)' }}>
             <tr>
               {COLUMNS.map((col) => {
@@ -223,15 +238,16 @@ export default function EventsPanel({ getAuthHeaders }) {
           <tbody>
             {viewEvents.map((e) => (
               <tr key={e.id} style={{ borderTop: '1px solid rgba(128,128,128,0.1)' }}>
-                <td style={cellTd}>{new Date(e.timestamp).toLocaleString()}</td>
-                <td style={cellTd}><code>{e.type}</code></td>
-                <td style={cellTd}>{e.actor || '—'}</td>
-                <td style={cellTd}>{e.targetId ? `${e.targetType}:${e.targetId}` : '—'}</td>
-                <td style={cellTd}>{e.ip || '—'}</td>
-                <td style={{ ...cellTd, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={e.userAgent || ''}>
+                <td style={cellTd} data-label="When">{new Date(e.timestamp).toLocaleString()}</td>
+                <td style={cellTd} data-label="Type"><code>{e.type}</code></td>
+                <td style={cellTd} data-label="Actor">{e.actor || '—'}</td>
+                <td style={cellTd} data-label="Target">{e.targetId ? `${e.targetType}:${e.targetId}` : '—'}</td>
+                <td style={cellTd} data-label="IP">{e.ip || '—'}</td>
+                <td style={cellTd} data-label="Location">{locationStr(e) || '—'}</td>
+                <td style={{ ...cellTd, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-label="User agent" title={e.userAgent || ''}>
                   {e.userAgent ? e.userAgent.slice(0, 40) : '—'}
                 </td>
-                <td style={cellTd}>{e.detail ? (typeof e.detail === 'object' ? JSON.stringify(e.detail) : e.detail) : '—'}</td>
+                <td style={cellTd} data-label="Detail">{e.detail ? (typeof e.detail === 'object' ? JSON.stringify(e.detail) : e.detail) : '—'}</td>
               </tr>
             ))}
             {viewEvents.length === 0 && !loading && (

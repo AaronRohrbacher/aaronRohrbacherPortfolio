@@ -9,7 +9,7 @@ async function requireAdmin(request) {
 }
 
 /**
- * GET /api/music/admin/permissions?trackId=xxx
+ * GET /api/admin/permissions?trackId=xxx
  */
 export async function GET(request) {
   if (!(await requireAdmin(request))) {
@@ -32,7 +32,7 @@ export async function GET(request) {
 }
 
 /**
- * PUT /api/music/admin/permissions
+ * PUT /api/admin/permissions
  * Body: { trackId, targetType: "user"|"group", targetId, action: "grant"|"revoke" }
  */
 export async function PUT(request) {

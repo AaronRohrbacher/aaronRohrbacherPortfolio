@@ -8,22 +8,19 @@ import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/portaputer/download
+// GET /api/download
 // Logs the download attempt then 302-redirects to a presigned S3 URL.
 // The .exe never leaves S3 — Lambda just signs a URL and steps out of the way.
 export async function GET(request) {
-  const { ip, userAgent } = requestMeta(request);
+  const { ip, userAgent, city, region, country } = requestMeta(request);
   const h = request.headers;
   const referrer = h.get('referer') || h.get('referrer') || null;
   const acceptLanguage = h.get('accept-language') || null;
-  // CloudFront automatically adds these when the distribution forwards them.
-  const country = h.get('cloudfront-viewer-country') || null;
-  const region = h.get('cloudfront-viewer-country-region') || null;
-  const city = h.get('cloudfront-viewer-city') || null;
 
   if (!isPortaputerStorageConfigured()) {
     // Still log the click — useful telemetry while the bucket is being set up.
     await logEvent({
+      site: 'portaputer',
       type: EVENT_TYPES.PORTAPUTER_DOWNLOAD,
       targetType: 'installer',
       targetId: PORTAPUTER_INSTALLER_KEY,
@@ -50,6 +47,7 @@ export async function GET(request) {
   try {
     const url = await getInstallerDownloadUrl();
     await logEvent({
+      site: 'portaputer',
       type: EVENT_TYPES.PORTAPUTER_DOWNLOAD,
       targetType: 'installer',
       targetId: PORTAPUTER_INSTALLER_KEY,
@@ -68,6 +66,7 @@ export async function GET(request) {
   } catch (err) {
     console.error('[portaputer/download] sign failed:', err?.message || err);
     await logEvent({
+      site: 'portaputer',
       type: EVENT_TYPES.PORTAPUTER_DOWNLOAD,
       targetType: 'installer',
       targetId: PORTAPUTER_INSTALLER_KEY,

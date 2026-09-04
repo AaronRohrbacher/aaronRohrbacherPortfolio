@@ -108,7 +108,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className={Style.wrap}>
+    <div className={Style.wrap} data-testid="main-admin-root">
       <div className={Style.header}>
         <h1>Portfolio Admin</h1>
         <div className={Style.headerActions}>

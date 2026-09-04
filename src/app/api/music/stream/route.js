@@ -11,9 +11,10 @@ import {
 } from '@/lib/trackStore';
 import { authenticateRequest } from '@/lib/verifyToken';
 import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
+import { issueMediaGrant, verifyMediaGrant } from '@/lib/appTokens';
 
 /**
- * GET /api/music/stream?id=trackId&format=mp3&download=1
+ * GET /api/stream?id=trackId&format=mp3&download=1
  * Streaming: redirects to a CDN URL (prod) or a presigned S3 URL (dev).
  * Download: redirects to a presigned S3 URL with Content-Disposition baked in.
  */
@@ -46,6 +47,8 @@ export async function GET(request) {
     const containingDumpIds = containingDumps.map((d) => d.id);
 
     let shareGrant = false;
+    const mediaGrant = searchParams.get('media');
+    if (mediaGrant && await verifyMediaGrant(mediaGrant, id)) shareGrant = true;
     if (shareToken) {
       if (containingDumpIds.length > 0) {
         const redeemed = await redeemDumpShareLink(shareToken, reqMeta);
@@ -95,7 +98,7 @@ export async function GET(request) {
 
     await logEvent({
       type: download ? EVENT_TYPES.DOWNLOAD : EVENT_TYPES.STREAM,
-      actor: user?.email || (shareGrant ? `share:${shareToken.slice(0, 8)}` : null),
+      actor: user?.email || (shareToken ? `share:${shareToken.slice(0, 8)}` : mediaGrant ? 'media-grant' : null),
       targetType: 'track',
       targetId: id,
       detail: format,
@@ -151,9 +154,11 @@ export async function GET(request) {
     if (searchParams.get('urlOnly') === '1') {
       const sameOriginUrl = new URL(request.url);
       sameOriginUrl.searchParams.delete('urlOnly');
-      return NextResponse.json({ url: `${sameOriginUrl.pathname}${sameOriginUrl.search}`, requiresAuth: true });
+      sameOriginUrl.searchParams.set('media', await issueMediaGrant(id));
+      return NextResponse.json({ url: `${sameOriginUrl.pathname}${sameOriginUrl.search}`, requiresAuth: false });
     }
-    const upstream = await fetch(streamUrl);
+    const range = request.headers.get('range');
+    const upstream = await fetch(streamUrl, range ? { headers: { Range: range } } : undefined);
     if (!upstream.ok || !upstream.body) {
       return NextResponse.json(
         { error: 'Upstream stream failed.' },
@@ -163,8 +168,13 @@ export async function GET(request) {
     const contentType =
       upstream.headers.get('content-type') ||
       (format === 'mp3' ? 'audio/mpeg'
+        : format === 'aac' ? 'audio/aac'
+          : format === 'm4a' ? 'audio/mp4'
         : format === 'aiff' || format === 'aif' ? 'audio/aiff'
           : format === 'wav' ? 'audio/wav'
+            : format === 'mp4' || format === 'm4v' ? 'video/mp4'
+              : format === 'webm' ? 'video/webm'
+                : format === 'mov' ? 'video/quicktime'
             : 'application/octet-stream');
     const responseHeaders = {
       'Content-Type': contentType,
@@ -175,8 +185,10 @@ export async function GET(request) {
     if (contentLength) responseHeaders['Content-Length'] = contentLength;
     const acceptRanges = upstream.headers.get('accept-ranges');
     if (acceptRanges) responseHeaders['Accept-Ranges'] = acceptRanges;
+    const contentRange = upstream.headers.get('content-range');
+    if (contentRange) responseHeaders['Content-Range'] = contentRange;
     return new NextResponse(upstream.body, {
-      status: 200,
+      status: upstream.status,
       headers: responseHeaders,
     });
   } catch (err) {

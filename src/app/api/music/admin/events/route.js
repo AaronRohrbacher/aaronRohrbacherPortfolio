@@ -9,7 +9,7 @@ async function requireAdmin(request) {
 }
 
 /**
- * GET /api/music/admin/events[?type=xxx&limit=100]
+ * GET /api/admin/events[?type=xxx&limit=100]
  * List recent auth/content/share events (admin only).
  */
 export async function GET(request) {
@@ -20,7 +20,7 @@ export async function GET(request) {
   const type = searchParams.get('type') || undefined;
   const limit = Number(searchParams.get('limit') || 100);
   try {
-    const events = await listEvents({ type, limit });
+    const events = await listEvents({ type, limit, site: 'music' });
     return NextResponse.json({ events });
   } catch (err) {
     console.error('List events failed:', err);
@@ -29,7 +29,7 @@ export async function GET(request) {
 }
 
 /**
- * DELETE /api/music/admin/events?sk=xxx
+ * DELETE /api/admin/events?sk=xxx
  * Remove a single event entry (admin only).
  */
 export async function DELETE(request) {
@@ -39,6 +39,6 @@ export async function DELETE(request) {
   const { searchParams } = new URL(request.url);
   const sk = searchParams.get('sk');
   if (!sk) return NextResponse.json({ error: 'sk required' }, { status: 400 });
-  await deleteEvent(sk);
+  await deleteEvent(sk, 'music');
   return NextResponse.json({ ok: true });
 }

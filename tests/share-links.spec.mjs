@@ -5,10 +5,10 @@ test.describe.configure({ mode: 'serial' });
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-const BASE = 'http://localhost:3000';
+const BASE = 'http://music.localhost:3000';
 
 async function signIn(request, email = 'admin@local.dev', password = 'admin') {
-  const res = await request.post(`${BASE}/api/music/auth/signin`, {
+  const res = await request.post(`${BASE}/api/auth/signin`, {
     data: { email, password },
   });
   const data = await res.json();
@@ -16,7 +16,7 @@ async function signIn(request, email = 'admin@local.dev', password = 'admin') {
 }
 
 async function signUp(request, email, password) {
-  const res = await request.post(`${BASE}/api/music/auth/signup`, {
+  const res = await request.post(`${BASE}/api/auth/signup`, {
     data: { email, password },
   });
   return res.json();
@@ -27,14 +27,14 @@ function authHeaders(token) {
 }
 
 async function getRawTracks(request, token) {
-  const res = await request.get(`${BASE}/api/music/tracks?raw=1`, {
+  const res = await request.get(`${BASE}/api/tracks?raw=1`, {
     headers: authHeaders(token),
   });
   return res.json();
 }
 
 async function putTracks(request, token, tracks) {
-  const res = await request.put(`${BASE}/api/music/tracks`, {
+  const res = await request.put(`${BASE}/api/tracks`, {
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     data: { tracks },
   });
@@ -74,7 +74,7 @@ test.describe('Track Share Links — admin API', () => {
   });
 
   test('POST creates a track-share link', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const res = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: trackA.id },
     });
@@ -87,7 +87,7 @@ test.describe('Track Share Links — admin API', () => {
   });
 
   test('POST without trackId returns 400', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const res = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: {},
     });
@@ -95,7 +95,7 @@ test.describe('Track Share Links — admin API', () => {
   });
 
   test('POST for nonexistent track returns 404', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const res = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: `ghost-${Date.now()}` },
     });
@@ -103,14 +103,14 @@ test.describe('Track Share Links — admin API', () => {
   });
 
   test('POST without admin auth returns 401', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const res = await request.post(`${BASE}/api/admin/track-share-links`, {
       data: { trackId: trackA.id },
     });
     expect(res.status()).toBe(401);
   });
 
   test('POST with expiresInDays: 14 sets expiresAt ~14 days out', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const res = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: trackA.id, expiresInDays: 14 },
     });
@@ -124,13 +124,13 @@ test.describe('Track Share Links — admin API', () => {
 
   test('POST with label round-trips via unified list endpoint', async ({ request }) => {
     const label = `labeled-${Date.now()}`;
-    const res = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const res = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: trackA.id, label },
     });
     const { link } = await res.json();
 
-    const listRes = await request.get(`${BASE}/api/music/admin/share-links`, {
+    const listRes = await request.get(`${BASE}/api/admin/share-links`, {
       headers: authHeaders(adminToken),
     });
     const listData = await listRes.json();
@@ -143,7 +143,7 @@ test.describe('Track Share Links — admin API', () => {
 
   test('GET ?trackId= returns links for a track', async ({ request }) => {
     const res = await request.get(
-      `${BASE}/api/music/admin/track-share-links?trackId=${encodeURIComponent(trackA.id)}`,
+      `${BASE}/api/admin/track-share-links?trackId=${encodeURIComponent(trackA.id)}`,
       { headers: authHeaders(adminToken) }
     );
     expect(res.status()).toBe(200);
@@ -154,7 +154,7 @@ test.describe('Track Share Links — admin API', () => {
   });
 
   test('GET without trackId returns 400', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/music/admin/track-share-links`, {
+    const res = await request.get(`${BASE}/api/admin/track-share-links`, {
       headers: authHeaders(adminToken),
     });
     expect(res.status()).toBe(400);
@@ -162,21 +162,21 @@ test.describe('Track Share Links — admin API', () => {
 
   test('DELETE ?token= revokes the link', async ({ request }) => {
     // Create a fresh link so we can revoke it without disturbing other tests
-    const create = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const create = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: trackA.id, label: `to-delete-${Date.now()}` },
     });
     const { link } = await create.json();
 
     const del = await request.delete(
-      `${BASE}/api/music/admin/track-share-links?token=${link.token}`,
+      `${BASE}/api/admin/track-share-links?token=${link.token}`,
       { headers: authHeaders(adminToken) }
     );
     expect(del.status()).toBe(200);
     expect((await del.json()).ok).toBe(true);
 
     const listRes = await request.get(
-      `${BASE}/api/music/admin/track-share-links?trackId=${encodeURIComponent(trackA.id)}`,
+      `${BASE}/api/admin/track-share-links?trackId=${encodeURIComponent(trackA.id)}`,
       { headers: authHeaders(adminToken) }
     );
     const listData = await listRes.json();
@@ -186,7 +186,7 @@ test.describe('Track Share Links — admin API', () => {
 
   test('DELETE without admin auth returns 401', async ({ request }) => {
     const res = await request.delete(
-      `${BASE}/api/music/admin/track-share-links?token=any`
+      `${BASE}/api/admin/track-share-links?token=any`
     );
     expect(res.status()).toBe(401);
   });
@@ -206,7 +206,7 @@ test.describe('Track Share Redemption — stream + track endpoints', () => {
     trackA = a;
     trackB = b;
 
-    const res = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const res = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: trackA.id, label: `redeem-${Date.now()}` },
     });
@@ -217,7 +217,7 @@ test.describe('Track Share Redemption — stream + track endpoints', () => {
 
   test('anonymous GET /api/music/track?id=&share= returns 200 with streamUrls', async ({ request }) => {
     const res = await request.get(
-      `${BASE}/api/music/track?id=${encodeURIComponent(trackA.id)}&share=${shareTokenA}`
+      `${BASE}/api/track?id=${encodeURIComponent(trackA.id)}&share=${shareTokenA}`
     );
     expect(res.status()).toBe(200);
     const data = await res.json();
@@ -231,9 +231,9 @@ test.describe('Track Share Redemption — stream + track endpoints', () => {
     }
   });
 
-  test('anonymous GET /api/music/stream?share= redirects to signed URL', async ({ request }) => {
+  test('anonymous GET /api/stream?share= redirects to signed URL', async ({ request }) => {
     const res = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${shareTokenA}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${shareTokenA}`,
       { maxRedirects: 0 }
     );
     expect(res.status()).toBe(302);
@@ -242,9 +242,9 @@ test.describe('Track Share Redemption — stream + track endpoints', () => {
     expect(loc.startsWith('https://')).toBe(true);
   });
 
-  test('anonymous GET /api/music/stream without share on restricted track returns 401 or 403', async ({ request }) => {
+  test('anonymous GET /api/stream without share on restricted track returns 401 or 403', async ({ request }) => {
     const res = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackA.id)}&format=mp3`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackA.id)}&format=mp3`,
       { maxRedirects: 0 }
     );
     expect([401, 403]).toContain(res.status());
@@ -252,7 +252,7 @@ test.describe('Track Share Redemption — stream + track endpoints', () => {
 
   test('wrong share token returns 401/403', async ({ request }) => {
     const res = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&share=totally-bogus-token`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&share=totally-bogus-token`,
       { maxRedirects: 0 }
     );
     expect([401, 403]).toContain(res.status());
@@ -260,7 +260,7 @@ test.describe('Track Share Redemption — stream + track endpoints', () => {
 
   test('track A share does NOT grant access to track B', async ({ request }) => {
     const res = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackB.id)}&format=mp3&share=${shareTokenA}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackB.id)}&format=mp3&share=${shareTokenA}`,
       { maxRedirects: 0 }
     );
     expect([401, 403]).toContain(res.status());
@@ -268,7 +268,7 @@ test.describe('Track Share Redemption — stream + track endpoints', () => {
 
   test('after admin DELETE, redemption fails', async ({ request }) => {
     // Make a dedicated share token so we can delete it without affecting others
-    const create = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const create = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: trackA.id, label: `delete-then-redeem-${Date.now()}` },
     });
@@ -277,20 +277,20 @@ test.describe('Track Share Redemption — stream + track endpoints', () => {
     // Works before delete — use download=1 so we always hit the redirect branch
     // regardless of whether MUSIC_CDN_DOMAIN is set or the server is proxying.
     const before = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
       { maxRedirects: 0 }
     );
     expect(before.status()).toBe(302);
 
     // Delete it
     await request.delete(
-      `${BASE}/api/music/admin/track-share-links?token=${link.token}`,
+      `${BASE}/api/admin/track-share-links?token=${link.token}`,
       { headers: authHeaders(adminToken) }
     );
 
     // Now fails
     const after = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
       { maxRedirects: 0 }
     );
     expect([401, 403]).toContain(after.status());
@@ -313,31 +313,31 @@ test.describe('Unified Share Links Admin API', () => {
     // Seed a login magic link
     const email = `unified-${Date.now()}@local.dev`;
     await signUp(request, email, 'testpass1');
-    await request.post(`${BASE}/api/music/admin/magic-links`, {
+    await request.post(`${BASE}/api/admin/magic-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { email, label: `login-seed-${Date.now()}` },
     });
 
     // Seed a dump share link
-    const dumpRes = await request.post(`${BASE}/api/music/admin/dumps`, {
+    const dumpRes = await request.post(`${BASE}/api/admin/dumps`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { name: `Unified Dump ${Date.now()}`, published: true, visibility: 'public' },
     });
     const dumpId = (await dumpRes.json()).dump.id;
-    await request.post(`${BASE}/api/music/admin/dump-share-links`, {
+    await request.post(`${BASE}/api/admin/dump-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { dumpId, label: `dump-seed-${Date.now()}` },
     });
 
     // Seed a track share link
-    await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: trackA.id, label: `track-seed-${Date.now()}` },
     });
   });
 
   test('GET returns all three kinds with expected fields', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/music/admin/share-links`, {
+    const res = await request.get(`${BASE}/api/admin/share-links`, {
       headers: authHeaders(adminToken),
     });
     expect(res.status()).toBe(200);
@@ -365,20 +365,20 @@ test.describe('Unified Share Links Admin API', () => {
   });
 
   test('GET without admin auth returns 401', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/music/admin/share-links`);
+    const res = await request.get(`${BASE}/api/admin/share-links`);
     expect(res.status()).toBe(401);
   });
 
   test('PATCH label updates the label', async ({ request }) => {
     // Create a fresh track share to mutate
-    const create = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const create = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: trackA.id, label: `before-${Date.now()}` },
     });
     const { link } = await create.json();
 
     const newLabel = `after-${Date.now()}`;
-    const patch = await request.patch(`${BASE}/api/music/admin/share-links`, {
+    const patch = await request.patch(`${BASE}/api/admin/share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { kind: 'track', token: link.token, label: newLabel },
     });
@@ -388,7 +388,7 @@ test.describe('Unified Share Links Admin API', () => {
     expect(pj.link.label).toBe(newLabel);
 
     // Verify via GET
-    const list = await request.get(`${BASE}/api/music/admin/share-links`, {
+    const list = await request.get(`${BASE}/api/admin/share-links`, {
       headers: authHeaders(adminToken),
     });
     const ld = await list.json();
@@ -398,7 +398,7 @@ test.describe('Unified Share Links Admin API', () => {
 
   test('PATCH active=false deactivates, share redemption fails; reactivating works', async ({ request }) => {
     // Create a fresh track share
-    const create = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const create = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: trackA.id, label: `toggle-${Date.now()}` },
     });
@@ -406,77 +406,75 @@ test.describe('Unified Share Links Admin API', () => {
 
     // Baseline: redemption works (use download=1 to force a redirect regardless of CDN config)
     const before = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
       { maxRedirects: 0 }
     );
     expect(before.status()).toBe(302);
 
     // Deactivate
-    const off = await request.patch(`${BASE}/api/music/admin/share-links`, {
+    const off = await request.patch(`${BASE}/api/admin/share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { kind: 'track', token: link.token, active: false },
     });
     expect(off.status()).toBe(200);
 
     const after = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
       { maxRedirects: 0 }
     );
     expect([401, 403]).toContain(after.status());
 
     // Reactivate
-    const on = await request.patch(`${BASE}/api/music/admin/share-links`, {
+    const on = await request.patch(`${BASE}/api/admin/share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { kind: 'track', token: link.token, active: true },
     });
     expect(on.status()).toBe(200);
 
     const back = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
       { maxRedirects: 0 }
     );
     expect(back.status()).toBe(302);
   });
 
-  test('PATCH login kind active=false blocks magic-link redemption; reactivating works', async ({ request }) => {
+  test('PATCH login kind active=false blocks redemption; reactivating permits the one use', async ({ request }) => {
     const email = `patch-login-${Date.now()}@local.dev`;
     await signUp(request, email, 'testpass1');
-    const mk = await request.post(`${BASE}/api/music/admin/magic-links`, {
+    const mk = await request.post(`${BASE}/api/admin/magic-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { email },
     });
     const { link } = await mk.json();
 
-    // Baseline: redemption returns 200
-    const before = await request.get(`${BASE}/api/music/auth/magic?token=${link.token}`);
-    expect(before.status()).toBe(200);
-
     // Deactivate via unified PATCH
-    await request.patch(`${BASE}/api/music/admin/share-links`, {
+    await request.patch(`${BASE}/api/admin/share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { kind: 'login', token: link.token, active: false },
     });
-    const after = await request.get(`${BASE}/api/music/auth/magic?token=${link.token}`);
+    const after = await request.get(`${BASE}/api/auth/magic?token=${link.token}`);
     expect(after.status()).toBe(401);
 
     // Reactivate
-    await request.patch(`${BASE}/api/music/admin/share-links`, {
+    await request.patch(`${BASE}/api/admin/share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { kind: 'login', token: link.token, active: true },
     });
-    const back = await request.get(`${BASE}/api/music/auth/magic?token=${link.token}`);
+    const back = await request.get(`${BASE}/api/auth/magic?token=${link.token}`);
     expect(back.status()).toBe(200);
+    const spent = await request.get(`${BASE}/api/auth/magic?token=${link.token}`);
+    expect(spent.status()).toBe(401);
   });
 
   test('PATCH expiresAt to past makes redemption fail; null clears expiry', async ({ request }) => {
-    const create = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const create = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: trackA.id, label: `expiry-${Date.now()}` },
     });
     const { link } = await create.json();
 
     const past = new Date(Date.now() - 86400000).toISOString();
-    const expirePatch = await request.patch(`${BASE}/api/music/admin/share-links`, {
+    const expirePatch = await request.patch(`${BASE}/api/admin/share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { kind: 'track', token: link.token, expiresAt: past },
     });
@@ -484,13 +482,13 @@ test.describe('Unified Share Links Admin API', () => {
     expect((await expirePatch.json()).link.expiresAt).toBe(past);
 
     const expired = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
       { maxRedirects: 0 }
     );
     expect([401, 403]).toContain(expired.status());
 
     // Clear expiry via null
-    const clear = await request.patch(`${BASE}/api/music/admin/share-links`, {
+    const clear = await request.patch(`${BASE}/api/admin/share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { kind: 'track', token: link.token, expiresAt: null },
     });
@@ -498,14 +496,14 @@ test.describe('Unified Share Links Admin API', () => {
     expect((await clear.json()).link.expiresAt).toBeNull();
 
     const live = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackA.id)}&format=mp3&download=1&share=${link.token}`,
       { maxRedirects: 0 }
     );
     expect(live.status()).toBe(302);
   });
 
   test('PATCH nonexistent (kind, token) returns 404', async ({ request }) => {
-    const res = await request.patch(`${BASE}/api/music/admin/share-links`, {
+    const res = await request.patch(`${BASE}/api/admin/share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { kind: 'track', token: `ghost-${Date.now()}`, label: 'x' },
     });
@@ -513,26 +511,26 @@ test.describe('Unified Share Links Admin API', () => {
   });
 
   test('PATCH without admin auth returns 401', async ({ request }) => {
-    const res = await request.patch(`${BASE}/api/music/admin/share-links`, {
+    const res = await request.patch(`${BASE}/api/admin/share-links`, {
       data: { kind: 'track', token: 'any', label: 'x' },
     });
     expect(res.status()).toBe(401);
   });
 
   test('DELETE ?kind=track deletes a track share', async ({ request }) => {
-    const create = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const create = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: trackA.id, label: `unified-del-track-${Date.now()}` },
     });
     const { link } = await create.json();
 
     const del = await request.delete(
-      `${BASE}/api/music/admin/share-links?kind=track&token=${link.token}`,
+      `${BASE}/api/admin/share-links?kind=track&token=${link.token}`,
       { headers: authHeaders(adminToken) }
     );
     expect(del.status()).toBe(200);
 
-    const list = await request.get(`${BASE}/api/music/admin/share-links`, {
+    const list = await request.get(`${BASE}/api/admin/share-links`, {
       headers: authHeaders(adminToken),
     });
     const ld = await list.json();
@@ -540,24 +538,24 @@ test.describe('Unified Share Links Admin API', () => {
   });
 
   test('DELETE ?kind=dump deletes a dump share', async ({ request }) => {
-    const dumpRes = await request.post(`${BASE}/api/music/admin/dumps`, {
+    const dumpRes = await request.post(`${BASE}/api/admin/dumps`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { name: `Unified Del Dump ${Date.now()}`, published: true, visibility: 'public' },
     });
     const dumpId = (await dumpRes.json()).dump.id;
-    const create = await request.post(`${BASE}/api/music/admin/dump-share-links`, {
+    const create = await request.post(`${BASE}/api/admin/dump-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { dumpId, label: `unified-del-dump-${Date.now()}` },
     });
     const { link } = await create.json();
 
     const del = await request.delete(
-      `${BASE}/api/music/admin/share-links?kind=dump&token=${link.token}`,
+      `${BASE}/api/admin/share-links?kind=dump&token=${link.token}`,
       { headers: authHeaders(adminToken) }
     );
     expect(del.status()).toBe(200);
 
-    const list = await request.get(`${BASE}/api/music/admin/share-links`, {
+    const list = await request.get(`${BASE}/api/admin/share-links`, {
       headers: authHeaders(adminToken),
     });
     const ld = await list.json();
@@ -567,26 +565,26 @@ test.describe('Unified Share Links Admin API', () => {
   test('DELETE ?kind=login deletes a login magic link', async ({ request }) => {
     const email = `unified-del-login-${Date.now()}@local.dev`;
     await signUp(request, email, 'testpass1');
-    const create = await request.post(`${BASE}/api/music/admin/magic-links`, {
+    const create = await request.post(`${BASE}/api/admin/magic-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { email },
     });
     const { link } = await create.json();
 
     const del = await request.delete(
-      `${BASE}/api/music/admin/share-links?kind=login&token=${link.token}`,
+      `${BASE}/api/admin/share-links?kind=login&token=${link.token}`,
       { headers: authHeaders(adminToken) }
     );
     expect(del.status()).toBe(200);
 
     // Confirm gone: magic redemption now fails
-    const redeem = await request.get(`${BASE}/api/music/auth/magic?token=${link.token}`);
+    const redeem = await request.get(`${BASE}/api/auth/magic?token=${link.token}`);
     expect(redeem.status()).toBe(401);
   });
 
   test('DELETE without kind returns 400', async ({ request }) => {
     const res = await request.delete(
-      `${BASE}/api/music/admin/share-links?token=abc`,
+      `${BASE}/api/admin/share-links?token=abc`,
       { headers: authHeaders(adminToken) }
     );
     expect(res.status()).toBe(400);
@@ -594,7 +592,7 @@ test.describe('Unified Share Links Admin API', () => {
 
   test('DELETE with invalid kind returns 400', async ({ request }) => {
     const res = await request.delete(
-      `${BASE}/api/music/admin/share-links?kind=nonsense&token=abc`,
+      `${BASE}/api/admin/share-links?kind=nonsense&token=abc`,
       { headers: authHeaders(adminToken) }
     );
     expect(res.status()).toBe(400);
@@ -602,7 +600,7 @@ test.describe('Unified Share Links Admin API', () => {
 
   test('DELETE without admin auth returns 401', async ({ request }) => {
     const res = await request.delete(
-      `${BASE}/api/music/admin/share-links?kind=track&token=abc`
+      `${BASE}/api/admin/share-links?kind=track&token=abc`
     );
     expect(res.status()).toBe(401);
   });
@@ -619,7 +617,7 @@ test.describe('Public /music/track/[id] page', () => {
     adminToken = await signIn(request);
     const { trackA: a } = await publishTwoRestrictedTracks(request, adminToken);
     trackA = a;
-    const res = await request.post(`${BASE}/api/music/admin/track-share-links`, {
+    const res = await request.post(`${BASE}/api/admin/track-share-links`, {
       headers: { ...authHeaders(adminToken), 'Content-Type': 'application/json' },
       data: { trackId: trackA.id, label: `page-${Date.now()}` },
     });
@@ -629,7 +627,7 @@ test.describe('Public /music/track/[id] page', () => {
 
   test('anon GET with valid share renders track + Play button + share-tagged downloads', async ({ page }) => {
     await page.goto(
-      `/music/track/${encodeURIComponent(trackA.id)}?share=${shareTokenA}`
+      `http://music.localhost:3000/track/${encodeURIComponent(trackA.id)}?share=${shareTokenA}`
     );
 
     // Track name heading
@@ -643,19 +641,19 @@ test.describe('Public /music/track/[id] page', () => {
     // Download link(s) carry the share token. The page.jsx uses Style.downloadBtn
     // which isn't a defined class in the SCSS module, so we match by href instead
     // of class to stay robust against styling changes.
-    const downloadLinks = page.locator('a[href*="/api/music/stream"][href*="download=1"]');
+    const downloadLinks = page.locator('a[href*="/api/stream"][href*="download=1"]');
     await expect(downloadLinks.first()).toBeVisible();
     const hrefs = await downloadLinks.evaluateAll((els) => els.map((e) => e.getAttribute('href')));
     expect(hrefs.length).toBeGreaterThan(0);
     for (const h of hrefs) {
-      expect(h).toContain('/api/music/stream');
+      expect(h).toContain('/api/stream');
       expect(h).toContain(`share=${shareTokenA}`);
       expect(h).toContain('download=1');
     }
   });
 
   test('anon GET without share on restricted track shows access-denied / sign-in UI', async ({ page }) => {
-    await page.goto(`/music/track/${encodeURIComponent(trackA.id)}`);
+    await page.goto(`http://music.localhost:3000/track/${encodeURIComponent(trackA.id)}`);
     // Restricted + no share + no auth → /api/music/track returns 404 or 401
     // The page renders either the "sign-in" error (401), the "denied" error (403),
     // or the generic "Could not find this track" (404). All are valid rejection states.

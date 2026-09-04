@@ -1,20 +1,28 @@
 import Requirements from '@/components/portaputer/sections/Requirements';
 import Style from '@/components/portaputer/PortaputerPage.module.scss';
+import { absoluteSeoTitle, seoPageTitle, SEO_SITES } from '@/lib/seoTitles';
+
+const PAGE_TITLE = seoPageTitle('System Requirements', SEO_SITES.portaputer);
 
 export const dynamic = 'force-static';
 
 export const metadata = {
-  title: 'System Requirements',
+  title: absoluteSeoTitle(PAGE_TITLE),
   description:
     'What PortaPuter needs on the PC you\'re capturing and the PC you\'ll run the VM on.',
   alternates: {
     canonical: 'https://portaputer.aaronrohrbacher.com/requirements',
   },
   openGraph: {
-    title: 'System Requirements | PortaPuter',
+    title: PAGE_TITLE,
     description:
       'What PortaPuter needs on the source and target PCs.',
     url: 'https://portaputer.aaronrohrbacher.com/requirements',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: PAGE_TITLE,
+    description: 'What PortaPuter needs on the source and target PCs.',
   },
 };
 

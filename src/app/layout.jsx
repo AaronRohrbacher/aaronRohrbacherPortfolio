@@ -4,6 +4,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import Script from 'next/script';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import ChatAgentLoader from '@/components/ChatAgentLoader';
+import { SEO_HOME_TITLES, SEO_SITES } from '@/lib/seoTitles';
 
 // metadataBase lets every page in the site emit absolute URLs from relative
 // strings (canonicals, og.url, twitter images). Without it, relative URLs
@@ -17,11 +18,11 @@ import ChatAgentLoader from '@/components/ChatAgentLoader';
 export const metadata = {
   metadataBase: new URL('https://aaronrohrbacher.com'),
   title: {
-    default: 'Aaron Rohrbacher | Lead Cross-Platform Software and DevOps Engineer',
-    template: '%s | Aaron Rohrbacher',
+    default: SEO_HOME_TITLES.main,
+    template: `%s | ${SEO_SITES.main}`,
   },
   description: 'Portfolio of Aaron Rohrbacher — lead cross-platform software and DevOps engineer specializing in AI/ML, full-stack development, and cloud architecture. Based in Portland, Oregon.',
-  applicationName: 'Aaron Rohrbacher',
+  applicationName: SEO_SITES.main,
   keywords: ['software engineer', 'cross-platform', 'DevOps', 'AI engineer', 'machine learning', 'AWS', 'full stack', 'Portland'],
   authors: [{ name: 'Aaron Rohrbacher', url: 'https://aaronrohrbacher.com' }],
   creator: 'Aaron Rohrbacher',

@@ -4,7 +4,7 @@ import { authenticateRequest } from '@/lib/verifyToken';
 import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
 
 /**
- * GET /api/music/dump?id=xxx[&share=<token>]
+ * GET /api/dump?id=xxx[&share=<token>]
  * Public endpoint for viewing a single dump + its tracks (with permission checks).
  * A valid `share` token bound to this dump bypasses visibility checks.
  *
@@ -92,7 +92,7 @@ export async function GET(request) {
       streamUrls: Object.fromEntries(
         Object.keys(track.formats).map((f) => [
           f,
-          `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${f}${shareQs}`,
+          `/api/stream?id=${encodeURIComponent(track.id)}&format=${f}${shareQs}`,
         ])
       ),
     }));

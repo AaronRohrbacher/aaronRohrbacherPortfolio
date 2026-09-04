@@ -64,7 +64,7 @@ export async function POST(req) {
       model: openai('gpt-4o-mini'),
       system: SYSTEM_PROMPT,
       messages,
-      maxTokens: 400,
+      maxOutputTokens: 400,
     });
     return result.toTextStreamResponse();
   } catch (err) {

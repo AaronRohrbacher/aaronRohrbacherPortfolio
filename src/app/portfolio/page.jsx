@@ -1,21 +1,24 @@
 import { info } from '@/info/Info';
+import { SEO_SITES, seoPageTitle } from '@/lib/seoTitles';
+
+const PAGE_TITLE = seoPageTitle('Software Projects', SEO_SITES.main);
 
 export const metadata = {
-  title: 'Portfolio — Software Projects by Aaron Rohrbacher',
+  title: { absolute: PAGE_TITLE },
   description:
     'Selected software projects by Aaron Rohrbacher: Session (a Rust digital audio workstation), Heard (an AI mastering plugin), Fanboy (a saxophone-tone DAW plugin), AppNow (LLM-powered CRUD app generator), MOVE (open-source macOS window tiler), Klear (KWin transparency script), and more — closed-source and open-source work spanning AI/ML, cross-platform apps, and developer tools.',
   alternates: {
     canonical: '/portfolio',
   },
   openGraph: {
-    title: 'Portfolio — Software Projects by Aaron Rohrbacher',
+    title: PAGE_TITLE,
     description:
       'Selected software projects: AI/ML plugins, a Rust DAW, LLM-powered tools, a macOS window tiler, and open-source utilities.',
     url: 'https://aaronrohrbacher.com/portfolio',
     type: 'website',
   },
   twitter: {
-    title: 'Portfolio — Software Projects by Aaron Rohrbacher',
+    title: PAGE_TITLE,
     description:
       'Selected software projects: AI/ML plugins, a Rust DAW, LLM tools, a macOS tiler, and OSS utilities.',
   },
@@ -34,7 +37,7 @@ const portfolioJsonLd = {
   '@type': 'CollectionPage',
   '@id': 'https://aaronrohrbacher.com/portfolio#collectionpage',
   url: 'https://aaronrohrbacher.com/portfolio',
-  name: 'Portfolio — Software Projects by Aaron Rohrbacher',
+  name: PAGE_TITLE,
   isPartOf: { '@id': 'https://aaronrohrbacher.com/#website' },
   about: { '@id': 'https://aaronrohrbacher.com/#person' },
   breadcrumb: {

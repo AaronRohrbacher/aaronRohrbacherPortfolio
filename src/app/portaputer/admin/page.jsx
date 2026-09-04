@@ -1,5 +1,7 @@
+import { absoluteSeoTitle, seoPageTitle, SEO_SITES } from '@/lib/seoTitles';
+
 export const metadata = {
-  title: 'PortaPuter Admin',
+  title: absoluteSeoTitle(seoPageTitle('Admin', SEO_SITES.portaputer)),
   robots: { index: false, follow: false },
 };
 

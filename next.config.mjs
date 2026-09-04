@@ -4,6 +4,11 @@
 const BUILD_TIME = new Date().toISOString();
 
 const nextConfig = {
+  // Pin both file tracing and Turbopack to this project. Without this Next 16
+  // can infer a parent workspace from an unrelated lockfile and browser tests
+  // then resolve assets from the wrong root.
+  outputFileTracingRoot: import.meta.dirname,
+  turbopack: { root: import.meta.dirname },
   env: {
     BUILD_TIME,
   },
@@ -16,7 +21,10 @@ const nextConfig = {
   // which breaks client hydration (PageTransition stays at opacity:0).
   // Note: Next.js allowedDevOrigins takes glob patterns, NOT CIDR — `10.1.1.0/24`
   // is interpreted as a literal string and never matches.
-  allowedDevOrigins: ['10.1.1.*', '10.1.*.*', '192.168.*.*', '*.local'],
+  allowedDevOrigins: [
+    'localhost', '*.localhost',
+    '10.1.1.*', '10.1.*.*', '192.168.*.*', '*.local',
+  ],
 
 
 

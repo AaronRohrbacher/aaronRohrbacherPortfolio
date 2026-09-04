@@ -61,6 +61,13 @@ export async function resetMusicDb() {
     await doc.send(new DeleteCommand({ TableName: TABLE, Key: { PK: r.PK, SK: r.SK } }));
   }
 
+  const eventRows = all.filter((r) =>
+    r.PK === 'EVENT' || r.PK === 'EVENT#music' || r.PK === 'EVENT#portaputer'
+  );
+  for (const event of eventRows) {
+    await doc.send(new DeleteCommand({ TableName: TABLE, Key: { PK: event.PK, SK: event.SK } }));
+  }
+
   const dumpMain = all.filter((r) => r.PK?.startsWith('DUMP#') && r.SK === r.PK);
   for (const d of dumpMain) {
     const id = d.PK.replace(/^DUMP#/, '');

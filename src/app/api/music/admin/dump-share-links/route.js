@@ -15,7 +15,7 @@ async function requireAdmin(request) {
 }
 
 /**
- * POST /api/music/admin/dump-share-links
+ * POST /api/admin/dump-share-links
  * Create a direct-access share link for a single dump (no account needed).
  * Body: { dumpId, expiresInDays? }
  */
@@ -29,7 +29,7 @@ export async function POST(request) {
   const dump = await getDump(dumpId);
   if (!dump) return NextResponse.json({ error: 'Dump not found' }, { status: 404 });
 
-  const link = await createDumpShareLink(dumpId, admin.email, expiresInDays || null, label || null);
+  const link = await createDumpShareLink(dumpId, admin.email, expiresInDays || null, label?.trim() || dump.name);
   await logEvent({
     type: EVENT_TYPES.SHARE_CREATE,
     actor: admin.email,
@@ -42,7 +42,7 @@ export async function POST(request) {
 }
 
 /**
- * GET /api/music/admin/dump-share-links?dumpId=xxx
+ * GET /api/admin/dump-share-links?dumpId=xxx
  * List active share links for a dump.
  */
 export async function GET(request) {
@@ -58,7 +58,7 @@ export async function GET(request) {
 }
 
 /**
- * DELETE /api/music/admin/dump-share-links?token=xxx
+ * DELETE /api/admin/dump-share-links?token=xxx
  * Revoke a dump share link.
  */
 export async function DELETE(request) {

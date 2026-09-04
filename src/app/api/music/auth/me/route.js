@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { verifyLocalToken } from '@/lib/localAuth';
+import { verifyToken } from '@/lib/verifyToken';
 
 export async function GET(request) {
   const auth = request.headers.get('authorization') || '';
@@ -7,6 +7,8 @@ export async function GET(request) {
   if (!token) {
     return NextResponse.json({ user: null });
   }
-  const user = await verifyLocalToken(token);
+  // Accept local-development JWTs, Cognito JWTs, and the short-lived
+  // application sessions issued when a user redeems a magic login link.
+  const user = await verifyToken(token);
   return NextResponse.json({ user });
 }

@@ -1,6 +1,11 @@
 import PortaputerPage from '@/components/portaputer/PortaputerPage';
+import { absoluteSeoTitle, SEO_HOME_TITLES } from '@/lib/seoTitles';
 
 export const dynamic = 'force-static';
+
+export const metadata = {
+  title: absoluteSeoTitle(SEO_HOME_TITLES.portaputer),
+};
 
 const jsonLd = {
   '@context': 'https://schema.org',

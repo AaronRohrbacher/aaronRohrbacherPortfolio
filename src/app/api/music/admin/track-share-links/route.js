@@ -15,7 +15,7 @@ async function requireAdmin(request) {
 }
 
 /**
- * POST /api/music/admin/track-share-links
+ * POST /api/admin/track-share-links
  * Create a direct-access share link for a single track (no account needed).
  * Body: { trackId, expiresInDays?, label? }
  */
@@ -29,7 +29,7 @@ export async function POST(request) {
   const track = await getTrack(trackId);
   if (!track) return NextResponse.json({ error: 'Track not found' }, { status: 404 });
 
-  const link = await createTrackShareLink(trackId, admin.email, expiresInDays || null, label || null);
+  const link = await createTrackShareLink(trackId, admin.email, expiresInDays || null, label?.trim() || track.name);
   await logEvent({
     type: EVENT_TYPES.SHARE_CREATE,
     actor: admin.email,
@@ -42,7 +42,7 @@ export async function POST(request) {
 }
 
 /**
- * GET /api/music/admin/track-share-links?trackId=xxx
+ * GET /api/admin/track-share-links?trackId=xxx
  * List active share links for a track.
  */
 export async function GET(request) {
@@ -58,7 +58,7 @@ export async function GET(request) {
 }
 
 /**
- * DELETE /api/music/admin/track-share-links?token=xxx
+ * DELETE /api/admin/track-share-links?token=xxx
  * Revoke a track share link.
  */
 export async function DELETE(request) {

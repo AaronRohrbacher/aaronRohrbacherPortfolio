@@ -30,14 +30,14 @@ function MagicLoginInner() {
       return;
     }
 
-    fetch(`/api/music/auth/magic?token=${encodeURIComponent(token)}`)
+    fetch(`/api/auth/magic?token=${encodeURIComponent(token)}`)
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Login failed');
         // Store token same way as normal sign-in
         localStorage.setItem('music_auth_token', data.idToken);
         setStatus('Success! Redirecting...');
-        router.push(musicHref('/'));
+        router.replace(data.destination || musicHref('/'));
       })
       .catch((err) => {
         setError(err.message);

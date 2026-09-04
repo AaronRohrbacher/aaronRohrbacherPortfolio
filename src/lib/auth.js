@@ -17,7 +17,7 @@ function setStoredToken(token) {
 }
 
 async function localSignIn(email, password) {
-  const res = await fetch('/api/music/auth/signin', {
+  const res = await fetch('/api/auth/signin', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -37,7 +37,7 @@ async function localSignIn(email, password) {
 }
 
 async function localSignUp(email, password) {
-  const res = await fetch('/api/music/auth/signup', {
+  const res = await fetch('/api/auth/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -51,7 +51,7 @@ async function localSignUp(email, password) {
 async function localGetCurrentUser() {
   const token = getStoredToken();
   if (!token) return null;
-  const res = await fetch('/api/music/auth/me', {
+  const res = await fetch('/api/auth/me', {
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await res.json();
@@ -154,6 +154,7 @@ async function cognitoCompleteNewPassword(cognitoUser, newPassword) {
 }
 
 async function cognitoSignOut() {
+  setStoredToken(null);
   const { CognitoUserPool } = await getCognito();
   const pool = new CognitoUserPool(getPoolData());
   const user = pool.getCurrentUser();
@@ -174,11 +175,25 @@ async function cognitoGetCurrentSession() {
 }
 
 async function cognitoGetIdToken() {
+  const appToken = getStoredToken();
+  if (appToken) return appToken;
   const session = await cognitoGetCurrentSession();
   return session?.getIdToken()?.getJwtToken() || null;
 }
 
 async function cognitoGetCurrentUser() {
+  const appToken = getStoredToken();
+  if (appToken) {
+    const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${appToken}` } });
+    const data = await res.json().catch(() => ({}));
+    if (data.user) return {
+      sub: data.user.sub,
+      email: data.user.email,
+      groups: data.user.groups || [],
+      isAdmin: (data.user.groups || []).includes('admin'),
+    };
+    setStoredToken(null);
+  }
   const session = await cognitoGetCurrentSession();
   if (!session) return null;
   const idToken = session.getIdToken();

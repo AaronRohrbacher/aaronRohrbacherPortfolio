@@ -1,5 +1,7 @@
+import { absoluteSeoTitle, seoPageTitle, SEO_SITES } from '@/lib/seoTitles';
+
 export const metadata = {
-  title: 'Music Admin',
+  title: absoluteSeoTitle(seoPageTitle('Admin', SEO_SITES.music)),
   robots: { index: false, follow: false },
 };
 

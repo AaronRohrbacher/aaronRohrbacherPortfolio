@@ -98,4 +98,4 @@ await client.send(
 );
 console.log('  Added to admin group.');
 
-console.log('\nDone! Sign in at /music/login with these credentials.');
+console.log('\nDone! Sign in at https://music.aaronrohrbacher.com/login with these credentials.');

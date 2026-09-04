@@ -20,7 +20,7 @@ function trackGradient(name) {
 }
 
 export default function MusicPlaylist({ initialTracks = [], initialDumps = [] }) {
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, authVersion } = useAuth();
   const { currentTrack, isPlaying, pending, playTrack, setQueue: setPlayerQueue } = useMusicPlayer();
   const musicHref = useMusicHref();
 
@@ -44,11 +44,11 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
   useEffect(() => {
     fetchTracks();
     fetchSettings();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [authVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function fetchSettings() {
     try {
-      const res = await fetch('/api/music/admin/settings');
+      const res = await fetch('/api/admin/settings');
       const data = await res.json();
       if (data.tracksPerPage) setPerPage(data.tracksPerPage);
     } catch {}
@@ -57,7 +57,7 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
   async function fetchTracks() {
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/tracks', { headers });
+      const res = await fetch('/api/tracks', { headers });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       const looseTracks = data.tracks || [];
@@ -80,7 +80,7 @@ export default function MusicPlaylist({ initialTracks = [], initialDumps = [] })
   }
 
   function getDownloadUrl(track, format) {
-    return `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${format}&download=1`;
+    return `/api/stream?id=${encodeURIComponent(track.id)}&format=${format}&download=1`;
   }
 
   // Render the hero (h1 + bio) ALWAYS, even while loading or on error,

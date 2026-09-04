@@ -1,5 +1,7 @@
+import { absoluteSeoTitle, seoPageTitle, SEO_SITES } from '@/lib/seoTitles';
+
 export const metadata = {
-  title: 'Sign Up',
+  title: absoluteSeoTitle(seoPageTitle('Sign Up', SEO_SITES.music)),
   robots: { index: false, follow: false },
 };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   signIn as cognitoSignIn,
   signUp as cognitoSignUp,
@@ -16,9 +17,21 @@ import {
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [idToken, setIdToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authVersion, setAuthVersion] = useState(0);
+
+  const notifySignup = useCallback(async (stage, email) => {
+    try {
+      await fetch('/api/auth/signup-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage, email }),
+      });
+    } catch {}
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -45,16 +58,21 @@ export function AuthProvider({ children }) {
     }
     setUser(result.user);
     setIdToken(result.idToken);
+    setAuthVersion((version) => version + 1);
     return result.user;
   }, []);
 
   const signUp = useCallback(async (email, password) => {
-    return cognitoSignUp(email, password);
-  }, []);
+    const result = await cognitoSignUp(email, password);
+    await notifySignup('submitted', email);
+    return result;
+  }, [notifySignup]);
 
   const confirmSignUp = useCallback(async (email, code) => {
-    return cognitoConfirmSignUp(email, code);
-  }, []);
+    const result = await cognitoConfirmSignUp(email, code);
+    await notifySignup('confirmed', email);
+    return result;
+  }, [notifySignup]);
 
   const completeNewPassword = useCallback(async (cognitoUser, newPassword) => {
     await cognitoCompleteNewPassword(cognitoUser, newPassword);
@@ -62,6 +80,7 @@ export function AuthProvider({ children }) {
     const t = await getIdToken();
     setUser(u);
     setIdToken(t);
+    setAuthVersion((version) => version + 1);
     return u;
   }, []);
 
@@ -69,7 +88,9 @@ export function AuthProvider({ children }) {
     cognitoSignOut();
     setUser(null);
     setIdToken(null);
-  }, []);
+    setAuthVersion((version) => version + 1);
+    router.refresh();
+  }, [router]);
 
   const forgotPassword = useCallback(async (email) => {
     return cognitoForgotPassword(email);
@@ -99,6 +120,7 @@ export function AuthProvider({ children }) {
         forgotPassword,
         confirmPassword,
         getAuthHeaders,
+        authVersion,
       }}
     >
       {children}

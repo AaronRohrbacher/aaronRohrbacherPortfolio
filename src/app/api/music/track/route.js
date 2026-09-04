@@ -12,7 +12,7 @@ import { authenticateRequest } from '@/lib/verifyToken';
 import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
 
 /**
- * GET /api/music/track?id=xxx[&share=<token>]
+ * GET /api/track?id=xxx[&share=<token>]
  * Public endpoint for viewing a single track + its stream URLs
  * (with permission checks).
  *
@@ -101,7 +101,7 @@ export async function GET(request) {
     const streamUrls = Object.fromEntries(
       Object.keys(track.formats || {}).map((f) => [
         f,
-        `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${f}${shareQs}`,
+        `/api/stream?id=${encodeURIComponent(track.id)}&format=${f}${shareQs}`,
       ])
     );
 

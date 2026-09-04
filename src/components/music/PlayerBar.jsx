@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Style from './PlayerBar.module.scss';
 import WaveformPlayer from './WaveformPlayer';
 import { useMusicPlayer } from './MusicPlayerContext';
-import { useAuth } from './AuthContext';
 import { renderRichText } from '@/lib/richText';
 
 export default function PlayerBar() {
-  const { getAuthHeaders } = useAuth();
+  const barRef = useRef(null);
   const {
     currentTrack,
     isPlaying,
@@ -18,27 +17,44 @@ export default function PlayerBar() {
     setMinimized,
     pending,
     togglePlayPause,
-    handleTrackEnd,
     handlePrev,
     handleNext,
     closePlayer,
+    mediaRef,
+    isVideo,
   } = useMusicPlayer();
 
-  const [authHeaders, setAuthHeaders] = useState(null);
-
   useEffect(() => {
-    let cancelled = false;
-    // Reset to null when track changes so we don't reuse stale headers
-    // and don't start streaming with missing auth.
-    setAuthHeaders(null);
-    getAuthHeaders().then((h) => { if (!cancelled) setAuthHeaders(h || {}); });
-    return () => { cancelled = true; };
-  }, [currentTrack, getAuthHeaders]);
+    if (currentTrack) {
+      document.documentElement.dataset.musicPlayer = minimized ? 'minimized' : 'expanded';
+      const bar = barRef.current;
+      const publishHeight = () => {
+        if (bar) {
+          document.documentElement.style.setProperty('--music-player-height', `${Math.ceil(bar.getBoundingClientRect().height)}px`);
+        }
+      };
+      publishHeight();
+      const observer = bar && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(publishHeight) : null;
+      if (bar && observer) observer.observe(bar);
+      return () => {
+        observer?.disconnect();
+        delete document.documentElement.dataset.musicPlayer;
+        document.documentElement.style.removeProperty('--music-player-height');
+      };
+    } else {
+      delete document.documentElement.dataset.musicPlayer;
+      document.documentElement.style.removeProperty('--music-player-height');
+    }
+    return undefined;
+  }, [currentTrack, minimized]);
 
   if (!currentTrack) return null;
 
   return (
-    <div className={[Style.bar, minimized ? Style.minimized : Style.expanded].join(' ')}>
+    <div ref={barRef} className={[Style.bar, minimized ? Style.minimized : Style.expanded].join(' ')}>
+      {/* The sole media element stays mounted for the entire playback
+          session. Native playback is not routed through WebAudio, so mobile
+          browsers can continue while the page is backgrounded or locked. */}
       {/* Minimized view */}
       {minimized && (
         <div className={Style.miniBar}>
@@ -90,18 +106,23 @@ export default function PlayerBar() {
             </button>
           </div>
         </div>
-        {authHeaders !== null && (
-          <WaveformPlayer
-            key={currentTrack.id}
-            streamUrls={currentTrack.streamUrls}
-            isPlaying={isPlaying}
-            onPlayPause={togglePlayPause}
-            onEnd={handleTrackEnd}
-            onPrev={queueIndex > 0 ? handlePrev : null}
-            onNext={queueIndex < queue.length - 1 ? handleNext : null}
-            fetchHeaders={authHeaders}
-          />
-        )}
+          <div className={[Style.playbackStage, isVideo ? Style.videoStage : ''].join(' ')}>
+            <video
+              ref={mediaRef}
+              className={[Style.persistentMedia, isVideo ? Style.videoVisible : ''].join(' ')}
+              playsInline
+              preload="metadata"
+            />
+            <div className={Style.waveformColumn}>
+              <WaveformPlayer
+                streamUrls={currentTrack.streamUrls}
+                isPlaying={isPlaying}
+                onPlayPause={togglePlayPause}
+                onPrev={queueIndex > 0 ? handlePrev : null}
+                onNext={queueIndex < queue.length - 1 ? handleNext : null}
+              />
+            </div>
+          </div>
       </div>
     </div>
   );

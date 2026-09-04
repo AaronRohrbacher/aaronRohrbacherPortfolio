@@ -14,7 +14,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const limit = Math.min(Number(searchParams.get('limit')) || 500, 2000);
 
-  const events = await listEvents({ type: EVENT_TYPES.PORTAPUTER_DOWNLOAD, limit });
+  const events = await listEvents({ type: EVENT_TYPES.PORTAPUTER_DOWNLOAD, limit, site: 'portaputer' });
 
   // Derive a few summary stats so the admin UI can render counts without
   // re-grouping in the browser.

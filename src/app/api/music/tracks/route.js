@@ -7,13 +7,15 @@ import {
   loadAllTracks,
   loadDumps,
   getDumpTracks,
+  getDumpsContainingTrack,
   canViewTrackDirect,
   getPermittedTrackIds,
 } from '@/lib/trackStore';
 import { authenticateRequest } from '@/lib/verifyToken';
+import { invalidatePublicMusic } from '@/lib/musicCache';
 
 /**
- * GET /api/music/tracks
+ * GET /api/tracks
  * Anonymous: public published tracks
  * Authenticated: public + authenticated + restricted (if permitted)
  * Admin (?raw=1): everything including unpublished, no URLs
@@ -72,7 +74,7 @@ export async function GET(request) {
     const project = (track) => {
       const streamUrls = {};
       for (const format of Object.keys(track.formats)) {
-        streamUrls[format] = `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${format}`;
+        streamUrls[format] = `/api/stream?id=${encodeURIComponent(track.id)}&format=${format}`;
       }
       return {
         id: track.id,
@@ -149,7 +151,7 @@ export async function GET(request) {
 }
 
 /**
- * PUT /api/music/tracks
+ * PUT /api/tracks
  * Admin only: update track metadata
  */
 export async function PUT(request) {
@@ -163,7 +165,13 @@ export async function PUT(request) {
 
     // Single track update
     if (body.track) {
+      const before = await getDumpsContainingTrack(body.track.id);
       await saveTrack(body.track);
+      const after = await getDumpsContainingTrack(body.track.id);
+      invalidatePublicMusic({
+        trackId: body.track.id,
+        dumpHandles: [...before, ...after].flatMap((dump) => [dump.id, dump.slug]),
+      });
       return NextResponse.json({ ok: true });
     }
 
@@ -171,7 +179,19 @@ export async function PUT(request) {
     if (!Array.isArray(body.tracks)) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
+    const beforeByTrack = new Map();
+    for (const track of body.tracks) {
+      beforeByTrack.set(track.id, await getDumpsContainingTrack(track.id));
+    }
     await saveTracks(body.tracks);
+    for (const track of body.tracks) {
+      const after = await getDumpsContainingTrack(track.id);
+      invalidatePublicMusic({
+        trackId: track.id,
+        dumpHandles: [...(beforeByTrack.get(track.id) || []), ...after]
+          .flatMap((dump) => [dump.id, dump.slug]),
+      });
+    }
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('Error saving tracks:', err);

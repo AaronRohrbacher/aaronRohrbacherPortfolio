@@ -89,7 +89,7 @@ test.describe('A-A-Bot live + Amazon Connect integration', () => {
   test('music page still loads (no regressions)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    const res = await page.goto('/music', { waitUntil: 'domcontentloaded' });
+    const res = await page.goto('http://music.localhost:3000', { waitUntil: 'domcontentloaded' });
     expect(res.status()).toBeLessThan(400);
     // Using 'load' instead of 'networkidle' — A-A-Bot and AC keep the
     // page active long after first paint, so 'networkidle' would time out.

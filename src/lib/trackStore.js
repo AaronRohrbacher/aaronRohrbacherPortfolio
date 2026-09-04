@@ -1,7 +1,9 @@
-import { randomBytes } from 'crypto';
-import { putItem, getItem, query, deleteItem, batchWrite, scanByPkPrefixes, updateItem } from './dynamo';
+import { randomBytes, createHash } from 'crypto';
+import { putItem, getItem, query, deleteItem, batchWrite, scanByPkPrefixes, updateItem, consumeLimitedUse } from './dynamo';
 import { canViewTrackDirect, canViewTrackInDumps, visibilityAdmits } from './trackAccess';
+import { safeMagicDestination } from './magicDestination';
 export { canViewTrackDirect, canViewTrackInDumps, visibilityAdmits };
+export { safeMagicDestination } from './magicDestination';
 
 // Dump-authoritative answer to "which dumps contain this track?". Walks
 // every dump's track list via the DUMP# sibling-row index — does NOT
@@ -601,9 +603,9 @@ export async function setSetting(key, value) {
 // list/edit/delete them from one admin tab without three near-identical
 // code paths. Distinguished by `kind` and the matching ID field:
 //
-//   kind: 'login'  → email     → /music/login/magic?token=...     (passwordless login)
-//   kind: 'dump'   → dumpId    → /music/dump/<id>?share=...        (public dump share)
-//   kind: 'track'  → trackId   → /music/track/<id>?share=...       (public track share)
+//   kind: 'login'  → email     → /login/magic?token=...       (passwordless login)
+//   kind: 'dump'   → dumpId    → /dump/<id>?share=...         (public dump share)
+//   kind: 'track'  → trackId   → /track/<id>?share=...        (public track share)
 //
 // All rows have: token, kind, createdBy, createdAt, expiresAt (nullable),
 // active (default true), label (nullable). Missing `active` is treated as
@@ -630,13 +632,16 @@ function shareItemToRecord(item) {
   const { idField } = SHARE_KINDS[kind];
   return {
     kind,
-    token: item.token,
+    token: item.token || item.tokenId,
+    copyAvailable: !!item.token,
     [idField]: item[idField],
     label: item.label || null,
     active: item.active !== false,
     createdBy: item.createdBy,
     createdAt: item.createdAt,
     expiresAt: item.expiresAt || null,
+    destination: item.destination || null,
+    maxUses: item.maxUses == null ? null : Number(item.maxUses),
     useCount: Number(item.useCount) || 0,
     lastUsedAt: item.lastUsedAt || null,
     lastUsedIp: item.lastUsedIp || null,
@@ -646,29 +651,37 @@ function shareItemToRecord(item) {
 function isShareLinkLive(item) {
   if (item.active === false) return false;
   if (item.expiresAt && new Date(item.expiresAt) < new Date()) return false;
+  if (item.maxUses != null && Number(item.useCount || 0) >= Number(item.maxUses)) return false;
   return true;
 }
 
-async function createShareLink(kind, targetId, createdBy, { expiresInDays = null, label = null } = {}) {
+function tokenHash(token) {
+  return createHash('sha256').update(String(token)).digest('hex');
+}
+
+async function createShareLink(kind, targetId, createdBy, { expiresInDays = null, label = null, destination = null, maxUses = null } = {}) {
   const cfg = SHARE_KINDS[kind];
   if (!cfg) throw new Error(`Unknown share-link kind: ${kind}`);
   const token = randomBytes(32).toString('hex');
+  const storedToken = kind === 'login' ? tokenHash(token) : token;
   const expiresAt = expiresInDays
     ? new Date(Date.now() + Number(expiresInDays) * 86400000).toISOString()
     : null;
   const createdAt = new Date().toISOString();
   await putItem({
-    PK: `${cfg.prefix}#${token}`,
-    SK: `${cfg.prefix}#${token}`,
+    PK: `${cfg.prefix}#${storedToken}`,
+    SK: `${cfg.prefix}#${storedToken}`,
     GSI1PK: `${cfg.indexPrefix}#${targetId}`,
-    GSI1SK: `${cfg.prefix}#${token}`,
-    token,
+    GSI1SK: `${cfg.prefix}#${storedToken}`,
+    ...(kind === 'login' ? { tokenHash: storedToken, tokenId: token.slice(0, 12) } : { token }),
     [cfg.idField]: targetId,
     label,
     active: true,
     createdBy,
     createdAt,
     expiresAt,
+    destination,
+    maxUses,
   });
   return {
     kind,
@@ -679,14 +692,23 @@ async function createShareLink(kind, targetId, createdBy, { expiresInDays = null
     createdBy,
     createdAt,
     expiresAt,
+    destination,
+    maxUses,
   };
 }
 
 async function redeemShareLink(kind, token, meta = {}) {
   const cfg = SHARE_KINDS[kind];
   if (!cfg) return null;
-  const pk = `${cfg.prefix}#${token}`;
-  const item = await getItem(pk, pk);
+  const storedToken = kind === 'login' ? tokenHash(token) : token;
+  let pk = `${cfg.prefix}#${storedToken}`;
+  let item = await getItem(pk, pk);
+  // Legacy login links used plaintext keys. They remain redeemable until
+  // their existing expiry/active setting rejects them.
+  if (!item && kind === 'login') {
+    pk = `${cfg.prefix}#${token}`;
+    item = await getItem(pk, pk);
+  }
   if (!item) return null;
   if (!isShareLinkLive(item)) return null;
 
@@ -701,9 +723,15 @@ async function redeemShareLink(kind, token, meta = {}) {
     if (meta && typeof meta.ip === 'string' && meta.ip) {
       set.lastUsedIp = meta.ip;
     }
-    updated = (await updateItem(pk, pk, { add: { useCount: 1 }, set })) || item;
+    if (item.maxUses != null) {
+      updated = await consumeLimitedUse(pk, pk, Number(item.maxUses), set);
+      if (!updated) return null;
+    } else {
+      updated = (await updateItem(pk, pk, { add: { useCount: 1 }, set })) || item;
+    }
   } catch (err) {
     console.error('[share-link] failed to record use', err);
+    if (item.maxUses != null) return null;
   }
 
   return shareItemToRecord(updated);
@@ -722,7 +750,24 @@ async function getShareLinksForTarget(kind, targetId) {
 async function deleteShareLinkRow(kind, token) {
   const cfg = SHARE_KINDS[kind];
   if (!cfg) return;
-  await deleteItem(`${cfg.prefix}#${token}`, `${cfg.prefix}#${token}`);
+  const item = await findShareItem(kind, token);
+  if (item) await deleteItem(item.PK, item.SK);
+}
+
+async function findShareItem(kind, token) {
+  const cfg = SHARE_KINDS[kind];
+  if (!cfg) return null;
+  const candidates = kind === 'login' ? [tokenHash(token), token] : [token];
+  for (const candidate of candidates) {
+    const pk = `${cfg.prefix}#${candidate}`;
+    const item = await getItem(pk, pk);
+    if (item) return item;
+  }
+  if (kind === 'login') {
+    const items = await scanByPkPrefixes([`${cfg.prefix}#`]);
+    return items.find((item) => item.tokenId === token) || null;
+  }
+  return null;
 }
 
 /**
@@ -742,17 +787,22 @@ export async function listAllShareLinks() {
 export async function updateShareLink(kind, token, patch = {}) {
   const cfg = SHARE_KINDS[kind];
   if (!cfg) return null;
-  const item = await getItem(`${cfg.prefix}#${token}`, `${cfg.prefix}#${token}`);
+  const item = await findShareItem(kind, token);
   if (!item) return null;
 
   if (patch.label !== undefined) item.label = patch.label || null;
   if (patch.active !== undefined) item.active = !!patch.active;
   if (patch.expiresInDays !== undefined) {
-    item.expiresAt = patch.expiresInDays
-      ? new Date(Date.now() + Number(patch.expiresInDays) * 86400000).toISOString()
+    const days = kind === 'login'
+      ? Math.max(1, Math.min(Number(patch.expiresInDays) || 7, 30))
+      : Number(patch.expiresInDays);
+    item.expiresAt = days
+      ? new Date(Date.now() + days * 86400000).toISOString()
       : null;
   } else if (patch.expiresAt !== undefined) {
-    item.expiresAt = patch.expiresAt || null;
+    item.expiresAt = patch.expiresAt || (kind === 'login'
+      ? new Date(Date.now() + 7 * 86400000).toISOString()
+      : null);
   }
 
   await putItem(item);
@@ -761,17 +811,30 @@ export async function updateShareLink(kind, token, patch = {}) {
 
 // ── Login magic links ────────────────────────────────────────────────────────
 // Used by UserManager to mint a passwordless-login URL for an existing user.
-// Behavior preserved; default expiry is now null (was 30d).
+// Login links always expire and always have a bounded use count.
 
-export async function createMagicLink(email, createdBy, expiresInDays = null, label = null) {
-  const link = await createShareLink('login', email, createdBy, { expiresInDays, label });
-  return { token: link.token, email: link.email, expiresAt: link.expiresAt };
+export async function createMagicLink(email, createdBy, expiresInDays = 7, label = null, destination = '/', maxUses = 1) {
+  const boundedExpiryDays = Math.max(1, Math.min(Number(expiresInDays) || 7, 30));
+  const link = await createShareLink('login', email, createdBy, {
+    expiresInDays: boundedExpiryDays,
+    label,
+    destination: safeMagicDestination(destination),
+    maxUses: Math.max(1, Math.min(Number(maxUses) || 1, 100)),
+  });
+  return {
+    token: link.token,
+    email: link.email,
+    label: link.label,
+    expiresAt: link.expiresAt,
+    destination: link.destination,
+    maxUses: link.maxUses,
+  };
 }
 
 export async function redeemMagicLink(token, meta = {}) {
   const link = await redeemShareLink('login', token, meta);
   if (!link) return null;
-  return { email: link.email, token: link.token };
+  return { email: link.email, token: link.token, destination: safeMagicDestination(link.destination) };
 }
 
 export async function getMagicLinksForUser(email) {
@@ -782,6 +845,11 @@ export async function getMagicLinksForUser(email) {
     createdAt: l.createdAt,
     expiresAt: l.expiresAt,
     createdBy: l.createdBy,
+    label: l.label,
+    destination: l.destination,
+    maxUses: l.maxUses,
+    useCount: l.useCount,
+    copyAvailable: l.copyAvailable,
   }));
 }
 
@@ -795,7 +863,7 @@ export async function deleteMagicLink(token) {
 
 export async function createDumpShareLink(dumpId, createdBy, expiresInDays = null, label = null) {
   const link = await createShareLink('dump', dumpId, createdBy, { expiresInDays, label });
-  return { token: link.token, dumpId: link.dumpId, expiresAt: link.expiresAt };
+  return { token: link.token, dumpId: link.dumpId, label: link.label, expiresAt: link.expiresAt };
 }
 
 export async function redeemDumpShareLink(token, meta = {}) {
@@ -812,6 +880,7 @@ export async function getDumpShareLinks(dumpId) {
     createdAt: l.createdAt,
     expiresAt: l.expiresAt,
     createdBy: l.createdBy,
+    label: l.label,
   }));
 }
 
@@ -826,7 +895,7 @@ export async function deleteDumpShareLink(token) {
 
 export async function createTrackShareLink(trackId, createdBy, expiresInDays = null, label = null) {
   const link = await createShareLink('track', trackId, createdBy, { expiresInDays, label });
-  return { token: link.token, trackId: link.trackId, expiresAt: link.expiresAt };
+  return { token: link.token, trackId: link.trackId, label: link.label, expiresAt: link.expiresAt };
 }
 
 export async function redeemTrackShareLink(token, meta = {}) {
@@ -843,6 +912,7 @@ export async function getTrackShareLinks(trackId) {
     createdAt: l.createdAt,
     expiresAt: l.expiresAt,
     createdBy: l.createdBy,
+    label: l.label,
   }));
 }
 

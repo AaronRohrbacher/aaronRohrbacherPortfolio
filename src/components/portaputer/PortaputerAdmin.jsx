@@ -59,7 +59,7 @@ export default function PortaputerAdmin() {
       setError(null);
       try {
         const headers = await getAuthHeaders();
-        const res = await fetch('/api/portaputer/downloads?limit=500', { headers });
+        const res = await fetch('/api/downloads?limit=500', { headers });
         if (!res.ok) throw new Error(`Request failed (${res.status})`);
         const json = await res.json();
         if (!cancelled) setData(json);
@@ -80,7 +80,7 @@ export default function PortaputerAdmin() {
     setUploadState({ status: 'requesting', progress: 0, message: 'Requesting upload slot…' });
     try {
       const headers = await getAuthHeaders();
-      const signRes = await fetch('/api/portaputer/upload', {
+      const signRes = await fetch('/api/upload', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -201,7 +201,7 @@ export default function PortaputerAdmin() {
   const installer = data?.installer;
 
   return (
-    <main className={Style.wrap}>
+    <main className={Style.wrap} data-testid="portaputer-admin-root">
       <header className={Style.header}>
         <h1 className={Style.title}>PortaPuter Downloads</h1>
         <p className={Style.subtitle}>
@@ -345,18 +345,18 @@ export default function PortaputerAdmin() {
                     .join(', ');
                   return (
                     <tr key={ev.id}>
-                      <td className={Style.nowrap}>{formatTime(ev.timestamp)}</td>
-                      <td className={Style.mono}>{ev.ip || '—'}</td>
-                      <td>{loc || '—'}</td>
-                      <td>
+                      <td className={Style.nowrap} data-label="When">{formatTime(ev.timestamp)}</td>
+                      <td className={Style.mono} data-label="IP">{ev.ip || '—'}</td>
+                      <td data-label="Location">{loc || '—'}</td>
+                      <td data-label="Status">
                         <span className={[Style.badge, Style[`badge_${d.status || 'unknown'}`]].join(' ')}>
                           {d.status || 'unknown'}
                         </span>
                       </td>
-                      <td className={Style.uaCell} title={ev.userAgent || ''}>
+                      <td className={Style.uaCell} data-label="User agent" title={ev.userAgent || ''}>
                         {ev.userAgent || '—'}
                       </td>
-                      <td className={Style.refCell} title={d.referrer || ''}>
+                      <td className={Style.refCell} data-label="Referrer" title={d.referrer || ''}>
                         {d.referrer || '—'}
                       </td>
                     </tr>

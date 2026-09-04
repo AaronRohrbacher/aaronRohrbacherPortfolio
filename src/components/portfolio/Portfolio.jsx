@@ -20,7 +20,7 @@ export default function Portfolio({ innerRef }) {
 
   return (
     <MotionConfig reducedMotion="user">
-      <Box ref={innerRef} id={'portfolio'} py={'2rem'}>
+      <Box ref={innerRef} id={'portfolio'} sx={{ py: '2rem' }}>
         <h1 className="sr-only">Portfolio</h1>
         <Box
           sx={{
@@ -37,7 +37,7 @@ export default function Portfolio({ innerRef }) {
           language-agnostic problem solving. I choose the language for the
           application, not the reverse.
         </Box>
-        <Grid container justifyContent={'center'} sx={{ maxWidth: '100%' }}>
+        <Grid container sx={{ justifyContent: 'center', maxWidth: '100%' }}>
           {projects.map((project, index) => (
             <Grid size={{ xs: 12, md: 6 }} key={project.id ?? index}>
               <motion.div

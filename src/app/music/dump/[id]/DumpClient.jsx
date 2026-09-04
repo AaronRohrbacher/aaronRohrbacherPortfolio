@@ -13,7 +13,7 @@ export default function DumpPage() {
   const { id } = useParams();
   const searchParams = useSearchParams();
   const shareToken = searchParams.get('share');
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, authVersion } = useAuth();
   const {
     currentTrack,
     isPlaying,
@@ -21,7 +21,7 @@ export default function DumpPage() {
     playTrack,
     setQueue: setPlayerQueue,
     setMinimized,
-    analyserHolderRef,
+    spectrumDataRef,
   } = useMusicPlayer();
   const musicHref = useMusicHref();
 
@@ -32,14 +32,14 @@ export default function DumpPage() {
 
   useEffect(() => {
     fetchDump();
-  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id, authVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function fetchDump() {
     setLoading(true);
     setError(null);
     try {
       const headers = await getAuthHeaders();
-      const url = `/api/music/dump?id=${encodeURIComponent(id)}${shareToken ? `&share=${encodeURIComponent(shareToken)}` : ''}`;
+      const url = `/api/dump?id=${encodeURIComponent(id)}${shareToken ? `&share=${encodeURIComponent(shareToken)}` : ''}`;
       const res = await fetch(url, { headers });
       if (res.status === 401) {
         setError('sign-in');
@@ -70,7 +70,7 @@ export default function DumpPage() {
 
   function getDownloadUrl(track, format) {
     const share = shareToken ? `&share=${encodeURIComponent(shareToken)}` : '';
-    return `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${format}&download=1${share}`;
+    return `/api/stream?id=${encodeURIComponent(track.id)}&format=${format}&download=1${share}`;
   }
 
   if (loading) {
@@ -136,7 +136,7 @@ export default function DumpPage() {
               pending={pending}
               onPlay={handlePlay}
               onExpand={() => setMinimized(false)}
-              analyserHolderRef={analyserHolderRef}
+              spectrumDataRef={spectrumDataRef}
               getDownloadUrl={getDownloadUrl}
             />
           ))}
@@ -156,70 +156,45 @@ export default function DumpPage() {
   );
 }
 
-// Tiny live FFT rendered into the list-item play button. Reads from the
-// same AnalyserNode the big player's waveform uses, via the context-level
-// holder. Rendering stops automatically when the holder clears (track
-// changed, player closed).
-function MiniFFT({ analyserHolderRef }) {
+function MiniFFT({ spectrumDataRef }) {
   const canvasRef = useRef(null);
   useEffect(() => {
-    const cnv = canvasRef.current;
-    if (!cnv) return;
-    let raf;
-    const smoothed = new Float32Array(12);
-    const freq = new Uint8Array(256);
-    const ATTACK = 0.6;
-    const DECAY = 0.18;
-    function frame() {
-      const analyser = analyserHolderRef?.current?.current;
-      const c = canvasRef.current;
-      if (!c) return;
+    let animation;
+    const draw = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
       const dpr = window.devicePixelRatio || 1;
-      const cssW = c.clientWidth;
-      const cssH = c.clientHeight;
-      if (c.width !== Math.floor(cssW * dpr) || c.height !== Math.floor(cssH * dpr)) {
-        c.width = Math.floor(cssW * dpr);
-        c.height = Math.floor(cssH * dpr);
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      if (canvas.width !== Math.floor(width * dpr) || canvas.height !== Math.floor(height * dpr)) {
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
       }
-      const ctx = c.getContext('2d');
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, cssW, cssH);
-
-      if (analyser) {
-        const bins = Math.min(freq.length, analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(freq);
-        const perBar = Math.max(1, Math.floor(bins / smoothed.length));
-        for (let i = 0; i < smoothed.length; i++) {
-          let sum = 0;
-          for (let j = 0; j < perBar; j++) sum += freq[i * perBar + j] || 0;
-          const target = (sum / perBar) / 255;
-          const prev = smoothed[i];
-          smoothed[i] = target > prev ? prev + (target - prev) * ATTACK : prev + (target - prev) * DECAY;
-        }
-      } else {
-        for (let i = 0; i < smoothed.length; i++) smoothed[i] *= 0.9;
-      }
-
+      const context = canvas.getContext('2d');
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      context.clearRect(0, 0, width, height);
+      const spectrum = spectrumDataRef?.current || [];
+      const barCount = 12;
       const gap = 1;
-      const totalGap = gap * (smoothed.length - 1);
-      const barW = Math.max(1, (cssW - totalGap) / smoothed.length);
-      const floorH = 1.5;
-      for (let i = 0; i < smoothed.length; i++) {
-        const h = Math.max(floorH, smoothed[i] * (cssH - 2));
-        const x = i * (barW + gap);
-        const y = cssH - h;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-        ctx.fillRect(x, y, barW, h);
+      const barWidth = Math.max(1, (width - gap * (barCount - 1)) / barCount);
+      for (let bar = 0; bar < barCount; bar += 1) {
+        const start = Math.floor((bar * spectrum.length) / barCount);
+        const end = Math.max(start + 1, Math.floor(((bar + 1) * spectrum.length) / barCount));
+        let total = 0;
+        for (let index = start; index < end; index += 1) total += spectrum[index] || 0;
+        const barHeight = Math.max(1.5, (total / (end - start)) * (height - 2));
+        context.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        context.fillRect(bar * (barWidth + gap), height - barHeight, barWidth, barHeight);
       }
-      raf = requestAnimationFrame(frame);
-    }
-    raf = requestAnimationFrame(frame);
-    return () => { if (raf) cancelAnimationFrame(raf); };
-  }, [analyserHolderRef]);
+      animation = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { if (animation) cancelAnimationFrame(animation); };
+  }, [spectrumDataRef]);
   return <canvas ref={canvasRef} className={Style.miniFFT} aria-hidden="true" />;
 }
 
-function TrackCard({ track, index, currentTrack, isPlaying, pending, onPlay, onExpand, analyserHolderRef, getDownloadUrl }) {
+function TrackCard({ track, index, currentTrack, isPlaying, pending, onPlay, onExpand, spectrumDataRef, getDownloadUrl }) {
   const isActive = currentTrack?.id === track.id;
   const showWaveform = isActive && isPlaying && !pending;
   const formats = Array.isArray(track.formats) ? track.formats : Object.keys(track.formats);
@@ -252,7 +227,7 @@ function TrackCard({ track, index, currentTrack, isPlaying, pending, onPlay, onE
         {pending ? (
           <span className={Style.btnSpinner} aria-hidden="true" />
         ) : showWaveform ? (
-          <MiniFFT analyserHolderRef={analyserHolderRef} />
+          <MiniFFT spectrumDataRef={spectrumDataRef} />
         ) : (
           <i className="fa-solid fa-play" />
         )}

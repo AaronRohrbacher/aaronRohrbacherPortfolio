@@ -3,14 +3,13 @@ import Script from 'next/script';
 /**
  * GoogleAnalytics
  *
- * Loads GA4 when NEXT_PUBLIC_GA_ID is set. Set it to your Measurement ID
- * (starts with "G-") in .env.local / SST secrets to enable analytics.
- * Nothing renders if the env var is absent, so prod vs. preview vs. local
- * can toggle tracking by setting/unsetting the variable.
+ * Loads GA4 in production when NEXT_PUBLIC_GA_ID is set. Set it to your
+ * Measurement ID (starts with "G-") in SST secrets to enable analytics.
+ * Nothing renders during development or when the env var is absent.
  */
 export default function GoogleAnalytics() {
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
-  if (!gaId) return null;
+  if (process.env.NODE_ENV !== 'production' || !gaId) return null;
 
   return (
     <>

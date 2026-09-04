@@ -18,7 +18,7 @@ const DEVICES = [
 for (const d of DEVICES) {
   test(`active player fits @ ${d.name}`, async ({ page }) => {
     await page.setViewportSize({ width: d.w, height: d.h });
-    await page.goto('/music/dump/tune-dump?share=d99c7b291aa3c71b81e9bd6d7a0b457041b60d48ddd56b16342491c59aa50283');
+    await page.goto('http://music.localhost:3000/dump/tune-dump?share=d99c7b291aa3c71b81e9bd6d7a0b457041b60d48ddd56b16342491c59aa50283');
     await page.waitForLoadState('networkidle');
     await page.locator('button[class*="playBtn"]').first().click();
     await expect(page.locator('button[aria-label="Pause"]').first()).toBeVisible({ timeout: 30000 });

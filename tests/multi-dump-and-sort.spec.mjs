@@ -5,12 +5,12 @@ import { test, expect } from '@playwright/test';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const BASE = 'http://localhost:3000';
+const BASE = 'http://music.localhost:3000';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 async function signIn(request, email = 'admin@local.dev', password = 'admin') {
-  const res = await request.post(`${BASE}/api/music/auth/signin`, {
+  const res = await request.post(`${BASE}/api/auth/signin`, {
     data: { email, password },
   });
   const data = await res.json();
@@ -18,7 +18,7 @@ async function signIn(request, email = 'admin@local.dev', password = 'admin') {
 }
 
 async function signUp(request, email, password) {
-  const res = await request.post(`${BASE}/api/music/auth/signup`, {
+  const res = await request.post(`${BASE}/api/auth/signup`, {
     data: { email, password },
   });
   return res.json();
@@ -29,7 +29,7 @@ function authHeaders(token) {
 }
 
 async function getRawTracks(request, token) {
-  const res = await request.get(`${BASE}/api/music/tracks?raw=1`, {
+  const res = await request.get(`${BASE}/api/tracks?raw=1`, {
     headers: authHeaders(token),
   });
   return res.json();
@@ -37,12 +37,12 @@ async function getRawTracks(request, token) {
 
 async function getPublicTracks(request, token) {
   const headers = token ? authHeaders(token) : {};
-  const res = await request.get(`${BASE}/api/music/tracks`, { headers });
+  const res = await request.get(`${BASE}/api/tracks`, { headers });
   return res.json();
 }
 
 async function putTracks(request, token, tracks) {
-  const res = await request.put(`${BASE}/api/music/tracks`, {
+  const res = await request.put(`${BASE}/api/tracks`, {
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     data: { tracks },
   });
@@ -50,7 +50,7 @@ async function putTracks(request, token, tracks) {
 }
 
 async function putSingleTrack(request, token, track) {
-  const res = await request.put(`${BASE}/api/music/tracks`, {
+  const res = await request.put(`${BASE}/api/tracks`, {
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     data: { track },
   });
@@ -58,7 +58,7 @@ async function putSingleTrack(request, token, track) {
 }
 
 async function createDump(request, token, { name, published = false, visibility = 'public' } = {}) {
-  const res = await request.post(`${BASE}/api/music/admin/dumps`, {
+  const res = await request.post(`${BASE}/api/admin/dumps`, {
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     data: { name, published, visibility },
   });
@@ -67,21 +67,21 @@ async function createDump(request, token, { name, published = false, visibility 
 }
 
 async function listAdminDumps(request, token) {
-  const res = await request.get(`${BASE}/api/music/admin/dumps`, {
+  const res = await request.get(`${BASE}/api/admin/dumps`, {
     headers: authHeaders(token),
   });
   return res.json();
 }
 
 async function deleteDump(request, token, dumpId) {
-  const res = await request.delete(`${BASE}/api/music/admin/dumps?id=${dumpId}`, {
+  const res = await request.delete(`${BASE}/api/admin/dumps?id=${dumpId}`, {
     headers: authHeaders(token),
   });
   return res.json();
 }
 
 async function createDumpShareLink(request, token, dumpId) {
-  const res = await request.post(`${BASE}/api/music/admin/dump-share-links`, {
+  const res = await request.post(`${BASE}/api/admin/dump-share-links`, {
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     data: { dumpId },
   });
@@ -106,12 +106,12 @@ async function resetAllTracks(request, token) {
 }
 
 async function signInBrowser(page, email = 'admin@local.dev', password = 'admin') {
-  const res = await page.request.post(`${BASE}/api/music/auth/signin`, {
+  const res = await page.request.post(`${BASE}/api/auth/signin`, {
     data: { email, password },
   });
   const data = await res.json();
   // First navigate so localStorage is available for this origin.
-  await page.goto('/music');
+  await page.goto('http://music.localhost:3000');
   await page.evaluate((tok) => localStorage.setItem('music_auth_token', tok), data.idToken);
   return data.idToken;
 }
@@ -240,7 +240,7 @@ test.describe('Multi-dump assignment — store layer', () => {
 
     const fmt = Object.keys(track.formats)[0];
     const res = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackId)}&format=${fmt}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackId)}&format=${fmt}`,
       { maxRedirects: 0 }
     );
     expect([200, 302]).toContain(res.status());
@@ -266,13 +266,13 @@ test.describe('Multi-dump assignment — store layer', () => {
 
     const fmt = Object.keys(track.formats)[0];
     const anon = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackId)}&format=${fmt}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackId)}&format=${fmt}`,
       { maxRedirects: 0 }
     );
     expect([403, 404]).toContain(anon.status());
 
     const admin = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackId)}&format=${fmt}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackId)}&format=${fmt}`,
       { headers: authHeaders(adminToken), maxRedirects: 0 }
     );
     expect([200, 302]).toContain(admin.status());
@@ -468,7 +468,7 @@ test.describe('Dump-share token across multi-dump tracks', () => {
     expect(share.token).toBeTruthy();
 
     const res = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackId)}&format=${fmt}&share=${share.token}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackId)}&format=${fmt}&share=${share.token}`,
       { maxRedirects: 0 }
     );
     expect([200, 302]).toContain(res.status());
@@ -496,7 +496,7 @@ test.describe('Dump-share token across multi-dump tracks', () => {
 
     const share = await createDumpShareLink(request, adminToken, dC);
     const res = await request.get(
-      `${BASE}/api/music/stream?id=${encodeURIComponent(trackId)}&format=${fmt}&share=${share.token}`,
+      `${BASE}/api/stream?id=${encodeURIComponent(trackId)}&format=${fmt}&share=${share.token}`,
       { maxRedirects: 0 }
     );
     // Track not effectively published and share token doesn't match any of
@@ -520,15 +520,15 @@ test.describe('Admin Tracks tab sort + Members rename — UI', () => {
     await getRawTracks(request, token);
   });
 
-  test('sort dropdown shows the four options and defaults to "Manual (my order)"', async ({ page }) => {
+  test('sort dropdown shows the four options and defaults to newest created', async ({ page }) => {
     await signInBrowser(page);
-    await page.goto('/music/admin');
+    await page.goto('http://music.localhost:3000/admin');
     // Wait for the tracks list to render
     await expect(page.getByRole('heading', { name: /Music Admin/i })).toBeVisible();
     // The Tracks tab is the default tab. Locate the Sort by select.
     const sortSelect = page.getByLabel('Sort by');
-    await expect(sortSelect).toBeVisible();
-    await expect(sortSelect).toHaveValue('manual');
+    await expect(sortSelect).toBeVisible({ timeout: 15000 });
+    await expect(sortSelect).toHaveValue('created');
 
     // Option labels
     const options = await sortSelect.locator('option').allTextContents();
@@ -539,7 +539,7 @@ test.describe('Admin Tracks tab sort + Members rename — UI', () => {
 
   test('switching sort to "Name" reorders the list alphabetically', async ({ page }) => {
     await signInBrowser(page);
-    await page.goto('/music/admin');
+    await page.goto('http://music.localhost:3000/admin');
 
     await expect(page.getByRole('heading', { name: /Music Admin/i })).toBeVisible();
 
@@ -562,6 +562,11 @@ test.describe('Admin Tracks tab sort + Members rename — UI', () => {
     // Switch to Name sort
     await sortSelect.selectOption('name');
     await expect(sortSelect).toHaveValue('name');
+    // The default newest-first direction is descending and intentionally
+    // persists when the field changes. Flip it to verify A→Z name sorting.
+    const direction = page.locator('button[title^="Sort direction"]');
+    await direction.click();
+    await expect(direction).toContainText('Asc');
 
     // Wait for re-render — give React a tick
     await page.waitForTimeout(300);
@@ -581,7 +586,7 @@ test.describe('Admin Tracks tab sort + Members rename — UI', () => {
 
   test('visibility select on track row shows "Members" (value=authenticated)', async ({ page }) => {
     await signInBrowser(page);
-    await page.goto('/music/admin');
+    await page.goto('http://music.localhost:3000/admin');
     await expect(page.getByRole('heading', { name: /Music Admin/i })).toBeVisible();
 
     // Wait for tracks to populate.
@@ -606,7 +611,7 @@ test.describe('Admin Tracks tab sort + Members rename — UI', () => {
 
   test('TrackEditor modal visibility select also says "Members"', async ({ page }) => {
     await signInBrowser(page);
-    await page.goto('/music/admin');
+    await page.goto('http://music.localhost:3000/admin');
     await expect(page.getByRole('heading', { name: /Music Admin/i })).toBeVisible();
 
     // Wait for at least one Edit button to show up.
@@ -634,7 +639,7 @@ test.describe('Admin Tracks tab sort + Members rename — UI', () => {
 
   test('DumpManager create form + DumpEditor visibility says "Members"', async ({ page }) => {
     await signInBrowser(page);
-    await page.goto('/music/admin');
+    await page.goto('http://music.localhost:3000/admin');
     await expect(page.getByRole('heading', { name: /Music Admin/i })).toBeVisible();
 
     // Switch to Dumps tab.
@@ -658,7 +663,7 @@ test.describe('Admin Tracks tab sort + Members rename — UI', () => {
     // Ensure there is at least one dump to edit — create one through the API.
     const token = await page.evaluate(() => localStorage.getItem('music_auth_token'));
     const stamp = Date.now();
-    await page.request.post(`${BASE}/api/music/admin/dumps`, {
+    await page.request.post(`${BASE}/api/admin/dumps`, {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       data: { name: `editor-vis-${stamp}` },
     });
@@ -666,7 +671,7 @@ test.describe('Admin Tracks tab sort + Members rename — UI', () => {
     // Refresh the Dumps tab.
     await page.reload();
     await signInBrowser(page); // reload nuked the token? re-set to be safe
-    await page.goto('/music/admin');
+    await page.goto('http://music.localhost:3000/admin');
     await page.getByRole('button', { name: /^Dumps$/ }).click();
 
     // Click the first Edit on the dumps list.
@@ -874,7 +879,7 @@ test.describe('Restricted dumps do not leak to anon /api/music/tracks', () => {
 // ── Per-track endpoints must also cascade dump visibility ─────────────────────
 //
 // Previously /api/music/tracks anon was gated by dump visibility, but the
-// per-track endpoints (/api/music/stream and /api/music/track) and the
+// per-track endpoints (/api/stream and /api/music/track) and the
 // authenticated-user listing path were not. A track with visibility:'public'
 // that lived ONLY in a non-public dump was streamable by anyone who knew its
 // id, viewable by its metadata endpoint, and listed for any signed-in user
@@ -885,13 +890,13 @@ test.describe('Restricted dumps do not leak to anon /api/music/tracks', () => {
 
 async function getTrackMeta(request, trackId, token) {
   const headers = token ? authHeaders(token) : {};
-  return request.get(`${BASE}/api/music/track?id=${encodeURIComponent(trackId)}`, { headers });
+  return request.get(`${BASE}/api/track?id=${encodeURIComponent(trackId)}`, { headers });
 }
 
 async function streamTrack(request, trackId, token) {
   const headers = token ? authHeaders(token) : {};
   return request.get(
-    `${BASE}/api/music/stream?id=${encodeURIComponent(trackId)}&format=mp3`,
+    `${BASE}/api/stream?id=${encodeURIComponent(trackId)}&format=mp3`,
     { headers, maxRedirects: 0 }
   );
 }
@@ -926,7 +931,7 @@ for (const tier of ['authenticated', 'restricted']) {
       expect([401, 403, 404]).toContain(res.status());
     });
 
-    test('anon GET /api/music/stream must NOT redirect to the audio', async ({ request }) => {
+    test('anon GET /api/stream must NOT redirect to the audio', async ({ request }) => {
       const res = await streamTrack(request, trackId);
       // A 2xx or a 3xx redirect both mean "granted." Both are wrong.
       expect(res.status()).toBeGreaterThanOrEqual(400);
@@ -952,7 +957,7 @@ for (const tier of ['authenticated', 'restricted']) {
       }
     });
 
-    test('authenticated non-permitted user GET /api/music/stream', async ({ request }) => {
+    test('authenticated non-permitted user GET /api/stream', async ({ request }) => {
       const email = `visgatestream-${tier}-${Date.now()}@local.dev`;
       const { idToken } = await signUp(request, email, 'password123');
       const res = await streamTrack(request, trackId, idToken);

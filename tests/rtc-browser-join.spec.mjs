@@ -17,6 +17,7 @@ async function launchWithFakeMedia() {
 }
 
 test('Voice call: Chime SDK joins the meeting (WebSocket opens)', async () => {
+  test.skip(process.env.RUN_LIVE_CONNECT_TESTS !== '1', 'Requires live Amazon Chime infrastructure');
   test.setTimeout(60000);
   const browser = await launchWithFakeMedia();
   const ctx = await browser.newContext({
@@ -61,6 +62,7 @@ test('Voice call: Chime SDK joins the meeting (WebSocket opens)', async () => {
 });
 
 test('Video call: Chime SDK joins meeting + video element attached', async () => {
+  test.skip(process.env.RUN_LIVE_CONNECT_TESTS !== '1', 'Requires live Amazon Chime infrastructure');
   test.setTimeout(60000);
   const browser = await launchWithFakeMedia();
   const ctx = await browser.newContext({

@@ -18,8 +18,8 @@ export default function GroupManager({ getAuthHeaders }) {
     try {
       const headers = await getAuthHeaders();
       const [groupsRes, usersRes] = await Promise.all([
-        fetch('/api/music/admin/groups', { headers }),
-        fetch('/api/music/admin/users', { headers }),
+        fetch('/api/admin/groups', { headers }),
+        fetch('/api/admin/users', { headers }),
       ]);
       const groupsData = await groupsRes.json();
       const usersData = await usersRes.json();
@@ -39,7 +39,7 @@ export default function GroupManager({ getAuthHeaders }) {
     setError('');
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/admin/groups', {
+      const res = await fetch('/api/admin/groups', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), description: desc.trim() }),
@@ -58,7 +58,7 @@ export default function GroupManager({ getAuthHeaders }) {
     if (!confirm(`Delete group "${groupName}"?`)) return;
     try {
       const headers = await getAuthHeaders();
-      await fetch(`/api/music/admin/groups?name=${encodeURIComponent(groupName)}`, {
+      await fetch(`/api/admin/groups?name=${encodeURIComponent(groupName)}`, {
         method: 'DELETE',
         headers,
       });
@@ -74,7 +74,7 @@ export default function GroupManager({ getAuthHeaders }) {
     setError('');
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/admin/groups', {
+      const res = await fetch('/api/admin/groups', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ groupName, username, action: isMember ? 'remove' : 'add' }),
@@ -106,7 +106,7 @@ export default function GroupManager({ getAuthHeaders }) {
       nonMembers.map((u) => {
         const key = `${groupName}:${u.username}`;
         setPending((p) => ({ ...p, [key]: true }));
-        return fetch('/api/music/admin/groups', {
+        return fetch('/api/admin/groups', {
           method: 'POST',
           headers: { ...headers, 'Content-Type': 'application/json' },
           body: JSON.stringify({ groupName, username: u.username, action: 'add' }),
@@ -128,7 +128,7 @@ export default function GroupManager({ getAuthHeaders }) {
       members.map((m) => {
         const key = `${groupName}:${m.username}`;
         setPending((p) => ({ ...p, [key]: true }));
-        return fetch('/api/music/admin/groups', {
+        return fetch('/api/admin/groups', {
           method: 'POST',
           headers: { ...headers, 'Content-Type': 'application/json' },
           body: JSON.stringify({ groupName, username: m.username, action: 'remove' }),

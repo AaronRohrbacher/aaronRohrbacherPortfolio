@@ -20,11 +20,13 @@
 import { getDumpByHandle, getDumpTracks } from '@/lib/trackStore';
 import { renderRichTextToPlainString } from '@/lib/richText';
 import DumpClient from './DumpClient';
+import { absoluteSeoTitle, seoPageTitle, SEO_SITES } from '@/lib/seoTitles';
 
 // Render at request time. Dump metadata can change in admin (publish flips,
 // description edits, track add/remove) and we want crawlers + visitors to
 // see fresh state without a redeploy. Matches the music index page's mode.
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
+export async function generateStaticParams() { return []; }
 
 const MUSIC_BASE = 'https://music.aaronrohrbacher.com';
 
@@ -59,7 +61,7 @@ export async function generateMetadata({ params }) {
     // just return a neutral noindex shell. The client component renders
     // the appropriate sign-in / denied / not-found UI for humans.
     return {
-      title: 'Music',
+      title: absoluteSeoTitle(seoPageTitle('Music Unavailable', SEO_SITES.music)),
       robots: { index: false, follow: false },
     };
   }
@@ -67,21 +69,22 @@ export async function generateMetadata({ params }) {
   const plainDescription =
     renderRichTextToPlainString(dump.description) || `Listen to ${dump.name} by Aaron Rohrbacher.`;
   const url = dumpUrl(dump, handle);
+  const title = seoPageTitle(dump.name, SEO_SITES.music);
 
   return {
-    title: dump.name,
+    title: absoluteSeoTitle(title),
     description: plainDescription.slice(0, 300),
     alternates: { canonical: url },
     openGraph: {
       type: 'music.album',
-      title: `${dump.name} | Aaron Rohrbacher`,
+      title,
       description: plainDescription.slice(0, 300),
       url,
-      siteName: 'Aaron Rohrbacher · Music',
+      siteName: SEO_SITES.music,
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${dump.name} | Aaron Rohrbacher`,
+      title,
       description: plainDescription.slice(0, 200),
     },
   };

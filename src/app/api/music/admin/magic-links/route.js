@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/verifyToken';
-import { createMagicLink, getMagicLinksForUser, deleteMagicLink } from '@/lib/trackStore';
+import {
+  createMagicLink,
+  getMagicLinksForUser,
+  deleteMagicLink,
+  getTrack,
+  getDumpByHandle,
+  safeMagicDestination,
+} from '@/lib/trackStore';
 
 async function requireAdmin(request) {
   const user = await authenticateRequest(request);
@@ -8,8 +15,12 @@ async function requireAdmin(request) {
   return user;
 }
 
+function decodePathPart(value) {
+  try { return decodeURIComponent(value); } catch { return value; }
+}
+
 /**
- * POST /api/music/admin/magic-links
+ * POST /api/admin/magic-links
  * Create a magic login link for a user.
  * Body: { email, expiresInDays? }
  */
@@ -17,15 +28,31 @@ export async function POST(request) {
   const admin = await requireAdmin(request);
   if (!admin) return NextResponse.json({ error: 'Admin required' }, { status: 401 });
 
-  const { email, expiresInDays, label } = await request.json();
+  const { email, expiresInDays, label, destination, maxUses } = await request.json();
   if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 });
 
-  const link = await createMagicLink(email, admin.email, expiresInDays || null, label || null);
+  const safeDestination = safeMagicDestination(destination || '/');
+  let resolvedLabel = label?.trim() || null;
+  if (!resolvedLabel) {
+    const trackMatch = safeDestination.match(/^\/track\/([^/?#]+)/);
+    const dumpMatch = safeDestination.match(/^\/dump\/([^/?#]+)/);
+    if (trackMatch) resolvedLabel = (await getTrack(decodePathPart(trackMatch[1])))?.name || null;
+    if (dumpMatch) resolvedLabel = (await getDumpByHandle(decodePathPart(dumpMatch[1])))?.name || null;
+  }
+
+  const link = await createMagicLink(
+    email,
+    admin.email,
+    expiresInDays == null ? 7 : expiresInDays,
+    resolvedLabel || `Login for ${email}`,
+    safeDestination,
+    maxUses == null ? 1 : maxUses,
+  );
   return NextResponse.json({ ok: true, link });
 }
 
 /**
- * GET /api/music/admin/magic-links?email=xxx
+ * GET /api/admin/magic-links?email=xxx
  * List active magic links for a user.
  */
 export async function GET(request) {
@@ -41,7 +68,7 @@ export async function GET(request) {
 }
 
 /**
- * DELETE /api/music/admin/magic-links?token=xxx
+ * DELETE /api/admin/magic-links?token=xxx
  * Revoke a magic link.
  */
 export async function DELETE(request) {

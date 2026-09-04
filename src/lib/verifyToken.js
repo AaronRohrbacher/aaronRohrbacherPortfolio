@@ -1,4 +1,5 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { verifyAppSession } from './appTokens';
 
 const USE_LOCAL = !process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
 const REGION = process.env.NEXT_PUBLIC_AWS_REGION || 'us-west-2';
@@ -58,6 +59,8 @@ async function verifyCognitoToken(token) {
  */
 export async function verifyToken(token) {
   if (!token) return null;
+  const appSession = await verifyAppSession(token);
+  if (appSession) return appSession;
   if (USE_LOCAL) return verifyLocalToken(token);
   return verifyCognitoToken(token);
 }

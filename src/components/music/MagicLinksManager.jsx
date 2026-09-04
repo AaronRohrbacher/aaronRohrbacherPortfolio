@@ -11,13 +11,14 @@ const KIND_LABEL = {
 
 function buildPublicUrl(link, origin) {
   if (link.kind === 'login') {
-    return `${origin}/music/login/magic?token=${link.token}`;
+    if (!link.copyAvailable) return '';
+    return `${origin}/login/magic?token=${link.token}`;
   }
   if (link.kind === 'dump') {
-    return `${origin}/music/dump/${encodeURIComponent(link.dumpId)}?share=${link.token}`;
+    return `${origin}/dump/${encodeURIComponent(link.dumpId)}?share=${link.token}`;
   }
   if (link.kind === 'track') {
-    return `${origin}/music/track/${encodeURIComponent(link.trackId)}?share=${link.token}`;
+    return `${origin}/track/${encodeURIComponent(link.trackId)}?share=${link.token}`;
   }
   return '';
 }
@@ -49,7 +50,7 @@ export default function MagicLinksManager({ getAuthHeaders }) {
     setError('');
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/admin/share-links', { headers });
+      const res = await fetch('/api/admin/share-links', { headers });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load links');
       setLinks(data.links || []);
@@ -65,6 +66,7 @@ export default function MagicLinksManager({ getAuthHeaders }) {
   async function copyLink(link) {
     try {
       const url = buildPublicUrl(link, window.location.origin);
+      if (!url) throw new Error('Login tokens are shown only once when created. Generate a new link to copy it.');
       await navigator.clipboard.writeText(url);
       setCopiedToken(link.token);
       setTimeout(() => setCopiedToken(null), 2000);
@@ -76,7 +78,7 @@ export default function MagicLinksManager({ getAuthHeaders }) {
   async function toggleActive(link) {
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/admin/share-links', {
+      const res = await fetch('/api/admin/share-links', {
         method: 'PATCH',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ kind: link.kind, token: link.token, active: !link.active }),
@@ -94,7 +96,7 @@ export default function MagicLinksManager({ getAuthHeaders }) {
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(
-        `/api/music/admin/share-links?kind=${link.kind}&token=${encodeURIComponent(link.token)}`,
+        `/api/admin/share-links?kind=${link.kind}&token=${encodeURIComponent(link.token)}`,
         { method: 'DELETE', headers }
       );
       if (!res.ok) {
@@ -110,7 +112,7 @@ export default function MagicLinksManager({ getAuthHeaders }) {
   async function saveEdit(patch) {
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/admin/share-links', {
+      const res = await fetch('/api/admin/share-links', {
         method: 'PATCH',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ kind: editing.kind, token: editing.token, ...patch }),
@@ -218,11 +220,11 @@ export default function MagicLinksManager({ getAuthHeaders }) {
                 </span>
               </div>
               <div className={Style.itemActions}>
-                <button className={Style.iconBtn} onClick={() => copyLink(link)}>
+                <button className={Style.iconBtn} onClick={() => copyLink(link)} disabled={!link.copyAvailable && link.kind === 'login'} title={!link.copyAvailable && link.kind === 'login' ? 'Hashed login tokens cannot be recovered; generate a new link' : undefined}>
                   {isCopied ? (
                     <><i className="fa-solid fa-check" /> Copied</>
                   ) : (
-                    <><i className="fa-solid fa-link" /> Copy URL</>
+                    <><i className="fa-solid fa-link" /> {link.kind === 'login' && !link.copyAvailable ? 'Token hidden' : 'Copy URL'}</>
                   )}
                 </button>
                 <button className={Style.iconBtn} onClick={() => setEditing(link)}>
@@ -257,7 +259,7 @@ export default function MagicLinksManager({ getAuthHeaders }) {
 function ShareLinkEditor({ link, onSave, onCancel }) {
   const [label, setLabel] = useState(link.label || '');
   const [active, setActive] = useState(link.active !== false);
-  const [expiryMode, setExpiryMode] = useState(link.expiresAt ? 'date' : 'never');
+  const [expiryMode, setExpiryMode] = useState(link.kind === 'login' || link.expiresAt ? 'date' : 'never');
   const [expiresDate, setExpiresDate] = useState(
     link.expiresAt ? link.expiresAt.split('T')[0] : ''
   );
@@ -299,7 +301,7 @@ function ShareLinkEditor({ link, onSave, onCancel }) {
               value={expiryMode}
               onChange={(e) => setExpiryMode(e.target.value)}
             >
-              <option value="never">Never expires</option>
+              {link.kind !== 'login' && <option value="never">Never expires</option>}
               <option value="date">Expires on date…</option>
             </select>
           </label>

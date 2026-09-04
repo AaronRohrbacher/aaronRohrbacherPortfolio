@@ -37,15 +37,15 @@ export default function MusicAdmin() {
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('manual');
-  const [sortDir, setSortDir] = useState('asc');
+  const [sortBy, setSortBy] = useState('created');
+  const [sortDir, setSortDir] = useState('desc');
 
   const fetchTracks = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/tracks?raw=1', { headers });
+      const res = await fetch('/api/tracks?raw=1', { headers });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setTracks(data.tracks || []);
@@ -59,7 +59,7 @@ export default function MusicAdmin() {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const res = await fetch('/api/music/admin/settings');
+      const res = await fetch('/api/admin/settings');
       const data = await res.json();
       if (data.tracksPerPage) setTracksPerPage(data.tracksPerPage);
     } catch {}
@@ -73,7 +73,7 @@ export default function MusicAdmin() {
     setSaving(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/tracks', {
+      const res = await fetch('/api/tracks', {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ track }),
@@ -94,7 +94,7 @@ export default function MusicAdmin() {
     setSaving(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/tracks', {
+      const res = await fetch('/api/tracks', {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ tracks: updated }),
@@ -183,7 +183,7 @@ export default function MusicAdmin() {
   }
 
   return (
-    <div className={Style.wrap}>
+    <div className={Style.wrap} data-testid="music-admin-root">
       <div className={Style.header}>
         <h1>Music Admin</h1>
         <div className={Style.headerActions}>
@@ -315,7 +315,7 @@ export default function MusicAdmin() {
                           title={`Download ${fmt.toUpperCase()}`}
                           onClick={async () => {
                             const headers = await getAuthHeaders();
-                            const res = await fetch(`/api/music/stream?id=${encodeURIComponent(track.id)}&format=${fmt}&download=1&urlOnly=1`, { headers });
+                            const res = await fetch(`/api/stream?id=${encodeURIComponent(track.id)}&format=${fmt}&download=1&urlOnly=1`, { headers });
                             if (!res.ok) { alert('Download failed'); return; }
                             const { url } = await res.json();
                             window.location.href = url;
@@ -414,7 +414,7 @@ export default function MusicAdmin() {
             className={Style.btn}
             onClick={async () => {
               const headers = await getAuthHeaders();
-              await fetch('/api/music/admin/settings', {
+              await fetch('/api/admin/settings', {
                 method: 'PUT',
                 headers: { ...headers, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tracksPerPage }),
@@ -552,8 +552,8 @@ function TrackEditor({ track, dumps = [], onSave, onCancel, getAuthHeaders }) {
     try {
       const headers = await getAuthHeaders();
       const [usersRes, groupsRes] = await Promise.all([
-        fetch('/api/music/admin/users', { headers }),
-        fetch('/api/music/admin/groups', { headers }),
+        fetch('/api/admin/users', { headers }),
+        fetch('/api/admin/groups', { headers }),
       ]);
       setAllUsers((await usersRes.json()).users || []);
       setAllGroups((await groupsRes.json()).groups || []);
@@ -564,7 +564,7 @@ function TrackEditor({ track, dumps = [], onSave, onCancel, getAuthHeaders }) {
     setPermLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`/api/music/admin/permissions?trackId=${track.id}`, { headers });
+      const res = await fetch(`/api/admin/permissions?trackId=${track.id}`, { headers });
       setPerms(await res.json());
     } catch {} finally {
       setPermLoading(false);
@@ -577,7 +577,7 @@ function TrackEditor({ track, dumps = [], onSave, onCancel, getAuthHeaders }) {
     setPending((p) => ({ ...p, [key]: true }));
     try {
       const headers = await getAuthHeaders();
-      await fetch('/api/music/admin/permissions', {
+      await fetch('/api/admin/permissions', {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ trackId: track.id, targetType: 'user', targetId: userId, action }),
@@ -599,7 +599,7 @@ function TrackEditor({ track, dumps = [], onSave, onCancel, getAuthHeaders }) {
     setPending((p) => ({ ...p, [key]: true }));
     try {
       const headers = await getAuthHeaders();
-      await fetch('/api/music/admin/permissions', {
+      await fetch('/api/admin/permissions', {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ trackId: track.id, targetType: 'group', targetId: groupName, action }),
@@ -843,14 +843,14 @@ function TrackMagicLinkButton({ track, getAuthHeaders }) {
     setState('working');
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/music/admin/track-share-links', {
+      const res = await fetch('/api/admin/track-share-links', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ trackId: track.id }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create link');
-      const url = `${window.location.origin}/music/track/${encodeURIComponent(track.id)}?share=${data.link.token}`;
+      const url = `${window.location.origin}/track/${encodeURIComponent(track.id)}?share=${data.link.token}`;
       await navigator.clipboard.writeText(url);
       setState('copied');
       setTimeout(() => setState('idle'), 2500);
@@ -893,7 +893,7 @@ function AdminPlayer({ track }) {
       ...track,
       formats: fmtKeys,
       streamUrls: Object.fromEntries(
-        fmtKeys.map((f) => [f, `/api/music/stream?id=${encodeURIComponent(track.id)}&format=${f}`])
+        fmtKeys.map((f) => [f, `/api/stream?id=${encodeURIComponent(track.id)}&format=${f}`])
       ),
     };
     playTrack(playerTrack, 0);

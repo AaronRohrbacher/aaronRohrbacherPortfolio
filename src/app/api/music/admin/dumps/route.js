@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/verifyToken';
 import { loadDumps, saveDump, deleteDump, getDumpTracks } from '@/lib/trackStore';
+import { invalidatePublicMusic } from '@/lib/musicCache';
 
 async function requireAdmin(request) {
   const user = await authenticateRequest(request);
@@ -9,7 +10,7 @@ async function requireAdmin(request) {
 }
 
 /**
- * GET /api/music/admin/dumps — List all dumps with their tracks
+ * GET /api/admin/dumps — List all dumps with their tracks
  */
 export async function GET(request) {
   if (!(await requireAdmin(request))) {
@@ -32,7 +33,7 @@ export async function GET(request) {
 }
 
 /**
- * POST /api/music/admin/dumps — Create or update a dump
+ * POST /api/admin/dumps — Create or update a dump
  * Body: { id?, name, description, artists, visibility, published }
  */
 export async function POST(request) {
@@ -57,6 +58,7 @@ export async function POST(request) {
         const merged = { ...existing, ...patch };
         saved.push(await saveDump(merged));
       }
+      invalidatePublicMusic({ dumpHandles: saved.flatMap((d) => [d.id, d.slug]) });
       return NextResponse.json({ dumps: saved });
     }
 
@@ -74,6 +76,7 @@ export async function POST(request) {
     // saveDump generates / uniques the slug and returns the persisted shape
     // (including updatedAt). Use that so the client sees the final slug.
     const saved = await saveDump(dump);
+    invalidatePublicMusic({ dumpHandles: [saved.id, saved.slug] });
     return NextResponse.json({ dump: saved });
   } catch (err) {
     console.error('Create dump error:', err);
@@ -82,7 +85,7 @@ export async function POST(request) {
 }
 
 /**
- * DELETE /api/music/admin/dumps?id=xxx — Delete a dump (unlinks tracks)
+ * DELETE /api/admin/dumps?id=xxx — Delete a dump (unlinks tracks)
  */
 export async function DELETE(request) {
   if (!(await requireAdmin(request))) {
@@ -98,7 +101,9 @@ export async function DELETE(request) {
 
     // deleteDump unlinks sibling rows and rewrites any legacy main-track rows
     // so they drop the dump assignment. No separate saveTracks pass needed.
+    const existing = (await loadDumps()).find((dump) => dump.id === id);
     await deleteDump(id);
+    invalidatePublicMusic({ dumpHandles: [id, existing?.slug] });
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('Delete dump error:', err);

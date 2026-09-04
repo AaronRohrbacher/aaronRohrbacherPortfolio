@@ -19,11 +19,14 @@ function getClient() {
   return _client;
 }
 
-const AUDIO_EXTENSIONS = ['.mp3', '.wav', '.aiff', '.aif'];
+// Uploaded variants are grouped by shared basename. Nothing is transcoded:
+// only objects that actually exist in the bucket become playback/download
+// options.
+const MEDIA_EXTENSIONS = ['.mp3', '.wav', '.aac', '.m4a', '.aiff', '.aif', '.mp4', '.m4v', '.webm', '.mov'];
 
 /**
- * List all audio files in the S3 bucket, grouped by track name.
- * Returns: { [trackName]: { mp3?: key, wav?: key, aiff?: key } }
+ * List uploaded media in the S3 bucket, grouped by shared basename.
+ * Returns: { [trackName]: { formats: { mp3?: key, mp4?: key, ... }, addedAt } }
  */
 export async function listBucketTracks() {
   const client = getClient();
@@ -41,11 +44,11 @@ export async function listBucketTracks() {
       const key = obj.Key;
       const lower = key.toLowerCase();
 
-      const ext = AUDIO_EXTENSIONS.find((e) => lower.endsWith(e));
+      const ext = MEDIA_EXTENSIONS.find((e) => lower.endsWith(e));
       if (!ext) continue;
 
       const filename = key.split('/').pop();
-      const trackName = filename.replace(/\.(mp3|wav|aiff|aif)$/i, '');
+      const trackName = filename.replace(/\.(mp3|wav|aac|m4a|aiff|aif|mp4|m4v|webm|mov)$/i, '');
 
       if (!tracks[trackName]) {
         tracks[trackName] = { _formats: {}, _addedAt: null };
@@ -84,8 +87,14 @@ export async function getObject(key) {
 const DOWNLOAD_CONTENT_TYPES = {
   mp3: 'audio/mpeg',
   wav: 'audio/wav',
+  aac: 'audio/aac',
+  m4a: 'audio/mp4',
   aiff: 'audio/aiff',
   aif: 'audio/aiff',
+  mp4: 'video/mp4',
+  m4v: 'video/mp4',
+  webm: 'video/webm',
+  mov: 'video/quicktime',
 };
 
 /**
@@ -101,7 +110,7 @@ export async function getDownloadUrl(key, filename, expiresIn = 3600) {
   const command = new GetObjectCommand({
     Bucket: BUCKET,
     Key: key,
-    ResponseContentDisposition: `attachment; filename="${filename.replace(/"/g, '')}"`,
+    ResponseContentDisposition: `attachment; filename="${filename.replace(/[\r\n"]/g, '')}"`,
     ResponseContentType: contentType,
   });
   return getSignedUrl(client, command, { expiresIn });
@@ -110,7 +119,7 @@ export async function getDownloadUrl(key, filename, expiresIn = 3600) {
 /**
  * Get a presigned URL for inline streaming. Explicit `Content-Disposition:
  * inline` so the browser plays the file instead of saving it, plus the
- * canonical audio/* content-type. Used by /api/music/stream as the no-CDN
+ * canonical audio/* content-type. Used by /api/stream as the no-CDN
  * fallback — redirect the client straight to S3 rather than proxying the
  * body through Lambda / Next dev server.
  */

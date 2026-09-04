@@ -8,6 +8,7 @@ import { test, expect } from '@playwright/test';
 test.describe.configure({ mode: 'serial' });
 
 test('live chat opens in-panel and receives flow greeting', async ({ page }) => {
+  test.skip(process.env.RUN_LIVE_CONNECT_TESTS !== '1', 'Requires live Amazon Connect chat infrastructure');
   test.setTimeout(90000);
 
   // Forward browser console + page errors to the test runner so failures

@@ -1,9 +1,11 @@
 import PortaputerLayout from '@/components/portaputer/PortaputerLayout';
+import { SEO_HOME_TITLES, SEO_SITES } from '@/lib/seoTitles';
 
 export const metadata = {
+  metadataBase: new URL('https://portaputer.aaronrohrbacher.com'),
   title: {
-    default: 'PortaPuter — Your Entire PC, One Double-Click Away',
-    template: '%s | PortaPuter',
+    default: SEO_HOME_TITLES.portaputer,
+    template: `%s | ${SEO_SITES.portaputer}`,
   },
   description:
     'Capture a live Windows desktop into a portable package. Copy it to any PC, double-click, and your old desktop boots in a window — no installation, no hypervisor, no fuss. Free and open source.',
@@ -16,16 +18,16 @@ export const metadata = {
     canonical: 'https://portaputer.aaronrohrbacher.com',
   },
   openGraph: {
-    title: 'PortaPuter — Your Entire PC, One Double-Click Away',
+    title: SEO_HOME_TITLES.portaputer,
     description:
       'Capture a live Windows desktop into a portable package. Copy it to any PC, double-click to launch.',
     url: 'https://portaputer.aaronrohrbacher.com',
-    siteName: 'PortaPuter',
+    siteName: SEO_SITES.portaputer,
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PortaPuter — Your Entire PC, One Double-Click Away',
+    title: SEO_HOME_TITLES.portaputer,
     description:
       'Capture a live Windows desktop into a portable package. Free and open source.',
   },

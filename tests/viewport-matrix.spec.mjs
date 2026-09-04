@@ -20,8 +20,8 @@ const DEVICES = [
 ];
 
 const TARGETS = [
-  { name: 'home',     path: '/music' },
-  { name: 'dump',     path: '/music/dump/tune-dump?share=d99c7b291aa3c71b81e9bd6d7a0b457041b60d48ddd56b16342491c59aa50283' },
+  { name: 'home',     path: 'http://music.localhost:3000' },
+  { name: 'dump',     path: 'http://music.localhost:3000/dump/tune-dump?share=d99c7b291aa3c71b81e9bd6d7a0b457041b60d48ddd56b16342491c59aa50283' },
 ];
 
 for (const device of DEVICES) {
@@ -42,7 +42,7 @@ for (const device of DEVICES) {
       expect.soft(doc.scrollW, `horizontal overflow on ${target.name}@${device.name}`).toBeLessThanOrEqual(doc.clientW + 1);
 
       // A primary action (play button or dump card) must be visible in the initial viewport
-      const primary = page.locator('button[class*="playBtn"], a[href*="/music/dump/"]').first();
+      const primary = page.locator('button[class*="playBtn"], a[href*="/dump/"]').first();
       const count = await primary.count();
       expect(count, `no primary interactive on ${target.name}@${device.name}`).toBeGreaterThan(0);
       const box = await primary.boundingBox();
