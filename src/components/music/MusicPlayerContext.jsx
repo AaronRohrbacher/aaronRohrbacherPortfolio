@@ -141,7 +141,12 @@ export function MusicPlayerProvider({ children }) {
         const data = await response.json();
         if (!data?.url || sequence !== loadSequenceRef.current) return;
         setResolvedMedia({ trackId: currentTrack.id, format: selectedFormat, url: data.url });
-        media.crossOrigin = data.requiresAuth ? '' : 'anonymous';
+        // Keep the media element same-origin by default. Setting
+        // crossOrigin="anonymous" here makes the browser require CORS on
+        // CDN responses and breaks otherwise playable uploaded videos.
+        // The stream endpoint already resolves authorization before the
+        // element is pointed at the media URL.
+        media.removeAttribute('crossorigin');
         media.src = new URL(data.url, window.location.href).href;
         media.load();
       } catch (error) {
