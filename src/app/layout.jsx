@@ -70,6 +70,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <meta name="theme-color" content="#000000" />
+        <meta name="ocs-site-verification" content="a02bdead4700010022c49a07db9b0684" />
       </head>
       <body>
         <GoogleAnalytics />
