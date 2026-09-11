@@ -8,6 +8,7 @@ export const PORTAPUTER_BUCKET = process.env.PORTAPUTER_S3_BUCKET || '';
 export const PORTAPUTER_REGION = process.env.PORTAPUTER_S3_REGION || 'us-west-2';
 export const PORTAPUTER_INSTALLER_KEY =
   process.env.PORTAPUTER_INSTALLER_KEY || 'PortaPuterCapture-Setup.exe';
+export const PREMIER_INSTALLER_KEY = 'Premier-Installer.zip';
 
 let _client;
 function getClient() {
