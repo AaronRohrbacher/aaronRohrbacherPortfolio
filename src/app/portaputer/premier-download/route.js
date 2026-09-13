@@ -8,6 +8,13 @@ import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
+  if (new URL(request.url).searchParams.get('key') !== '66514a35') {
+    return new NextResponse('Not Found', {
+      status: 404,
+      headers: { 'Cache-Control': 'private, no-store' },
+    });
+  }
+
   const { ip, userAgent, city, region, country } = requestMeta(request);
   const h = request.headers;
   const detail = {
@@ -33,7 +40,13 @@ export async function GET(request) {
       ip,
       userAgent,
     });
-    return NextResponse.redirect(url, { status: 302 });
+    return NextResponse.redirect(url, {
+      status: 302,
+      headers: {
+        'Cache-Control': 'private, no-store',
+        'Referrer-Policy': 'no-referrer',
+      },
+    });
   } catch (err) {
     console.error('[portaputer/premier-download] sign failed:', err?.message || err);
     await logEvent({
