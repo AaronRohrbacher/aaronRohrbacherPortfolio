@@ -32,6 +32,7 @@ export async function getInstallerDownloadUrl({
   key = PORTAPUTER_INSTALLER_KEY,
   filename = 'PortaPuterCapture-Setup.exe',
   expiresIn = 3600,
+  ifMatch,
 } = {}) {
   if (!PORTAPUTER_BUCKET) {
     throw new Error('PORTAPUTER_S3_BUCKET is not configured');
@@ -39,6 +40,7 @@ export async function getInstallerDownloadUrl({
   const cmd = new GetObjectCommand({
     Bucket: PORTAPUTER_BUCKET,
     Key: key,
+    IfMatch: ifMatch,
     ResponseContentDisposition: `attachment; filename="${filename.replace(/"/g, '')}"`,
     ResponseContentType: 'application/octet-stream',
   });

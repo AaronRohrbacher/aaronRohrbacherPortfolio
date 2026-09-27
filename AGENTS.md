@@ -1,3 +1,12 @@
+# Production deployment prohibition
+
+NEVER deploy to production. The user explicitly prohibits this, including when
+asked to implement, fix, or "set up" something. Do not infer deployment permission.
+Do not run production deployment scripts, `sst deploy --stage production`, or
+equivalent commands, trigger production deployment workflows, or delegate them.
+Do not make direct production infrastructure changes as a deployment workaround.
+Keep implementation and verification local. Production deployment is left to the user.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import {
   getInstallerDownloadUrl,
   PREMIER_INSTALLER_KEY,
+  headInstaller,
 } from '@/lib/portaputerS3';
 import { logEvent, EVENT_TYPES, requestMeta } from '@/lib/eventLog';
 
@@ -27,9 +28,15 @@ export async function GET(request) {
   };
 
   try {
+    const manifest = new URL(request.url).searchParams.get('manifest') === '1';
+    const object = manifest ? await headInstaller(PREMIER_INSTALLER_KEY) : null;
+    if (manifest && (!object?.size || !object?.etag)) {
+      throw new Error('Installer metadata is unavailable');
+    }
     const url = await getInstallerDownloadUrl({
       key: PREMIER_INSTALLER_KEY,
       filename: PREMIER_INSTALLER_KEY,
+      ifMatch: object?.etag,
     });
     await logEvent({
       site: 'portaputer',
@@ -40,6 +47,11 @@ export async function GET(request) {
       ip,
       userAgent,
     });
+    if (manifest) {
+      return NextResponse.json({ url, size: object.size, etag: object.etag, filename: PREMIER_INSTALLER_KEY }, {
+        headers: { 'Cache-Control': 'private, no-store' },
+      });
+    }
     return NextResponse.redirect(url, {
       status: 302,
       headers: {

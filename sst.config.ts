@@ -202,7 +202,7 @@ export default $config({
     });
     const portaputerBucket = new sst.aws.Bucket(
       "PortaputerInstallers",
-      {},
+      { cors: { exposeHeaders: ["ETag", "Content-Range", "Content-Length"] } },
       { provider: portaputerAwsProvider },
     );
 
