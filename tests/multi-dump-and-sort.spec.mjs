@@ -783,6 +783,12 @@ test.describe('Non-public dumps do not leak to anon /api/music/tracks', () => {
     expect(dumpIds).not.toContain(privateDumpId);
   });
 
+  test('non-public dump page renders its client shell instead of returning 500', async ({ request }) => {
+    const response = await request.get(`${BASE}/dump/${encodeURIComponent(privateDumpId)}`);
+    expect(response.status()).toBe(200);
+    expect(await response.text()).not.toContain('Internal Server Error');
+  });
+
   test('anon GET /api/music/tracks does not surface the track either (dump was its only gateway)', async ({ request }) => {
     const data = await getPublicTracks(request);
     const looseIds = (data.tracks || []).map((t) => t.id);

@@ -40,8 +40,8 @@
 
 .videoVisible {
   position: static;
-  width: min(34vw, 360px);
-  height: clamp(150px, 22vh, 220px);
+  width: 100%;
+  height: clamp(260px, 48dvh, 600px);
   opacity: 1;
   pointer-events: auto;
   object-fit: contain;
@@ -55,14 +55,44 @@
 }
 
 .videoStage {
-  display: grid;
-  grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.videoExpandedBar {
+  max-width: 1400px;
+}
+
+.fullscreenBtn {
+  align-self: start;
+  display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.45rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 9px;
+  background: rgba(128, 128, 128, 0.09);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background 180ms, border-color 180ms, opacity 180ms;
+
+  &:hover {
+    background: rgba(128, 128, 128, 0.16);
+    border-color: rgba(128, 128, 128, 0.35);
+  }
 }
 
 .waveformColumn {
+  display: block;
+  width: 100%;
   min-width: 0;
+  flex: 0 0 auto;
 }
 
 :global([data-theme="dark"]) .bar {
@@ -249,13 +279,23 @@
 
 @media (max-width: 700px) {
   .videoStage {
-    grid-template-columns: 1fr;
     gap: 0.7rem;
   }
 
   .videoVisible {
-    width: min(100%, 360px);
-    height: min(24vh, 190px);
+    width: 100%;
+    height: clamp(200px, 38dvh, 380px);
     margin: 0 auto;
+  }
+
+  .fullscreenBtn {
+    align-self: flex-end;
+  }
+}
+
+@media (max-height: 650px) {
+  .videoVisible {
+    height: 32dvh;
+    min-height: 160px;
   }
 }

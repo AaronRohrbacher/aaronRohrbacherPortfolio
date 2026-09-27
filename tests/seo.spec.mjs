@@ -50,7 +50,17 @@ test.describe('standardized rendered titles', () => {
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', trackTitle);
 
     expect(dump, 'the deterministic local catalog must contain a public dump').toBeTruthy();
-    await page.goto(`http://music.localhost:3000/dump/${encodeURIComponent(dump.slug || dump.id)}`);
+    const dumpUrl = `http://music.localhost:3000/dump/${encodeURIComponent(dump.slug || dump.id)}`;
+    const dumpResponse = await request.get(dumpUrl);
+    expect(dumpResponse.ok()).toBeTruthy();
+    const dumpHtml = await dumpResponse.text();
+    expect(dumpHtml).toContain('MusicAlbum');
+    expect(dumpHtml).toContain(dump.name);
+    for (const dumpTrack of dump.tracks || []) {
+      expect(dumpHtml).toContain(dumpTrack.name);
+    }
+
+    await page.goto(dumpUrl);
     const dumpTitle = `${dump.name} | Aaron Rohrbacher Music`;
     await expect(page).toHaveTitle(dumpTitle);
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', dumpTitle);

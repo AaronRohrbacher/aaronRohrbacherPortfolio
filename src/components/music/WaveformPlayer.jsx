@@ -21,14 +21,14 @@ const SPECTRUM_WINDOW = Float32Array.from(
 );
 
 const WS_OPTS = {
-  waveColor: 'rgba(0, 0, 0, 0)',
-  progressColor: 'rgba(0, 0, 0, 0)',
+  waveColor: 'rgba(124, 58, 237, 0.72)',
+  progressColor: 'rgba(0, 168, 120, 0.95)',
   cursorColor: 'rgba(0, 229, 255, 0.95)',
   cursorWidth: 2,
-  barWidth: 1,
-  barGap: 0,
-  barRadius: 0,
-  height: 72,
+  barWidth: 2,
+  barGap: 1,
+  barRadius: 2,
+  height: 96,
   normalize: true,
   dragToSeek: true,
 };

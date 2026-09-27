@@ -6,6 +6,16 @@ import { isVideoFormat, playbackFormatFor } from '@/lib/mediaPlayback';
 
 const MusicPlayerContext = createContext(null);
 
+function shouldMinimizeTrack(track) {
+  return typeof window !== 'undefined'
+    && window.innerWidth < 768
+    && !isVideoFormat(playbackFormatFor(track));
+}
+
+function shouldAutoPlayTrack(track) {
+  return !isVideoFormat(playbackFormatFor(track));
+}
+
 export function MusicPlayerProvider({ children }) {
   const { getAuthHeaders } = useAuth();
   const mediaRef = useRef(null);
@@ -66,9 +76,10 @@ export function MusicPlayerProvider({ children }) {
       setReady(false);
       setResolvedMedia(null);
       setSelectedFormatState(playbackFormatFor(queue[nextIdx]));
+      setMinimized(shouldMinimizeTrack(queue[nextIdx]));
       setCurrentTrack(queue[nextIdx]);
       setQueueIndex(nextIdx);
-      setIsPlaying(true);
+      setIsPlaying(shouldAutoPlayTrack(queue[nextIdx]));
       setPending(true);
     } else {
       setIsPlaying(false);
@@ -175,7 +186,7 @@ export function MusicPlayerProvider({ children }) {
       navigator.mediaSession.setActionHandler('play', () => setIsPlaying(true));
       navigator.mediaSession.setActionHandler('pause', () => setIsPlaying(false));
       navigator.mediaSession.setActionHandler('previoustrack', () => {
-        if (queueIndex > 0) { setReady(false); setResolvedMedia(null); setSelectedFormatState(playbackFormatFor(queue[queueIndex - 1])); setCurrentTrack(queue[queueIndex - 1]); setQueueIndex(queueIndex - 1); setIsPlaying(true); }
+        if (queueIndex > 0) { setReady(false); setResolvedMedia(null); setSelectedFormatState(playbackFormatFor(queue[queueIndex - 1])); setMinimized(shouldMinimizeTrack(queue[queueIndex - 1])); setCurrentTrack(queue[queueIndex - 1]); setQueueIndex(queueIndex - 1); setIsPlaying(shouldAutoPlayTrack(queue[queueIndex - 1])); }
       });
       navigator.mediaSession.setActionHandler('nexttrack', handleTrackEnd);
     } catch {}
@@ -185,20 +196,21 @@ export function MusicPlayerProvider({ children }) {
     const activeQueue = newQueue || queue;
     if (newQueue) setQueue(newQueue);
     const found = activeQueue.findIndex((item) => item.id === track.id);
-    setMinimized(typeof window !== 'undefined' && window.innerWidth < 768);
+    setMinimized(shouldMinimizeTrack(track));
     if (currentTrackRef.current?.id === track.id) { setIsPlaying((playing) => !playing); return; }
     playbackSessionRef.current = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
     heartbeatRef.current = -1; resumeAtRef.current = 0;
     setReady(false); setResolvedMedia(null);
     setSelectedFormatState(playbackFormatFor(track)); setCurrentTrack(track);
-    setQueueIndex(found >= 0 ? found : index); setIsPlaying(true); setPending(true);
+    setQueueIndex(found >= 0 ? found : index); setIsPlaying(shouldAutoPlayTrack(track)); setPending(true);
   }, [queue]);
 
   const handlePrev = useCallback(() => {
     if (queueIndex <= 0) return;
     playbackSessionRef.current = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
     heartbeatRef.current = -1; setReady(false); setResolvedMedia(null); setSelectedFormatState(playbackFormatFor(queue[queueIndex - 1]));
-    setCurrentTrack(queue[queueIndex - 1]); setQueueIndex(queueIndex - 1); setIsPlaying(true); setPending(true);
+    setMinimized(shouldMinimizeTrack(queue[queueIndex - 1]));
+    setCurrentTrack(queue[queueIndex - 1]); setQueueIndex(queueIndex - 1); setIsPlaying(shouldAutoPlayTrack(queue[queueIndex - 1])); setPending(true);
   }, [queue, queueIndex]);
   const togglePlayPause = useCallback(() => setIsPlaying((playing) => !playing), []);
   const closePlayer = useCallback(() => {

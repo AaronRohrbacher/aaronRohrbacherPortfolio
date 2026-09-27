@@ -21,6 +21,7 @@ import { getDumpByHandle, getDumpTracks } from '@/lib/trackStore';
 import { renderRichTextToPlainString } from '@/lib/richText';
 import DumpClient from './DumpClient';
 import { absoluteSeoTitle, seoPageTitle, SEO_SITES } from '@/lib/seoTitles';
+import { Suspense } from 'react';
 
 // Render at request time. Dump metadata can change in admin (publish flips,
 // description edits, track add/remove) and we want crawlers + visitors to
@@ -97,7 +98,11 @@ export default async function DumpServerPage({ params }) {
   // Non-public path: render only the client component. It handles the
   // auth/sign-in/denied UX. No SEO content is emitted.
   if (!dump) {
-    return <DumpClient />;
+    return (
+      <Suspense fallback={null}>
+        <DumpClient />
+      </Suspense>
+    );
   }
 
   // Public path: SSR the dump's name, description, and track list so
@@ -175,7 +180,9 @@ export default async function DumpServerPage({ params }) {
           </ol>
         )}
       </div>
-      <DumpClient />
+      <Suspense fallback={null}>
+        <DumpClient />
+      </Suspense>
     </>
   );
 }

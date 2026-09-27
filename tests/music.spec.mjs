@@ -321,6 +321,7 @@ test.describe('Stream & Download', () => {
     const data = await res.json();
     expect(data.url).toBeTruthy();
     expect(data.url).not.toContain('urlOnly=1');
+    expect(new URL(data.url, BASE).origin).toBe(new URL(BASE).origin);
   });
 
   test('download returns file with Content-Disposition', async ({ request }) => {

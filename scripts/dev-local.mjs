@@ -206,6 +206,11 @@ const next = spawn('npx', ['next', 'dev'], {
     ...envLocal,
     MUSIC_TABLE_NAME: TABLE_NAME,
     DYNAMO_ENDPOINT: ENDPOINT,
+    // Local waveform rendering fetches the media bytes for decoding. Never
+    // hand the browser the production CDN here: its CORS policy intentionally
+    // allows production origins only. With no CDN domain, /api/stream issues a
+    // same-origin media grant and proxies the bytes through the local server.
+    MUSIC_CDN_DOMAIN: '',
     NEXT_PUBLIC_AWS_REGION: 'us-west-2',
   },
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Style from './PlayerBar.module.scss';
 import WaveformPlayer from './WaveformPlayer';
 import { useMusicPlayer } from './MusicPlayerContext';
@@ -8,6 +8,7 @@ import { renderRichText } from '@/lib/richText';
 
 export default function PlayerBar() {
   const barRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const {
     currentTrack,
     isPlaying,
@@ -23,6 +24,31 @@ export default function PlayerBar() {
     mediaRef,
     isVideo,
   } = useMusicPlayer();
+
+  useEffect(() => {
+    const updateFullscreen = () => setIsFullscreen(
+      document.fullscreenElement === mediaRef.current
+      || document.webkitFullscreenElement === mediaRef.current,
+    );
+    document.addEventListener('fullscreenchange', updateFullscreen);
+    document.addEventListener('webkitfullscreenchange', updateFullscreen);
+    return () => {
+      document.removeEventListener('fullscreenchange', updateFullscreen);
+      document.removeEventListener('webkitfullscreenchange', updateFullscreen);
+    };
+  }, [mediaRef]);
+
+  async function toggleFullscreen() {
+    const video = mediaRef.current;
+    if (!video) return;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      await (document.exitFullscreen?.() || document.webkitExitFullscreen?.());
+    } else if (video.requestFullscreen) {
+      await video.requestFullscreen();
+    } else if (video.webkitEnterFullscreen) {
+      video.webkitEnterFullscreen();
+    }
+  }
 
   useEffect(() => {
     if (currentTrack) {
@@ -88,7 +114,7 @@ export default function PlayerBar() {
       )}
 
       {/* Expanded view — always mounted so audio keeps playing when minimized */}
-      <div className={Style.expandedBar} style={minimized ? { display: 'none' } : undefined}>
+      <div className={[Style.expandedBar, isVideo ? Style.videoExpandedBar : ''].join(' ')} style={minimized ? { display: 'none' } : undefined}>
         <div className={Style.expandedHeader}>
           <div className={Style.expandedInfo}>
             <span className={Style.nowPlayingLabel}>Now Playing</span>
@@ -110,9 +136,21 @@ export default function PlayerBar() {
             <video
               ref={mediaRef}
               className={[Style.persistentMedia, isVideo ? Style.videoVisible : ''].join(' ')}
+              controls={isVideo}
               playsInline
               preload="metadata"
             />
+            {isVideo && (
+              <button
+                type="button"
+                className={Style.fullscreenBtn}
+                onClick={toggleFullscreen}
+                aria-label={isFullscreen ? 'Exit full screen' : 'View video full screen'}
+              >
+                <i className={isFullscreen ? 'fa-solid fa-compress' : 'fa-solid fa-expand'} aria-hidden="true" />
+                <span>{isFullscreen ? 'Exit full screen' : 'Full screen'}</span>
+              </button>
+            )}
             <div className={Style.waveformColumn}>
               <WaveformPlayer
                 streamUrls={currentTrack.streamUrls}
